@@ -3,7 +3,7 @@
  * component CSS in src/client.css, using DSH alias tokens, so the plugin can
  * still load during local development without Tailwind installed. */
 [data-dsh-ymc-sidebar-style] { display: none; }
-.ymc-panel { display: flex; flex-direction: column; height: 100%; min-height: 0; background: var(--dsw-alias-bg-layer-2); color: var(--dsw-alias-label-primary); font-size: 12px; font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif; isolation: isolate; }
+.ymc-panel { display: flex; flex-direction: column; height: 100%; min-height: 0; max-width: none; background: var(--dsw-alias-bg-layer-2); color: var(--dsw-alias-label-primary); font-size: 12px; font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif; isolation: isolate; }
 .ymc-panel-header { display: flex; align-items: center; gap: 6px; height: 34px; padding: 0 8px 0 10px; border-bottom: 1px solid var(--dsw-alias-border-l2); flex: none; }
 .ymc-panel-title { font-weight: 600; letter-spacing: 0.02em; white-space: nowrap; }
 .ymc-panel-root { color: var(--dsw-alias-label-tertiary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; flex: 1; }
@@ -14,12 +14,27 @@
 .ymc-header-button:hover { border-color: var(--dsw-alias-border-l2); }
 .ymc-toolbar-active { background: var(--dsw-alias-interactive-bg-hover); color: var(--dsw-alias-brand-primary); }
 .ymc-panel-body { display: flex; flex-direction: column; min-height: 0; flex: 1; }
-.ymc-tree-pane { min-height: 40px; position: relative; overflow: hidden; }
+.ymc-tree-pane { display: flex; flex-direction: column; min-height: 120px; position: relative; overflow: hidden; }
 .ymc-divider { flex: none; height: 7px; display: flex; align-items: center; justify-content: center; cursor: row-resize; touch-action: none; position: relative; }
 .ymc-divider::before { content: ''; position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-50%); width: 100%; height: 3px; background: transparent; transition: background 0.12s ease; }
 .ymc-divider:hover::before { background: var(--dsw-alias-brand-primary); opacity: 0.4; }
 .ymc-divider-grip { width: 26px; height: 3px; border-radius: 2px; background: var(--dsw-alias-border-l2); }
 .ymc-preview-pane { flex: 1; min-height: 60px; display: flex; flex-direction: column; }
+.ymc-preview-root { display: flex; flex-direction: column; min-height: 0; flex: 1; }
+.ymc-preview-content { position: relative; display: flex; flex-direction: column; min-height: 0; flex: 1; }
+.ymc-tabs-scroll { flex: none; overflow-x: auto; border-bottom: 1px solid var(--dsw-alias-border-l2); scrollbar-width: none; scrollbar-color: transparent transparent; }
+.ymc-tabs-scroll::-webkit-scrollbar { height: 6px; }
+.ymc-tabs-scroll::-webkit-scrollbar-thumb { background: transparent; border-radius: 9999px; }
+.ymc-tabs-scroll.is-scrolling { scrollbar-width: thin; scrollbar-color: var(--dsw-alias-scrollbar-bg-l2, var(--dsw-alias-border-l2)) transparent; }
+.ymc-tabs-scroll.is-scrolling::-webkit-scrollbar-thumb { background: var(--dsw-alias-scrollbar-bg-l2, var(--dsw-alias-border-l2)); }
+.ymc-tabs { display: inline-flex; min-width: 100%; align-items: stretch; }
+.ymc-tab { display: flex; height: 30px; max-width: 180px; flex: none; align-items: center; gap: 6px; padding: 0 10px; border-bottom: 2px solid transparent; color: var(--dsw-alias-label-secondary); font-size: 12px; white-space: nowrap; cursor: pointer; user-select: none; transition: background-color 120ms ease, color 120ms ease, border-color 120ms ease; }
+.ymc-tab:hover { background: var(--dsw-alias-interactive-bg-hover); color: var(--dsw-alias-label-primary); }
+.ymc-tab-active, .ymc-tab-active:hover { border-bottom-color: var(--dsw-alias-brand-primary); background: var(--dsw-alias-bg-layer-2); color: var(--dsw-alias-label-primary); }
+.ymc-tab-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.ymc-tab-close { display: inline-flex; width: 16px; height: 16px; flex: none; align-items: center; justify-content: center; padding: 0; border: 0; background: transparent; border-radius: 4px; color: var(--dsw-alias-label-tertiary); cursor: pointer; font: inherit; opacity: 0; transition: opacity 120ms ease, background-color 120ms ease, color 120ms ease; }
+.ymc-tab:hover .ymc-tab-close, .ymc-tab-active .ymc-tab-close { opacity: 1; }
+.ymc-tab-close:hover { background: var(--dsw-alias-interactive-bg-hover); color: var(--dsw-alias-label-primary); }
 .ymc-tree-scroll, .ymc-code-scroll, .ymc-markdown-scroll, .ymc-image-preview { position: relative; flex: 1; min-height: 0; overflow: auto; }
 .ymc-tree-scroll { outline: none; }
 .ymc-tree-spacer, .ymc-code-spacer { position: relative; min-width: 100%; }

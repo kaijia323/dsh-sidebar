@@ -4,7 +4,8 @@ DSH Web Client 的 VSCode 风格文件树侧栏。在会话标题栏新增“文
 
 - 以当前会话工作区目录（session cwd）为根展示文件树
 - 目录按需懒加载，树与代码视图都做了虚拟滚动
-- 点击文件后，在右栏下半部预览内容
+- 点击文件后，在右栏下方预览内容（上方为文件树）
+- 支持多文件 tabs：可同时打开多个文件、横向滚动、点击 `×` 关闭
 - 支持文本/代码（带行号与基础语法高亮）、Markdown 渲染 / 源码切换、常见图片预览
 - 不预置目录忽略规则，文件系统里有什么就展示什么（`node_modules` 等大目录靠懒加载 + 虚拟化抗压）
 
@@ -14,7 +15,7 @@ DSH Web Client 的 VSCode 风格文件树侧栏。在会话标题栏新增“文
 
 - **Host half（`src/index.ts`）**：注入 `fs` 与 `connection`，在 `/dsh-ymc-sidebar` 注册一个仅 loopback 可访问的 Connection RPC channel，提供 `meta` / `list` / `read` 三个端点。
 - **Browser half（`src/client.tsx`）**：注入 `slots`、`sessions`、`workspaces`、`connection`、`layout`，注册：
-  - `details`（single）：整个右栏，包含虚拟化文件树 + 可拖拽分割的预览区
+  - `details`（single）：整个右栏，包含虚拟化文件树 + 可拖拽上下分割的预览区
   - `conversation.session.header.actions`（list）：标题栏“文件树”按钮
 
 > `details` 是 single slot：注册后替换 DSH 内置工具详情面板；插件卸载后原生面板自动恢复。

@@ -51,7 +51,20 @@ test('client bundle materializes as a lazy-CJS plugin factory', async () => {
   assert.ok(factory, 'factory must register through window.__ModuleLoader__.load')
 
   const plugin = factory!((specifier: string) => {
-    if (specifier === 'react') return { memo: (component: unknown) => component }
+    if (specifier === 'react') {
+      return {
+        memo: (component: unknown) => component,
+        createContext: (defaultValue?: unknown) => ({ Provider: () => null, Consumer: () => null, defaultValue }),
+        forwardRef: (render: unknown) => render,
+        useMemo: (fn: () => unknown) => fn(),
+        useContext: () => ({}),
+        useEffect: () => {},
+        useRef: () => ({ current: null }),
+        useState: (initial: unknown) => [initial, () => {}],
+        useCallback: (fn: unknown) => fn,
+        Fragment: Symbol('Fragment'),
+      }
+    }
     if (specifier === 'react/jsx-runtime') return {}
     throw new Error('unexpected require: ' + specifier)
   }) as { name: string; inject: string[]; apply: (ctx: unknown) => void }

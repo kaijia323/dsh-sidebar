@@ -3,7 +3,7 @@
 
 @layer components {
   .ymc-panel {
-    @apply isolate flex h-full min-h-0 flex-col bg-[var(--dsw-alias-bg-layer-2)] text-[var(--dsw-alias-label-primary)] text-xs;
+    @apply isolate flex h-full min-h-0 max-w-none flex-col bg-[var(--dsw-alias-bg-layer-2)] text-[var(--dsw-alias-label-primary)] text-xs;
     font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
   }
 
@@ -55,7 +55,7 @@
   }
 
   .ymc-tree-pane {
-    @apply relative min-h-[40px] overflow-hidden;
+    @apply relative flex min-h-[120px] shrink-0 flex-col overflow-hidden;
   }
 
   .ymc-divider {
@@ -78,6 +78,76 @@
 
   .ymc-preview-pane {
     @apply flex min-h-[60px] flex-1 flex-col;
+  }
+
+  .ymc-preview-root {
+    @apply flex min-h-0 flex-1 flex-col;
+  }
+
+  .ymc-preview-content {
+    @apply relative flex min-h-0 flex-1 flex-col;
+  }
+
+  .ymc-tabs-scroll {
+    @apply flex-none overflow-x-auto border-b border-[var(--dsw-alias-border-l2)];
+    scrollbar-width: none;
+    scrollbar-color: transparent transparent;
+  }
+
+  .ymc-tabs-scroll::-webkit-scrollbar {
+    height: 6px;
+  }
+
+  .ymc-tabs-scroll::-webkit-scrollbar-thumb {
+    background: transparent;
+    border-radius: 9999px;
+  }
+
+  .ymc-tabs-scroll.is-scrolling {
+    scrollbar-width: thin;
+    scrollbar-color: var(--dsw-alias-scrollbar-bg-l2, var(--dsw-alias-border-l2)) transparent;
+  }
+
+  .ymc-tabs-scroll.is-scrolling::-webkit-scrollbar-thumb {
+    background: var(--dsw-alias-scrollbar-bg-l2, var(--dsw-alias-border-l2));
+  }
+
+  .ymc-tabs {
+    @apply inline-flex min-w-full items-stretch;
+  }
+
+  .ymc-tab {
+    @apply flex h-[30px] max-w-[180px] flex-none cursor-pointer items-center gap-1.5 border-b-2 border-transparent px-2.5 text-xs whitespace-nowrap select-none text-[var(--dsw-alias-label-secondary)];
+    transition: background-color 120ms ease, color 120ms ease, border-color 120ms ease;
+  }
+
+  .ymc-tab:hover {
+    @apply bg-[var(--dsw-alias-interactive-bg-hover)] text-[var(--dsw-alias-label-primary)];
+  }
+
+  .ymc-tab-active,
+  .ymc-tab-active:hover {
+    @apply border-b-[var(--dsw-alias-brand-primary)] bg-[var(--dsw-alias-bg-layer-2)] text-[var(--dsw-alias-label-primary)];
+  }
+
+  .ymc-tab-label {
+    @apply min-w-0 truncate;
+  }
+
+  .ymc-tab-close {
+    @apply inline-flex h-4 w-4 flex-none cursor-pointer items-center justify-center rounded border-0 bg-transparent p-0 text-[var(--dsw-alias-label-tertiary)];
+    font: inherit;
+    opacity: 0;
+    transition: opacity 120ms ease, background-color 120ms ease, color 120ms ease;
+  }
+
+  .ymc-tab:hover .ymc-tab-close,
+  .ymc-tab-active .ymc-tab-close {
+    opacity: 1;
+  }
+
+  .ymc-tab-close:hover {
+    @apply bg-[var(--dsw-alias-interactive-bg-hover)] text-[var(--dsw-alias-label-primary)];
   }
 
   .ymc-tree-scroll,

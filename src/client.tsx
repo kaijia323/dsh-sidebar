@@ -12,6 +12,7 @@ import {
 import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
 import type { RpcResult } from '@deepseek-ai/dsh-client-connection/client'
 import type { PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
+import { File, FileText, Image as ImageIcon, X } from 'lucide-react'
 import { basename, clamp, flattenTree, formatBytes, isImagePath, isMarkdownPath, resolveRoot } from './client-model'
 import type { DirData, EntryType, FlatRow, SessionListLike, SidebarEntry, WorkspaceListLike } from './client-model'
 
@@ -339,27 +340,68 @@ function FolderIcon({ open }: { open?: boolean }) {
 
 function FileIcon({ name }: { name: string }) {
   if (isImagePath(name)) {
-    return (
-      <svg className="ymc-icon ymc-icon-image" width="14" height="14" viewBox="0 0 16 16" aria-hidden="true">
-        <path d="M2 2h12v12H2z" fill="none" stroke="currentColor" strokeWidth="1.2" />
-        <circle cx="5.5" cy="5.5" r="1.3" fill="currentColor" />
-        <path d="M2 11l3.5-3.5 2.5 2.5 3-3 3 3" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
-      </svg>
-    )
+    return <ImageIcon className="ymc-icon ymc-icon-image" size={14} strokeWidth={1.5} aria-hidden="true" />
   }
   if (isMarkdownPath(name)) {
-    return (
-      <svg className="ymc-icon ymc-icon-markdown" width="14" height="14" viewBox="0 0 16 16" aria-hidden="true">
-        <path d="M2.5 3.5h11v9h-11z" fill="none" stroke="currentColor" strokeWidth="1.2" />
-        <path d="M4.5 11V6l2 2 2-2v5M11 6v5l2-2" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    )
+    return <FileText className="ymc-icon ymc-icon-markdown" size={14} strokeWidth={1.5} aria-hidden="true" />
   }
+  return <File className="ymc-icon ymc-icon-file" size={14} strokeWidth={1.5} aria-hidden="true" />
+}
+
+interface TabsBarProps {
+  tabs: SelectedFile[]
+  activePath: string | undefined
+  onCloseTab: (path: string) => void
+  onSelectTab: (path: string) => void
+}
+
+function TabsBar({ tabs, activePath, onCloseTab, onSelectTab }: TabsBarProps) {
+  const [scrolling, setScrolling] = useState(false)
+  const timerRef = useRef<number | undefined>(undefined)
+
+  useEffect(() => () => {
+    if (timerRef.current !== undefined) window.clearTimeout(timerRef.current)
+  }, [])
+
+  function handleScroll() {
+    setScrolling(true)
+    if (timerRef.current !== undefined) window.clearTimeout(timerRef.current)
+    timerRef.current = window.setTimeout(() => setScrolling(false), 600)
+  }
+
   return (
-    <svg className="ymc-icon ymc-icon-file" width="14" height="14" viewBox="0 0 16 16" aria-hidden="true">
-      <path d="M4 1.5h5.5L13 5v9.5a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-12a1 1 0 0 1 1-1z" fill="none" stroke="currentColor" strokeWidth="1.2" />
-      <path d="M9.5 1.5V5H13" fill="none" stroke="currentColor" strokeWidth="1.2" />
-    </svg>
+    <div
+      className={`ymc-tabs-scroll flex-none overflow-x-auto${scrolling ? ' is-scrolling' : ''}`}
+      onScroll={handleScroll}
+    >
+      <div className="ymc-tabs inline-flex min-w-full items-stretch">
+        {tabs.map((tab) => {
+          const active = tab.path === activePath
+          return (
+            <div
+              key={tab.path}
+              className={`ymc-tab group flex h-[30px] max-w-[180px] flex-none cursor-pointer items-center gap-1.5 px-2.5 text-xs whitespace-nowrap select-none${active ? ' ymc-tab-active' : ''}`}
+              onClick={() => onSelectTab(tab.path)}
+              title={tab.path}
+            >
+              <FileIcon name={tab.name} />
+              <span className="ymc-tab-label min-w-0 truncate">{tab.name}</span>
+              <button
+                type="button"
+                className="ymc-tab-close inline-flex h-4 w-4 flex-none cursor-pointer items-center justify-center rounded border-0 bg-transparent p-0 text-[var(--dsw-alias-label-tertiary)] hover:bg-[var(--dsw-alias-interactive-bg-hover)] hover:text-[var(--dsw-alias-label-primary)]"
+                onClick={(event) => {
+                  event.stopPropagation()
+                  onCloseTab(tab.path)
+                }}
+                aria-label={`关闭 ${tab.name}`}
+              >
+                <X size={14} strokeWidth={2.5} />
+              </button>
+            </div>
+          )
+        })}
+      </div>
+    </div>
   )
 }
 
@@ -487,11 +529,15 @@ function Tree({ root, dirs, expanded, loading, selectedPath, maxRows, onToggle, 
 
 interface PreviewPaneProps {
   api: FsApi
-  file: SelectedFile | null
+  tabs: SelectedFile[]
+  activePath: string | undefined
   limits: Limits
+  onCloseTab: (path: string) => void
+  onSelectTab: (path: string) => void
 }
 
-function PreviewPane({ api, file, limits }: PreviewPaneProps) {
+function PreviewPane({ api, tabs, activePath, limits, onCloseTab, onSelectTab }: PreviewPaneProps) {
+  const file = tabs.find((tab) => tab.path === activePath) ?? null
   const [phase, setPhase] = useState<'idle' | 'loading' | 'ready'>('idle')
   const [value, setValue] = useState<ReadValue | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -526,81 +572,95 @@ function PreviewPane({ api, file, limits }: PreviewPaneProps) {
     return () => controller.abort()
   }, [api, file])
 
+  let content: ReactNode
   if (!file) {
-    return <div className="ymc-preview-empty flex h-full flex-col items-center justify-center text-[var(--dsw-alias-label-tertiary)]">点击文件查看内容</div>
-  }
-  if (phase === 'loading') {
-    return <div className="ymc-preview-empty flex h-full flex-col items-center justify-center text-[var(--dsw-alias-label-tertiary)]"><span className="ymc-spinner" />正在读取…</div>
-  }
-  if (error || (value && isDomainError(value))) {
+    content = <div className="ymc-preview-empty flex h-full flex-col items-center justify-center text-[var(--dsw-alias-label-tertiary)]">点击文件查看内容</div>
+  } else if (phase === 'loading') {
+    content = <div className="ymc-preview-empty flex h-full flex-col items-center justify-center text-[var(--dsw-alias-label-tertiary)]"><span className="ymc-spinner" />正在读取…</div>
+  } else if (error || (value && isDomainError(value))) {
     const message = error ?? (isDomainError(value!) ? value.message : '')
-    return <div className="ymc-preview-error overflow-auto text-[var(--dsw-alias-state-error-primary)]">{message}</div>
+    content = <div className="ymc-preview-error overflow-auto text-[var(--dsw-alias-state-error-primary)]">{message}</div>
+  } else {
+    const read = value as ReadOk | null
+    if (!read) {
+      content = <div className="ymc-preview-empty">无内容</div>
+    } else {
+      const result = read.result
+      if (result.kind === 'binary') {
+        content = (
+          <div className="ymc-preview-message">
+            <strong>{file.name}</strong>
+            <p>二进制文件，无法预览。</p>
+            <p className="ymc-preview-meta">{formatBytes(read.size)}</p>
+          </div>
+        )
+      } else if (result.kind === 'too-large') {
+        content = (
+          <div className="ymc-preview-message">
+            <strong>{file.name}</strong>
+            <p>文件超过预览大小限制（{formatBytes(result.limit)}）。</p>
+            <p className="ymc-preview-meta">{formatBytes(read.size)}</p>
+          </div>
+        )
+      } else if (result.kind === 'error') {
+        content = (
+          <div className="ymc-preview-message">
+            <strong>{file.name}</strong>
+            <p>{result.message}</p>
+          </div>
+        )
+      } else if (result.kind === 'image') {
+        const source = `data:${result.mime};base64,${result.base64}`
+        content = (
+          <div className="ymc-image-preview">
+            <img className="ymc-image" src={source} alt={file.name} />
+          </div>
+        )
+      } else {
+        const markdownFile = isMarkdownPath(file.path)
+        content = (
+          <div className="ymc-text-preview flex min-h-0 flex-1 flex-col">
+            {markdownFile && (
+              <div className="ymc-preview-toolbar flex h-[26px] flex-none items-center gap-0.5 border-b border-[var(--dsw-alias-border-l2)] px-1.5">
+                <button
+                  type="button"
+                  className={`ymc-toolbar-button inline-flex cursor-pointer items-center rounded-md px-1.5 py-1${markdown ? ' ymc-toolbar-active' : ''}`}
+                  onClick={() => setMarkdown(true)}
+                >
+                  预览
+                </button>
+                <button
+                  type="button"
+                  className={`ymc-toolbar-button inline-flex cursor-pointer items-center rounded-md px-1.5 py-1${markdown ? '' : ' ymc-toolbar-active'}`}
+                  onClick={() => setMarkdown(false)}
+                >
+                  源码
+                </button>
+                <span className="ymc-preview-meta ml-auto text-[11px] text-[var(--dsw-alias-label-tertiary)]">{formatBytes(read.size)}</span>
+              </div>
+            )}
+            {markdownFile && markdown
+              ? <div className="ymc-markdown-scroll relative min-h-0 flex-1 overflow-auto"><MarkdownView text={result.content} /></div>
+              : <CodeView text={result.content} />}
+          </div>
+        )
+      }
+    }
   }
 
-  const read = value as ReadOk | null
-  if (!read) return <div className="ymc-preview-empty">无内容</div>
-
-  const result = read.result
-  if (result.kind === 'binary') {
-    return (
-      <div className="ymc-preview-message">
-        <strong>{file.name}</strong>
-        <p>二进制文件，无法预览。</p>
-        <p className="ymc-preview-meta">{formatBytes(read.size)}</p>
-      </div>
-    )
-  }
-  if (result.kind === 'too-large') {
-    return (
-      <div className="ymc-preview-message">
-        <strong>{file.name}</strong>
-        <p>文件超过预览大小限制（{formatBytes(result.limit)}）。</p>
-        <p className="ymc-preview-meta">{formatBytes(read.size)}</p>
-      </div>
-    )
-  }
-  if (result.kind === 'error') {
-    return (
-      <div className="ymc-preview-message">
-        <strong>{file.name}</strong>
-        <p>{result.message}</p>
-      </div>
-    )
-  }
-  if (result.kind === 'image') {
-    const source = `data:${result.mime};base64,${result.base64}`
-    return (
-      <div className="ymc-image-preview">
-        <img className="ymc-image" src={source} alt={file.name} />
-      </div>
-    )
-  }
-
-  const markdownFile = isMarkdownPath(file.path)
   return (
-    <div className="ymc-text-preview flex min-h-0 flex-1 flex-col">
-      {markdownFile && (
-        <div className="ymc-preview-toolbar flex h-[26px] flex-none items-center gap-0.5 border-b border-[var(--dsw-alias-border-l2)] px-1.5">
-          <button
-            type="button"
-            className={`ymc-toolbar-button inline-flex cursor-pointer items-center rounded-md px-1.5 py-1${markdown ? ' ymc-toolbar-active' : ''}`}
-            onClick={() => setMarkdown(true)}
-          >
-            预览
-          </button>
-          <button
-            type="button"
-            className={`ymc-toolbar-button inline-flex cursor-pointer items-center rounded-md px-1.5 py-1${markdown ? '' : ' ymc-toolbar-active'}`}
-            onClick={() => setMarkdown(false)}
-          >
-            源码
-          </button>
-          <span className="ymc-preview-meta ml-auto text-[11px] text-[var(--dsw-alias-label-tertiary)]">{formatBytes(read.size)}</span>
-        </div>
+    <div className="ymc-preview-root flex min-h-0 flex-1 flex-col">
+      {tabs.length > 0 && (
+        <TabsBar
+          tabs={tabs}
+          activePath={activePath}
+          onCloseTab={onCloseTab}
+          onSelectTab={onSelectTab}
+        />
       )}
-      {markdownFile && markdown
-        ? <div className="ymc-markdown-scroll relative min-h-0 flex-1 overflow-auto"><MarkdownView text={result.content} /></div>
-        : <CodeView text={result.content} />}
+      <div className="ymc-preview-content relative flex min-h-0 flex-1 flex-col">
+        {content}
+      </div>
     </div>
   )
 }
@@ -643,7 +703,8 @@ function DetailsPanel({ api, closeDetails, sessionId, useSessions, useWorkspaces
   const [dirs, setDirs] = useState<Record<string, DirData>>({})
   const [expanded, setExpanded] = useState<ReadonlySet<string>>(() => new Set<string>())
   const [loading, setLoading] = useState<ReadonlySet<string>>(() => new Set<string>())
-  const [selected, setSelected] = useState<SelectedFile | null>(null)
+  const [tabs, setTabs] = useState<SelectedFile[]>([])
+  const [activePath, setActivePath] = useState<string | undefined>(undefined)
   const [rootError, setRootError] = useState<string | null>(null)
   const [split, setSplit] = useState(0.55)
 
@@ -673,7 +734,8 @@ function DetailsPanel({ api, closeDetails, sessionId, useSessions, useWorkspaces
     inflightRef.current.clear()
     setDirs({})
     setExpanded(new Set(root ? [root] : []))
-    setSelected(null)
+    setTabs([])
+    setActivePath(undefined)
     setRootError(null)
     if (!root) setRootError('当前会话没有工作区目录（cwd）。请先打开一个工作区会话。')
   }, [root])
@@ -689,7 +751,8 @@ function DetailsPanel({ api, closeDetails, sessionId, useSessions, useWorkspaces
       const body = bodyRef.current
       if (!drag || !body) return
       const rect = body.getBoundingClientRect()
-      setSplit(clamp((event.clientY - rect.top) / Math.max(rect.height, 1), 0.2, 0.8))
+      const ratio = (event.clientY - rect.top) / Math.max(rect.height, 1)
+      setSplit(clamp(ratio, 0.2, 0.8))
     }
     const handlePointerUp = () => { dragRef.current = null }
     window.addEventListener('pointermove', handlePointerMove)
@@ -769,8 +832,29 @@ function DetailsPanel({ api, closeDetails, sessionId, useSessions, useWorkspaces
     controllersRef.current.clear()
     inflightRef.current.clear()
     setDirs({})
-    setSelected(null)
+    setTabs([])
+    setActivePath(undefined)
     setExpanded(new Set(root ? [root] : []))
+  }
+
+  function openFile(entry: SidebarEntry) {
+    setTabs((prev) => prev.some((tab) => tab.path === entry.path) ? prev : [...prev, { path: entry.path, name: entry.name }])
+    setActivePath(entry.path)
+  }
+
+  function closeTab(path: string) {
+    const index = tabs.findIndex((tab) => tab.path === path)
+    if (index === -1) return
+    const next = tabs.filter((tab) => tab.path !== path)
+    setTabs(next)
+    if (activePath === path) {
+      const neighbor = next[Math.min(index, next.length - 1)]
+      setActivePath(neighbor?.path)
+    }
+  }
+
+  function selectTab(path: string) {
+    setActivePath(path)
   }
 
   function onDividerPointerDown(event: React.PointerEvent<HTMLDivElement>) {
@@ -779,7 +863,8 @@ function DetailsPanel({ api, closeDetails, sessionId, useSessions, useWorkspaces
     event.preventDefault()
     const rect = body.getBoundingClientRect()
     dragRef.current = { startY: event.clientY, startSplit: split }
-    const next = clamp((event.clientY - rect.top) / Math.max(rect.height, 1), 0.2, 0.8)
+    const ratio = (event.clientY - rect.top) / Math.max(rect.height, 1)
+    const next = clamp(ratio, 0.2, 0.8)
     setSplit(next)
   }
 
@@ -801,8 +886,8 @@ function DetailsPanel({ api, closeDetails, sessionId, useSessions, useWorkspaces
       <PanelHeader root={root} loadingRoot={rowLoading} onRefresh={refresh} onClose={closeDetails} />
       <div className="ymc-panel-body relative flex min-h-0 flex-1 flex-col" ref={bodyRef}>
         <div
-          className="ymc-tree-pane relative min-h-[40px] shrink-0 overflow-hidden"
-          style={{ flexBasis: `${Math.round(split * 100)}%`, flexGrow: 0, flexShrink: 0, minHeight: 40 }}
+          className="ymc-tree-pane relative flex min-h-[120px] shrink-0 flex-col overflow-hidden"
+          style={{ flexBasis: `${Math.round(split * 100)}%`, flexGrow: 0, flexShrink: 0, minHeight: 120 }}
         >
           {hasRootError
             ? <div className="ymc-preview-error overflow-auto text-[var(--dsw-alias-state-error-primary)]">{rootData!.error}</div>
@@ -812,10 +897,10 @@ function DetailsPanel({ api, closeDetails, sessionId, useSessions, useWorkspaces
                   dirs={dirs}
                   expanded={expanded}
                   loading={loading}
-                  selectedPath={selected?.path}
+                  selectedPath={activePath}
                   maxRows={limits.maxTreeRows}
                   onToggle={toggleDirectory}
-                  onSelectFile={(entry) => setSelected({ path: entry.path, name: entry.name })}
+                  onSelectFile={openFile}
                 />
               )}
         </div>
@@ -823,7 +908,14 @@ function DetailsPanel({ api, closeDetails, sessionId, useSessions, useWorkspaces
           <span className="ymc-divider-grip h-[3px] w-[26px] rounded-sm bg-[var(--dsw-alias-border-l2)]" />
         </div>
         <div className="ymc-preview-pane relative flex min-h-[60px] flex-1 flex-col">
-          <PreviewPane api={api} file={selected} limits={limits} />
+          <PreviewPane
+            api={api}
+            tabs={tabs}
+            activePath={activePath}
+            limits={limits}
+            onCloseTab={closeTab}
+            onSelectTab={selectTab}
+          />
         </div>
       </div>
     </div>
