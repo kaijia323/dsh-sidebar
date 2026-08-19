@@ -1,0 +1,71 @@
+/* Fallback stylesheet used only when the Tailwind CLI is unavailable at build
+ * time (e.g. before `pnpm install`). It intentionally mirrors the custom
+ * component CSS in src/client.css, using DSH alias tokens, so the plugin can
+ * still load during local development without Tailwind installed. */
+[data-dsh-ymc-sidebar-style] { display: none; }
+.ymc-panel { display: flex; flex-direction: column; height: 100%; min-height: 0; background: var(--dsw-alias-bg-layer-2); color: var(--dsw-alias-label-primary); font-size: 12px; font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif; isolation: isolate; }
+.ymc-panel-header { display: flex; align-items: center; gap: 6px; height: 34px; padding: 0 8px 0 10px; border-bottom: 1px solid var(--dsw-alias-border-l2); flex: none; }
+.ymc-panel-title { font-weight: 600; letter-spacing: 0.02em; white-space: nowrap; }
+.ymc-panel-root { color: var(--dsw-alias-label-tertiary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; flex: 1; }
+.ymc-panel-actions { display: flex; align-items: center; gap: 2px; margin-left: auto; }
+.ymc-icon-button, .ymc-header-button, .ymc-toolbar-button { display: inline-flex; align-items: center; gap: 5px; border: 0; background: transparent; color: inherit; cursor: pointer; border-radius: 5px; padding: 4px 6px; font: inherit; }
+.ymc-icon-button:hover, .ymc-header-button:hover, .ymc-toolbar-button:hover { background: var(--dsw-alias-interactive-bg-hover); }
+.ymc-header-button { border: 1px solid transparent; white-space: nowrap; }
+.ymc-header-button:hover { border-color: var(--dsw-alias-border-l2); }
+.ymc-toolbar-active { background: var(--dsw-alias-interactive-bg-hover); color: var(--dsw-alias-brand-primary); }
+.ymc-panel-body { display: flex; flex-direction: column; min-height: 0; flex: 1; }
+.ymc-tree-pane { min-height: 40px; position: relative; overflow: hidden; }
+.ymc-divider { flex: none; height: 7px; display: flex; align-items: center; justify-content: center; cursor: row-resize; touch-action: none; position: relative; }
+.ymc-divider::before { content: ''; position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-50%); width: 100%; height: 3px; background: transparent; transition: background 0.12s ease; }
+.ymc-divider:hover::before { background: var(--dsw-alias-brand-primary); opacity: 0.4; }
+.ymc-divider-grip { width: 26px; height: 3px; border-radius: 2px; background: var(--dsw-alias-border-l2); }
+.ymc-preview-pane { flex: 1; min-height: 60px; display: flex; flex-direction: column; }
+.ymc-tree-scroll, .ymc-code-scroll, .ymc-markdown-scroll, .ymc-image-preview { position: relative; flex: 1; min-height: 0; overflow: auto; }
+.ymc-tree-scroll { outline: none; }
+.ymc-tree-spacer, .ymc-code-spacer { position: relative; min-width: 100%; }
+.ymc-tree-row { position: absolute; left: 0; right: 0; height: 24px; display: flex; align-items: center; gap: 4px; cursor: pointer; user-select: none; white-space: nowrap; }
+.ymc-tree-row:hover { background: var(--dsw-alias-interactive-bg-hover); }
+.ymc-tree-row-selected, .ymc-tree-row-selected:hover { background: var(--dsw-alias-interactive-bg-hover); }
+.ymc-tree-note { color: var(--dsw-alias-label-tertiary); font-style: italic; cursor: default; }
+.ymc-tree-chevron-slot { width: 14px; height: 24px; display: inline-flex; align-items: center; justify-content: center; flex: none; }
+.ymc-tree-chevron { display: inline-flex; align-items: center; justify-content: center; color: var(--dsw-alias-label-tertiary); }
+.ymc-chevron { transition: transform 0.12s ease; }
+.ymc-chevron-open { transform: rotate(90deg); }
+.ymc-icon { flex: none; color: var(--dsw-alias-label-tertiary); }
+.ymc-icon-folder { color: var(--dsw-alias-state-warn-primary); }
+.ymc-icon-file { color: var(--dsw-alias-label-tertiary); }
+.ymc-icon-image { color: var(--dsw-alias-brand-primary); }
+.ymc-icon-markdown { color: var(--dsw-alias-state-success-primary); }
+.ymc-tree-label { overflow: hidden; text-overflow: ellipsis; }
+.ymc-tree-empty, .ymc-preview-empty, .ymc-preview-error, .ymc-preview-message, .ymc-panel-message { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 16px; color: var(--dsw-alias-label-tertiary); height: 100%; text-align: center; }
+.ymc-preview-error { color: var(--dsw-alias-state-error-primary); overflow: auto; height: auto; }
+.ymc-preview-message { color: var(--dsw-alias-label-tertiary); }
+.ymc-preview-message strong { color: var(--dsw-alias-label-primary); }
+.ymc-preview-meta { font-size: 11px; color: var(--dsw-alias-label-tertiary); }
+.ymc-tree-truncated { padding: 4px 8px; color: var(--dsw-alias-label-tertiary); font-size: 11px; }
+.ymc-spinner { width: 11px; height: 11px; flex: none; border: 2px solid var(--dsw-alias-border-l2); border-top-color: var(--dsw-alias-brand-primary); border-radius: 50%; animation: ymc-spin 0.8s linear infinite; display: inline-block; }
+@keyframes ymc-spin { to { transform: rotate(360deg); } }
+.ymc-text-preview { display: flex; flex-direction: column; min-height: 0; flex: 1; }
+.ymc-preview-toolbar { display: flex; align-items: center; gap: 2px; height: 26px; padding: 0 6px; border-bottom: 1px solid var(--dsw-alias-border-l2); flex: none; }
+.ymc-preview-toolbar .ymc-preview-meta { margin-left: auto; }
+.ymc-code-row { position: absolute; left: 0; right: 0; height: 20px; display: flex; align-items: flex-start; font-family: ui-monospace, SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace; font-size: 12px; line-height: 20px; }
+.ymc-code-gutter { position: sticky; left: 0; z-index: 10; min-width: 34px; padding: 0 8px 0 4px; text-align: right; color: var(--dsw-alias-label-tertiary); background: var(--dsw-alias-bg-layer-2); border-right: 1px solid var(--dsw-alias-border-l2); flex: none; user-select: none; }
+.ymc-code-line { white-space: pre; padding-right: 16px; }
+.ymc-token-comment { color: var(--dsw-alias-label-tertiary); font-style: italic; }
+.ymc-token-string { color: var(--dsw-alias-state-success-primary); }
+.ymc-token-number { color: var(--dsw-alias-state-warn-primary); }
+.ymc-token-keyword { color: var(--dsw-alias-state-business-primary); }
+.ymc-markdown { max-width: 760px; margin: 0 auto; padding: 12px 14px 32px; line-height: 1.6; color: var(--dsw-alias-label-primary); }
+.ymc-markdown a { color: var(--dsw-alias-brand-primary); text-decoration: none; }
+.ymc-markdown a:hover { text-decoration: underline; }
+.ymc-markdown h1, .ymc-markdown h2, .ymc-markdown h3, .ymc-markdown h4, .ymc-markdown h5, .ymc-markdown h6 { margin: 0.8em 0 0.45em; line-height: 1.25; font-weight: 600; }
+.ymc-markdown h1 { font-size: 1.5em; } .ymc-markdown h2 { font-size: 1.3em; } .ymc-markdown h3 { font-size: 1.15em; }
+.ymc-markdown p { margin: 0.45em 0; }
+.ymc-markdown ul, .ymc-markdown ol { margin: 0.45em 0; padding-left: 1.6em; }
+.ymc-markdown blockquote { margin: 0.45em 0; padding: 2px 12px; border-left: 3px solid var(--dsw-alias-border-l3); color: var(--dsw-alias-label-secondary); }
+.ymc-markdown hr { border: 0; border-top: 1px solid var(--dsw-alias-border-l2); margin: 12px 0; }
+.ymc-markdown pre { background: var(--dsw-alias-bg-layer-1); border: 1px solid var(--dsw-alias-border-l2); border-radius: 6px; padding: 10px 12px; overflow: auto; }
+.ymc-markdown code { font-family: ui-monospace, SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace; font-size: 0.92em; }
+.ymc-md-code { background: var(--dsw-alias-bg-layer-1); border-radius: 4px; padding: 1px 4px; }
+.ymc-image { display: block; max-width: 100%; max-height: 100%; margin: 0 auto; object-fit: contain; }
+.ymc-tree-scroll, .ymc-code-scroll, .ymc-markdown-scroll, .ymc-image-preview { scrollbar-color: var(--dsw-alias-scrollbar-bg-l2, var(--dsw-alias-border-l2)) transparent; scrollbar-width: thin; }

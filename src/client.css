@@ -1,0 +1,311 @@
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  .ymc-panel {
+    @apply isolate flex h-full min-h-0 flex-col bg-[var(--dsw-alias-bg-layer-2)] text-[var(--dsw-alias-label-primary)] text-xs;
+    font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  }
+
+  .ymc-panel-header {
+    @apply flex flex-none items-center gap-1.5 border-b border-[var(--dsw-alias-border-l2)] px-2.5 py-0;
+    height: 34px;
+  }
+
+  .ymc-panel-title {
+    @apply font-semibold tracking-wide whitespace-nowrap;
+  }
+
+  .ymc-panel-root {
+    @apply min-w-0 flex-1 truncate text-[var(--dsw-alias-label-tertiary)];
+  }
+
+  .ymc-panel-actions {
+    @apply ml-auto flex items-center gap-0.5;
+  }
+
+  .ymc-icon-button,
+  .ymc-header-button,
+  .ymc-toolbar-button {
+    @apply inline-flex cursor-pointer items-center gap-1.5 rounded-md border-0 bg-transparent p-1.5;
+    font: inherit;
+    color: inherit;
+  }
+
+  .ymc-icon-button:hover,
+  .ymc-header-button:hover,
+  .ymc-toolbar-button:hover {
+    @apply bg-[var(--dsw-alias-interactive-bg-hover)];
+  }
+
+  .ymc-header-button {
+    @apply whitespace-nowrap border border-transparent;
+  }
+
+  .ymc-header-button:hover {
+    @apply border-[var(--dsw-alias-border-l2)];
+  }
+
+  .ymc-toolbar-active {
+    @apply bg-[var(--dsw-alias-interactive-bg-hover)] text-[var(--dsw-alias-brand-primary)];
+  }
+
+  .ymc-panel-body {
+    @apply flex min-h-0 flex-1 flex-col;
+  }
+
+  .ymc-tree-pane {
+    @apply relative min-h-[40px] overflow-hidden;
+  }
+
+  .ymc-divider {
+    @apply relative flex h-[7px] flex-none touch-none items-center justify-center;
+    cursor: row-resize;
+  }
+
+  .ymc-divider::before {
+    content: '';
+    @apply absolute left-0 right-0 top-1/2 h-[3px] -translate-y-1/2 bg-transparent transition-colors duration-100;
+  }
+
+  .ymc-divider:hover::before {
+    @apply bg-[var(--dsw-alias-brand-primary)] opacity-40;
+  }
+
+  .ymc-divider-grip {
+    @apply h-[3px] w-[26px] rounded-sm bg-[var(--dsw-alias-border-l2)];
+  }
+
+  .ymc-preview-pane {
+    @apply flex min-h-[60px] flex-1 flex-col;
+  }
+
+  .ymc-tree-scroll,
+  .ymc-code-scroll,
+  .ymc-markdown-scroll,
+  .ymc-image-preview {
+    @apply relative min-h-0 flex-1 overflow-auto;
+  }
+
+  .ymc-tree-scroll {
+    @apply outline-none;
+  }
+
+  .ymc-tree-spacer,
+  .ymc-code-spacer {
+    @apply relative min-w-full;
+  }
+
+  .ymc-tree-row {
+    @apply absolute left-0 right-0 flex h-6 cursor-pointer items-center gap-1 whitespace-nowrap select-none;
+  }
+
+  .ymc-tree-row:hover {
+    @apply bg-[var(--dsw-alias-interactive-bg-hover)];
+  }
+
+  .ymc-tree-row-selected,
+  .ymc-tree-row-selected:hover {
+    @apply bg-[var(--dsw-alias-interactive-bg-hover)];
+  }
+
+  .ymc-tree-note {
+    @apply cursor-default italic text-[var(--dsw-alias-label-tertiary)];
+  }
+
+  .ymc-tree-chevron-slot {
+    @apply inline-flex h-6 w-3.5 flex-none items-center justify-center;
+  }
+
+  .ymc-tree-chevron {
+    @apply inline-flex items-center justify-center text-[var(--dsw-alias-label-tertiary)];
+  }
+
+  .ymc-chevron {
+    @apply transition-transform duration-100;
+  }
+
+  .ymc-chevron-open {
+    @apply rotate-90;
+  }
+
+  .ymc-icon {
+    @apply flex-none text-[var(--dsw-alias-label-tertiary)];
+  }
+
+  .ymc-icon-folder {
+    @apply text-[var(--dsw-alias-state-warn-primary)];
+  }
+
+  .ymc-icon-file {
+    @apply text-[var(--dsw-alias-label-tertiary)];
+  }
+
+  .ymc-icon-image {
+    @apply text-[var(--dsw-alias-brand-primary)];
+  }
+
+  .ymc-icon-markdown {
+    @apply text-[var(--dsw-alias-state-success-primary)];
+  }
+
+  .ymc-tree-label {
+    @apply truncate;
+  }
+
+  .ymc-tree-empty,
+  .ymc-preview-empty,
+  .ymc-preview-error,
+  .ymc-preview-message,
+  .ymc-panel-message {
+    @apply flex h-full flex-col items-center justify-center gap-2 p-4 text-center text-[var(--dsw-alias-label-tertiary)];
+  }
+
+  .ymc-preview-error {
+    @apply h-auto overflow-auto text-[var(--dsw-alias-state-error-primary)];
+  }
+
+  .ymc-preview-message {
+    @apply text-[var(--dsw-alias-label-tertiary)];
+  }
+
+  .ymc-preview-message strong {
+    @apply text-[var(--dsw-alias-label-primary)];
+  }
+
+  .ymc-preview-meta {
+    @apply text-[11px] text-[var(--dsw-alias-label-tertiary)];
+  }
+
+  .ymc-tree-truncated {
+    @apply px-2 py-1 text-[11px] text-[var(--dsw-alias-label-tertiary)];
+  }
+
+  .ymc-spinner {
+    @apply inline-block h-[11px] w-[11px] flex-none rounded-full border-2 border-[var(--dsw-alias-border-l2)] border-t-[var(--dsw-alias-brand-primary)];
+    animation: ymc-spin 0.8s linear infinite;
+  }
+
+  .ymc-text-preview {
+    @apply flex min-h-0 flex-1 flex-col;
+  }
+
+  .ymc-preview-toolbar {
+    @apply flex h-[26px] flex-none items-center gap-0.5 border-b border-[var(--dsw-alias-border-l2)] px-1.5;
+  }
+
+  .ymc-preview-toolbar .ymc-preview-meta {
+    @apply ml-auto;
+  }
+
+  .ymc-code-row {
+    @apply absolute left-0 right-0 flex h-5 items-start font-mono text-xs leading-5;
+  }
+
+  .ymc-code-gutter {
+    @apply sticky left-0 z-10 min-w-[34px] flex-none select-none border-r border-[var(--dsw-alias-border-l2)] bg-[var(--dsw-alias-bg-layer-2)] px-2 text-right text-[var(--dsw-alias-label-tertiary)];
+    padding-left: 4px;
+  }
+
+  .ymc-code-line {
+    @apply whitespace-pre pr-4;
+  }
+
+  .ymc-token-comment {
+    @apply italic text-[var(--dsw-alias-label-tertiary)];
+  }
+
+  .ymc-token-string {
+    @apply text-[var(--dsw-alias-state-success-primary)];
+  }
+
+  .ymc-token-number {
+    @apply text-[var(--dsw-alias-state-warn-primary)];
+  }
+
+  .ymc-token-keyword {
+    @apply text-[var(--dsw-alias-state-business-primary)];
+  }
+
+  .ymc-markdown {
+    @apply mx-auto max-w-[760px] p-3 leading-relaxed text-[var(--dsw-alias-label-primary)];
+    padding-bottom: 32px;
+  }
+
+  .ymc-markdown a {
+    @apply text-[var(--dsw-alias-brand-primary)] no-underline;
+  }
+
+  .ymc-markdown a:hover {
+    @apply underline;
+  }
+
+  .ymc-markdown h1,
+  .ymc-markdown h2,
+  .ymc-markdown h3,
+  .ymc-markdown h4,
+  .ymc-markdown h5,
+  .ymc-markdown h6 {
+    @apply my-2 font-semibold leading-snug;
+  }
+
+  .ymc-markdown h1 {
+    @apply text-xl;
+  }
+
+  .ymc-markdown h2 {
+    @apply text-lg;
+  }
+
+  .ymc-markdown h3 {
+    @apply text-base;
+  }
+
+  .ymc-markdown p {
+    @apply my-1;
+  }
+
+  .ymc-markdown ul,
+  .ymc-markdown ol {
+    @apply my-1 pl-6;
+  }
+
+  .ymc-markdown blockquote {
+    @apply my-1 border-l-[3px] border-[var(--dsw-alias-border-l3)] px-3 text-[var(--dsw-alias-label-secondary)];
+  }
+
+  .ymc-markdown hr {
+    @apply my-3 border-0 border-t border-[var(--dsw-alias-border-l2)];
+  }
+
+  .ymc-markdown pre {
+    @apply overflow-auto rounded-md border border-[var(--dsw-alias-border-l2)] bg-[var(--dsw-alias-bg-layer-1)] p-2.5;
+  }
+
+  .ymc-markdown code {
+    @apply font-mono text-[0.92em];
+  }
+
+  .ymc-md-code {
+    @apply rounded-sm bg-[var(--dsw-alias-bg-layer-1)] px-1 py-0.5;
+  }
+
+  .ymc-image {
+    @apply mx-auto block max-h-full max-w-full object-contain;
+  }
+}
+
+@keyframes ymc-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* DSH-aware scrollbars for the virtualized panes. */
+.ymc-tree-scroll,
+.ymc-code-scroll,
+.ymc-markdown-scroll,
+.ymc-image-preview {
+  scrollbar-color: var(--dsw-alias-scrollbar-bg-l2, var(--dsw-alias-border-l2)) transparent;
+  scrollbar-width: thin;
+}

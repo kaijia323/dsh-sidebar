@@ -1,0 +1,4 @@
+# dsh-ymc-sidebar bundle: register the host half (fs RPC channel for the browser file tree).
+- insert:
+    - id: dsh-ymc-sidebar
+      name: dsh-ymc-sidebar

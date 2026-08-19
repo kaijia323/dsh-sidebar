@@ -1,0 +1,35 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+.pnpm/
+
+# Build output
+lib/
+dist/
+*.tsbuildinfo
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# DeepSeek Harness test artifacts
+.dsh-test/
+.dsh-*.log
+.dsh-*.html
+.chrome-tmp/
+.agent-home/
