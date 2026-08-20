@@ -8,6 +8,7 @@ import {
   isImagePath,
   isMarkdownPath,
   resolveRoot,
+  treeInteractionReducer,
 } from '../src/client-model.ts'
 
 test('basename handles windows and posix paths', () => {
@@ -100,4 +101,63 @@ test('flattenTree inserts a note for a truncated directory and breaks cycles', (
   assert.ok(names.includes('… 目录内容过多，已截断'))
   // The self-referential directory path is deduplicated instead of looping forever.
   assert.equal(names.filter((name) => name === 'self').length, 0)
+})
+
+function treeState(expanded: string[] = [], entering: string[] = [], collapsing: string[] = []) {
+  return {
+    expanded: new Set(expanded),
+    entering: new Set(entering),
+    collapsing: new Set(collapsing),
+  }
+}
+
+test('tree toggle: closed directory starts an expand transition', () => {
+  const next = treeInteractionReducer(treeState(), { type: 'toggle', path: '/a' })
+  assert.equal(next.expanded.has('/a'), true)
+  assert.equal(next.entering.has('/a'), true)
+  assert.equal(next.collapsing.has('/a'), false)
+})
+
+test('tree toggle: expanding directory switches to collapse in the same atomic update', () => {
+  const next = treeInteractionReducer(treeState(['/a'], ['/a']), { type: 'toggle', path: '/a' })
+  assert.equal(next.expanded.has('/a'), true)
+  assert.equal(next.entering.has('/a'), false)
+  assert.equal(next.collapsing.has('/a'), true)
+})
+
+test('tree toggle: collapsing directory cancels back to open without losing expanded state', () => {
+  const next = treeInteractionReducer(treeState(['/a'], [], ['/a']), { type: 'toggle', path: '/a' })
+  assert.equal(next.expanded.has('/a'), true)
+  assert.equal(next.entering.has('/a'), false)
+  assert.equal(next.collapsing.has('/a'), false)
+})
+
+test('tree reducer converges after rapid expand -> collapse -> cancel-collapse clicks', () => {
+  let state = treeState()
+  state = treeInteractionReducer(state, { type: 'toggle', path: '/a' })
+  state = treeInteractionReducer(state, { type: 'toggle', path: '/a' })
+  state = treeInteractionReducer(state, { type: 'toggle', path: '/a' })
+  assert.equal(state.expanded.has('/a'), true)
+  assert.equal(state.entering.has('/a'), false)
+  assert.equal(state.collapsing.has('/a'), false)
+})
+
+test('tree reducer converges after rapid expand -> collapse -> finishCollapse', () => {
+  let state = treeState()
+  state = treeInteractionReducer(state, { type: 'toggle', path: '/a' })
+  state = treeInteractionReducer(state, { type: 'toggle', path: '/a' })
+  state = treeInteractionReducer(state, { type: 'finishCollapse', path: '/a' })
+  assert.equal(state.expanded.has('/a'), false)
+  assert.equal(state.entering.has('/a'), false)
+  assert.equal(state.collapsing.has('/a'), false)
+})
+
+test('tree reducer finish actions clear only their own animation phase', () => {
+  const expanded = treeInteractionReducer(treeState(['/a'], ['/a']), { type: 'finishExpand', path: '/a' })
+  assert.equal(expanded.expanded.has('/a'), true)
+  assert.equal(expanded.entering.has('/a'), false)
+
+  const collapsed = treeInteractionReducer(treeState(['/a'], [], ['/a']), { type: 'finishCollapse', path: '/a' })
+  assert.equal(collapsed.expanded.has('/a'), false)
+  assert.equal(collapsed.collapsing.has('/a'), false)
 })

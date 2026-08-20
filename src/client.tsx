@@ -4,6 +4,7 @@ import {
   useEffect,
   useLayoutEffect,
   useMemo,
+  useReducer,
   useRef,
   useState,
   useSyncExternalStore,
@@ -14,8 +15,8 @@ import { animate } from 'animejs'
 import { createRoot, type Root } from 'react-dom/client'
 import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
 import type { RpcResult } from '@deepseek-ai/dsh-client-connection/client'
-import { ChevronDown, ChevronRight, File, FileText, FolderTree, Image as ImageIcon, RefreshCw, X } from 'lucide-react'
-import { basename, clamp, flattenTree, formatBytes, isImagePath, isMarkdownPath, resolveRoot } from './client-model'
+import { ChevronRight, File, FileText, FolderTree, Image as ImageIcon, RefreshCw, X } from 'lucide-react'
+import { basename, clamp, flattenTree, formatBytes, isImagePath, isMarkdownPath, resolveRoot, treeInteractionReducer } from './client-model'
 import type { DirData, EntryType, FlatRow, SessionListLike, SidebarEntry, WorkspaceListLike } from './client-model'
 
 declare const __DSH_YMC_CLIENT_CSS__: string
@@ -35,6 +36,7 @@ const SIDEBAR_STORAGE_KEY = 'dsh-ymc-sidebar:v1'
 
 const COLLAPSE_MS = 240
 const ENTER_MS = 200
+const TOGGLE_THROTTLE_MS = Math.max(ENTER_MS, COLLAPSE_MS) + 50
 
 const DEFAULT_LIMITS = {
   maxTextBytes: 2 * 1024 * 1024,
@@ -353,10 +355,13 @@ function isPathInside(path: string, ancestor: string): boolean {
 
 function Chevron({ open }: { open: boolean }) {
   return (
-    <span className={`ymc-chevron${open ? ' is-open' : ''}`} aria-hidden="true">
-      <ChevronRight className="ymc-chevron-icon ymc-chevron-right" size={12} strokeWidth={1.5} />
-      <ChevronDown className="ymc-chevron-icon ymc-chevron-down" size={12} strokeWidth={1.5} />
-    </span>
+    <ChevronRight
+      className="ymc-chevron"
+      size={12}
+      strokeWidth={1.5}
+      style={{ transform: open ? 'rotate(90deg)' : 'rotate(0deg)' }}
+      aria-hidden="true"
+    />
   )
 }
 
@@ -507,8 +512,8 @@ interface TreeProps {
 function Tree({ root, dirs, expanded, loading, entering, collapsing, selectedPath, maxRows, onToggle, onSelectFile, onCollapseEnd, onExpandEnd }: TreeProps) {
   const scrollRef = useRef<HTMLDivElement>(null)
   const spacerRef = useRef<HTMLDivElement>(null)
-  const collapseAnimationsRef = useRef(new Map<string, { revert(): void }>())
-  const expandAnimationsRef = useRef(new Map<string, { revert(): void }>())
+  const collapseAnimationsRef = useRef(new Map<string, { revert(): void; cancel(): void }>())
+  const expandAnimationsRef = useRef(new Map<string, { revert(): void; cancel(): void }>())
   const [viewport, setViewport] = useState({ top: 0, height: 0 })
 
   useLayoutEffect(() => {
@@ -575,11 +580,10 @@ function Tree({ root, dirs, expanded, loading, entering, collapsing, selectedPat
       }
 
       const removalCount = subtreeIndices.length
-      const oldHeight = rows.length * TREE_ROW_HEIGHT
       const newHeight = (rows.length - removalCount) * TREE_ROW_HEIGHT
 
       const childTargets: HTMLElement[] = []
-      const afterTargets: Array<{ el: HTMLElement; from: number; to: number }> = []
+      const afterTargets: Array<{ el: HTMLElement; to: number }> = []
       for (const el of rowElements) {
         const key = el.dataset.rowKey
         if (!key) continue
@@ -590,7 +594,6 @@ function Tree({ root, dirs, expanded, loading, entering, collapsing, selectedPat
         } else if (entry.index > lastSubtreeIndex) {
           afterTargets.push({
             el,
-            from: entry.index * TREE_ROW_HEIGHT,
             to: (entry.index - removalCount) * TREE_ROW_HEIGHT,
           })
         }
@@ -611,8 +614,8 @@ function Tree({ root, dirs, expanded, loading, entering, collapsing, selectedPat
       if (childTargets.length > 0) {
         remaining += 1
         animations.push(animate(childTargets, {
-          opacity: [1, 0],
-          translateY: [0, -6],
+          opacity: 0,
+          translateY: -6,
           duration: COLLAPSE_MS,
           ease: 'inOutQuad',
           onComplete: onOneComplete,
@@ -621,7 +624,7 @@ function Tree({ root, dirs, expanded, loading, entering, collapsing, selectedPat
       for (const item of afterTargets) {
         remaining += 1
         animations.push(animate(item.el, {
-          top: [item.from, item.to],
+          top: item.to,
           duration: COLLAPSE_MS,
           ease: 'inOutQuad',
           onComplete: onOneComplete,
@@ -630,7 +633,7 @@ function Tree({ root, dirs, expanded, loading, entering, collapsing, selectedPat
       if (spacer) {
         remaining += 1
         animations.push(animate(spacer, {
-          height: [oldHeight, newHeight],
+          height: newHeight,
           duration: COLLAPSE_MS,
           ease: 'inOutQuad',
           onComplete: onOneComplete,
@@ -645,6 +648,9 @@ function Tree({ root, dirs, expanded, loading, entering, collapsing, selectedPat
       collapseAnimationsRef.current.set(path, {
         revert() {
           for (const animation of animations) animation.revert()
+        },
+        cancel() {
+          for (const animation of animations) animation.cancel()
         },
       })
     }
@@ -752,6 +758,9 @@ function Tree({ root, dirs, expanded, loading, entering, collapsing, selectedPat
         revert() {
           for (const animation of animations) animation.revert()
         },
+        cancel() {
+          for (const animation of animations) animation.cancel()
+        },
       })
     }
   }, [entering, enteringKeys, rows, dirs, onExpandEnd])
@@ -759,11 +768,15 @@ function Tree({ root, dirs, expanded, loading, entering, collapsing, selectedPat
   useEffect(() => {
     for (const [path, animation] of expandAnimationsRef.current) {
       if (!entering.has(path)) {
-        animation.revert()
+        // If a collapse is taking over, freeze the expand at its current visual
+        // state so the collapse animation can continue smoothly from there.
+        // Otherwise revert to the stable pre-expand state.
+        if (collapsing.has(path)) animation.cancel()
+        else animation.revert()
         expandAnimationsRef.current.delete(path)
       }
     }
-  }, [entering])
+  }, [entering, collapsing])
 
   useEffect(() => {
     for (const [path, animation] of collapseAnimationsRef.current) {
@@ -800,7 +813,7 @@ function Tree({ root, dirs, expanded, loading, entering, collapsing, selectedPat
       <TreeRow
         key={row.key}
         row={row}
-        expanded={expanded.has(row.path)}
+        expanded={expanded.has(row.path) && !collapsing.has(row.path)}
         loading={loading.has(row.path)}
         selected={selectedPath === row.path}
         onToggle={(target) => handleToggle(target.path)}
@@ -1001,9 +1014,12 @@ function FileTreePanel({ api, sessionId, sessions, workspaces, onClose }: FileTr
 
   const [limits, setLimits] = useState<Limits>(DEFAULT_LIMITS)
   const [dirs, setDirs] = useState<Record<string, DirData>>({})
-  const [expanded, setExpanded] = useState<ReadonlySet<string>>(() => new Set<string>())
-  const [entering, setEntering] = useState<ReadonlySet<string>>(() => new Set<string>())
-  const [collapsing, setCollapsing] = useState<ReadonlySet<string>>(() => new Set<string>())
+  const [treeState, dispatch] = useReducer(
+    treeInteractionReducer,
+    undefined,
+    () => ({ expanded: new Set<string>(), entering: new Set<string>(), collapsing: new Set<string>() }),
+  )
+  const { expanded, entering, collapsing } = treeState
   const [loading, setLoading] = useState<ReadonlySet<string>>(() => new Set<string>())
   const [tabs, setTabs] = useState<SelectedFile[]>([])
   const [activePath, setActivePath] = useState<string | undefined>(undefined)
@@ -1014,6 +1030,7 @@ function FileTreePanel({ api, sessionId, sessions, workspaces, onClose }: FileTr
   const dragRef = useRef<{ startY: number; startSplit: number } | null>(null)
   const inflightRef = useRef(new Map<string, Promise<void>>())
   const controllersRef = useRef(new Map<string, AbortController>())
+  const toggleThrottleRef = useRef(new Map<string, number>())
   const dirsRef = useRef(dirs)
   const expandedRef = useRef(expanded)
   const loadingRef = useRef(loading)
@@ -1033,11 +1050,10 @@ function FileTreePanel({ api, sessionId, sessions, workspaces, onClose }: FileTr
   useEffect(() => {
     for (const controller of controllersRef.current.values()) controller.abort()
     controllersRef.current.clear()
+    toggleThrottleRef.current.clear()
     inflightRef.current.clear()
     setDirs({})
-    setExpanded(new Set(root ? [root] : []))
-    setEntering(new Set())
-    setCollapsing(new Set())
+    dispatch({ type: 'reset', root })
     setTabs([])
     setActivePath(undefined)
     setRootError(null)
@@ -1050,25 +1066,11 @@ function FileTreePanel({ api, sessionId, sessions, workspaces, onClose }: FileTr
   }, [])
 
   const finishCollapse = useCallback((path: string) => {
-    setExpanded((prev) => {
-      const next = new Set(prev)
-      next.delete(path)
-      return next
-    })
-    setCollapsing((prev) => {
-      const next = new Set(prev)
-      next.delete(path)
-      return next
-    })
+    dispatch({ type: 'finishCollapse', path })
   }, [])
 
   const finishExpand = useCallback((path: string) => {
-    setEntering((prev) => {
-      if (!prev.has(path)) return prev
-      const next = new Set(prev)
-      next.delete(path)
-      return next
-    })
+    dispatch({ type: 'finishExpand', path })
   }, [])
 
   useEffect(() => {
@@ -1145,50 +1147,29 @@ function FileTreePanel({ api, sessionId, sessions, workspaces, onClose }: FileTr
   }, [expanded, dirs, loadDir])
 
   function toggleDirectory(path: string) {
-    // If a collapse is already animating, this click cancels it and keeps the folder open.
-    if (collapsing.has(path)) {
-      setCollapsing((prev) => {
-        if (!prev.has(path)) return prev
-        const next = new Set(prev)
-        next.delete(path)
-        return next
-      })
-      return
-    }
+    // Throttle rapid clicks on the same directory. The window is slightly longer
+    // than the longest expand/collapse animation, so a new toggle only starts
+    // after the previous animation has had time to settle.
+    const now = Date.now()
+    const lastToggle = toggleThrottleRef.current.get(path) ?? 0
+    if (now - lastToggle < TOGGLE_THROTTLE_MS) return
+    toggleThrottleRef.current.set(path, now)
 
-    if (expanded.has(path)) {
-      // Start a soft collapse: rows stay mounted while anime.js animates height,
-      // then Tree calls finishCollapse to remove the directory from the expanded set.
-      setEntering((prev) => {
-        if (!prev.has(path)) return prev
-        const next = new Set(prev)
-        next.delete(path)
-        return next
-      })
-      setCollapsing((prev) => new Set(prev).add(path))
-    } else {
-      // Cancel any pending collapse, then expand with the same height transition.
-      setCollapsing((prev) => {
-        if (!prev.has(path)) return prev
-        const next = new Set(prev)
-        next.delete(path)
-        return next
-      })
-      setExpanded((prev) => new Set(prev).add(path))
-      setEntering((prev) => new Set(prev).add(path))
-    }
+    // All remaining state transitions are handled atomically by the reducer:
+    // collapse-in-progress -> cancel back to open, open -> start collapse,
+    // closed -> start expand.
+    dispatch({ type: 'toggle', path })
   }
 
   function refresh() {
     for (const controller of controllersRef.current.values()) controller.abort()
     controllersRef.current.clear()
+    toggleThrottleRef.current.clear()
     inflightRef.current.clear()
     setDirs({})
+    dispatch({ type: 'reset', root })
     setTabs([])
     setActivePath(undefined)
-    setExpanded(new Set(root ? [root] : []))
-    setEntering(new Set())
-    setCollapsing(new Set())
   }
 
   function openFile(entry: SidebarEntry) {

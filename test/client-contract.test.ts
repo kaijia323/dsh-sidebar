@@ -44,6 +44,36 @@ test('client styles follow DSH alias tokens and use Tailwind entry', async () =>
   assert.doesNotMatch(css + fallback, /--ymc-/, 'custom ymc color palette must not be used')
 })
 
+test('chevron flips in the same render that starts collapse and keeps 200ms rotation', async () => {
+  const [source, css, fallback] = await Promise.all([
+    readFile(new URL('../src/client.tsx', import.meta.url), 'utf8'),
+    readFile(new URL('../src/client.css', import.meta.url), 'utf8'),
+    readFile(new URL('../src/client.fallback.css', import.meta.url), 'utf8'),
+  ])
+  assert.match(source, /expanded=\{expanded\.has\(row\.path\) && !collapsing\.has\(row\.path\)\}/)
+  assert.match(source, /ChevronRight/)
+  assert.match(css + fallback, /transition: transform 200ms cubic-bezier\(0\.2, 0, 0, 1\)/)
+})
+
+test('rapid directory clicks are throttled slightly beyond the animation duration', async () => {
+  const source = await readFile(new URL('../src/client.tsx', import.meta.url), 'utf8')
+  assert.match(source, /const TOGGLE_THROTTLE_MS = Math\.max\(ENTER_MS, COLLAPSE_MS\) \+ 50/)
+  assert.match(source, /now - lastToggle < TOGGLE_THROTTLE_MS/)
+})
+
+test('tree rows use opaque sidebar background so overlapping rows occlude without z-index', async () => {
+  const [source, css, fallback] = await Promise.all([
+    readFile(new URL('../src/client.tsx', import.meta.url), 'utf8'),
+    readFile(new URL('../src/client.css', import.meta.url), 'utf8'),
+    readFile(new URL('../src/client.fallback.css', import.meta.url), 'utf8'),
+  ])
+  assert.doesNotMatch(source, /ymc-tree-row-animating/)
+  assert.doesNotMatch(source, /animating=\{enteringKeys\.has\(row\.key\)/)
+  assert.match(css + fallback, /\.ymc-tree-row\s*\{[^}]*background:\s*var\(--dsw-specific-sidebar-fill\)/)
+  assert.doesNotMatch(css + fallback, /\.ymc-tree-row\s*\{[^}]*z-index/)
+  assert.doesNotMatch(css + fallback, /\.ymc-tree-row-animating/)
+})
+
 test('client style installer is hot-swap safe (one style element per fiber)', async () => {
   const source = await readFile(new URL('../src/client.tsx', import.meta.url), 'utf8')
   assert.match(source, /const element = document\.createElement\('style'\)/, 'installStyles must create a fresh style element')

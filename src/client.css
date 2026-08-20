@@ -181,6 +181,7 @@
 
   .ymc-tree-row {
     @apply absolute left-0 right-0 flex h-6 cursor-pointer items-center gap-1 whitespace-nowrap select-none;
+    background: var(--dsw-specific-sidebar-fill);
     transition: background-color 80ms ease;
   }
 
@@ -211,36 +212,9 @@
   }
 
   .ymc-chevron {
-    @apply relative inline-flex h-3 w-3 flex-none items-center justify-center;
-  }
-
-  .ymc-chevron-icon {
-    @apply absolute inset-0 flex items-center justify-center text-[var(--dsw-alias-label-tertiary)];
-    transition: opacity 160ms cubic-bezier(0.2, 0, 0, 1), transform 160ms cubic-bezier(0.2, 0, 0, 1), filter 160ms cubic-bezier(0.2, 0, 0, 1);
-  }
-
-  .ymc-chevron-right {
-    transform: scale(1);
-    opacity: 1;
-    filter: blur(0);
-  }
-
-  .ymc-chevron-down {
-    transform: scale(0.25) rotate(-90deg);
-    opacity: 0;
-    filter: blur(4px);
-  }
-
-  .ymc-chevron.is-open .ymc-chevron-right {
-    transform: scale(0.25) rotate(90deg);
-    opacity: 0;
-    filter: blur(4px);
-  }
-
-  .ymc-chevron.is-open .ymc-chevron-down {
-    transform: scale(1) rotate(0deg);
-    opacity: 1;
-    filter: blur(0);
+    @apply inline-flex h-3 w-3 flex-none items-center justify-center text-[var(--dsw-alias-label-tertiary)];
+    transition: transform 200ms cubic-bezier(0.2, 0, 0, 1);
+    will-change: transform;
   }
 
   .ymc-icon {
@@ -529,7 +503,8 @@ body[data-dsh-ymc-sidebar-dragging] #root {
     transition: none;
   }
 
-  .ymc-chevron-icon {
+  .ymc-chevron {
     transition: none;
+    will-change: auto;
   }
 }

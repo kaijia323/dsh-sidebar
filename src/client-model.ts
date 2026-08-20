@@ -71,6 +71,76 @@ export function resolveRoot(sessionId: string, sessions: SessionListLike, worksp
   return workspaces.items[0]?.path
 }
 
+export interface TreeInteractionState {
+  expanded: ReadonlySet<string>
+  entering: ReadonlySet<string>
+  collapsing: ReadonlySet<string>
+}
+
+export type TreeInteractionAction =
+  | { type: 'toggle'; path: string }
+  | { type: 'finishExpand'; path: string }
+  | { type: 'finishCollapse'; path: string }
+  | { type: 'reset'; root?: string }
+
+function addPath(set: ReadonlySet<string>, path: string): ReadonlySet<string> {
+  const next = new Set(set)
+  next.add(path)
+  return next
+}
+
+function removePath(set: ReadonlySet<string>, path: string): ReadonlySet<string> {
+  const next = new Set(set)
+  next.delete(path)
+  return next
+}
+
+export function treeInteractionReducer(state: TreeInteractionState, action: TreeInteractionAction): TreeInteractionState {
+  switch (action.type) {
+    case 'toggle': {
+      const { path } = action
+      if (state.collapsing.has(path)) {
+        return {
+          ...state,
+          collapsing: removePath(state.collapsing, path),
+        }
+      }
+      if (state.expanded.has(path)) {
+        return {
+          expanded: state.expanded,
+          entering: removePath(state.entering, path),
+          collapsing: addPath(state.collapsing, path),
+        }
+      }
+      return {
+        expanded: addPath(state.expanded, path),
+        entering: addPath(state.entering, path),
+        collapsing: removePath(state.collapsing, path),
+      }
+    }
+    case 'finishExpand': {
+      return {
+        ...state,
+        entering: removePath(state.entering, action.path),
+      }
+    }
+    case 'finishCollapse': {
+      return {
+        expanded: removePath(state.expanded, action.path),
+        entering: removePath(state.entering, action.path),
+        collapsing: removePath(state.collapsing, action.path),
+      }
+    }
+    case 'reset': {
+      return {
+        expanded: action.root ? new Set([action.root]) : new Set<string>(),
+        entering: new Set<string>(),
+        collapsing: new Set<string>(),
+      }
+    }
+  }
+}
+
 export function flattenTree(root: string, dirs: Record<string, DirData>, expanded: ReadonlySet<string>, maxRows: number): { rows: FlatRow[]; truncated: boolean } {
   const rows: FlatRow[] = []
   const seen = new Set<string>([root])
