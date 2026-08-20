@@ -63,6 +63,14 @@ test('client bundle materializes as a lazy-CJS plugin factory', async () => {
         },
       },
     },
+    // animejs is a browser animation library; keep the bundle materialization
+    // test DOM-free by providing minimal browser global stubs.
+    document: {
+      addEventListener() {},
+      hidden: false,
+    },
+    requestAnimationFrame: (_callback: FrameRequestCallback) => 0,
+    cancelAnimationFrame: (_handle: number) => {},
     console,
   }
   runInNewContext(code, context)

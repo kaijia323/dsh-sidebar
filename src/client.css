@@ -5,6 +5,8 @@
   .ymc-panel {
     @apply isolate flex h-full min-h-0 max-w-none flex-col bg-transparent text-[var(--dsw-alias-label-primary)] text-xs;
     font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
   }
 
   .ymc-panel-header {
@@ -14,6 +16,10 @@
 
   .ymc-panel-title {
     @apply font-semibold tracking-wide whitespace-nowrap;
+  }
+
+  .ymc-panel-title-icon {
+    @apply flex-none text-[var(--dsw-alias-label-secondary)];
   }
 
   .ymc-panel-root {
@@ -30,12 +36,19 @@
     @apply inline-flex cursor-pointer items-center gap-1.5 rounded-md border-0 bg-transparent p-1.5;
     font: inherit;
     color: inherit;
+    transition: background-color 120ms ease, color 120ms ease, transform 120ms ease;
   }
 
   .ymc-icon-button:hover,
   .ymc-header-button:hover,
   .ymc-toolbar-button:hover {
     @apply bg-[var(--dsw-alias-interactive-bg-hover)];
+  }
+
+  .ymc-icon-button:active,
+  .ymc-header-button:active,
+  .ymc-toolbar-button:active {
+    transform: scale(0.96);
   }
 
   .ymc-header-button {
@@ -168,6 +181,7 @@
 
   .ymc-tree-row {
     @apply absolute left-0 right-0 flex h-6 cursor-pointer items-center gap-1 whitespace-nowrap select-none;
+    transition: background-color 80ms ease;
   }
 
   .ymc-tree-row:hover {
@@ -177,6 +191,11 @@
   .ymc-tree-row-selected,
   .ymc-tree-row-selected:hover {
     @apply bg-[var(--dsw-alias-interactive-bg-hover)];
+  }
+
+  .ymc-tree-row-selected::before {
+    content: '';
+    @apply absolute top-0 bottom-0 left-0 w-0.5 bg-[var(--dsw-alias-brand-primary)];
   }
 
   .ymc-tree-note {
@@ -192,11 +211,36 @@
   }
 
   .ymc-chevron {
-    @apply transition-transform duration-100;
+    @apply relative inline-flex h-3 w-3 flex-none items-center justify-center;
   }
 
-  .ymc-chevron-open {
-    @apply rotate-90;
+  .ymc-chevron-icon {
+    @apply absolute inset-0 flex items-center justify-center text-[var(--dsw-alias-label-tertiary)];
+    transition: opacity 160ms cubic-bezier(0.2, 0, 0, 1), transform 160ms cubic-bezier(0.2, 0, 0, 1), filter 160ms cubic-bezier(0.2, 0, 0, 1);
+  }
+
+  .ymc-chevron-right {
+    transform: scale(1);
+    opacity: 1;
+    filter: blur(0);
+  }
+
+  .ymc-chevron-down {
+    transform: scale(0.25) rotate(-90deg);
+    opacity: 0;
+    filter: blur(4px);
+  }
+
+  .ymc-chevron.is-open .ymc-chevron-right {
+    transform: scale(0.25) rotate(90deg);
+    opacity: 0;
+    filter: blur(4px);
+  }
+
+  .ymc-chevron.is-open .ymc-chevron-down {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+    filter: blur(0);
   }
 
   .ymc-icon {
@@ -275,6 +319,7 @@
   .ymc-code-gutter {
     @apply sticky left-0 z-10 min-w-[34px] flex-none select-none border-r border-[var(--dsw-alias-border-l2)] bg-[var(--dsw-alias-bg-layer-2)] px-2 text-right text-[var(--dsw-alias-label-tertiary)];
     padding-left: 4px;
+    font-variant-numeric: tabular-nums;
   }
 
   .ymc-code-line {
@@ -362,6 +407,11 @@
 
   .ymc-image {
     @apply mx-auto block max-h-full max-w-full object-contain;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1);
+  }
+
+  body[data-ds-dark-theme] .ymc-image {
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1);
   }
 }
 
@@ -466,47 +516,6 @@ body[data-dsh-ymc-sidebar-dragging] #root {
   color: var(--dsw-alias-label-primary);
 }
 
-.ymc-sidebar-header {
-  display: flex;
-  align-items: center;
-  flex: none;
-  gap: 6px;
-  height: 34px;
-  padding: 0 8px 0 10px;
-  border-bottom: 1px solid var(--dsw-alias-border-l2);
-  background: var(--dsw-specific-sidebar-fill);
-}
-
-.ymc-sidebar-title {
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  white-space: nowrap;
-}
-
-.ymc-sidebar-spacer {
-  flex: 1;
-}
-
-.ymc-sidebar-close {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 22px;
-  height: 22px;
-  padding: 0;
-  border: 0;
-  border-radius: 4px;
-  background: transparent;
-  color: var(--dsw-alias-label-tertiary);
-  cursor: pointer;
-  font: inherit;
-}
-
-.ymc-sidebar-close:hover {
-  background: var(--dsw-alias-interactive-bg-hover);
-  color: var(--dsw-alias-label-primary);
-}
-
 .ymc-sidebar-body {
   display: flex;
   flex: 1;
@@ -517,6 +526,10 @@ body[data-dsh-ymc-sidebar-dragging] #root {
 
 @media (prefers-reduced-motion: reduce) {
   #root {
+    transition: none;
+  }
+
+  .ymc-chevron-icon {
     transition: none;
   }
 }

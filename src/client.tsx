@@ -10,10 +10,11 @@ import {
   type CSSProperties,
   type ReactNode,
 } from 'react'
+import { animate } from 'animejs'
 import { createRoot, type Root } from 'react-dom/client'
 import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
 import type { RpcResult } from '@deepseek-ai/dsh-client-connection/client'
-import { File, FileText, Image as ImageIcon, X } from 'lucide-react'
+import { ChevronDown, ChevronRight, File, FileText, FolderTree, Image as ImageIcon, RefreshCw, X } from 'lucide-react'
 import { basename, clamp, flattenTree, formatBytes, isImagePath, isMarkdownPath, resolveRoot } from './client-model'
 import type { DirData, EntryType, FlatRow, SessionListLike, SidebarEntry, WorkspaceListLike } from './client-model'
 
@@ -31,6 +32,9 @@ const SIDEBAR_MIN = 280
 const SIDEBAR_MAX = 640
 const SIDEBAR_DEFAULT = 360
 const SIDEBAR_STORAGE_KEY = 'dsh-ymc-sidebar:v1'
+
+const COLLAPSE_MS = 240
+const ENTER_MS = 200
 
 const DEFAULT_LIMITS = {
   maxTextBytes: 2 * 1024 * 1024,
@@ -340,11 +344,19 @@ interface SelectedFile {
   name: string
 }
 
+function isPathInside(path: string, ancestor: string): boolean {
+  if (path === ancestor) return false
+  const separator = ancestor.includes('\\') ? '\\' : '/'
+  const prefix = ancestor.endsWith(separator) ? ancestor : ancestor + separator
+  return path.startsWith(prefix)
+}
+
 function Chevron({ open }: { open: boolean }) {
   return (
-    <svg className={`ymc-chevron${open ? ' ymc-chevron-open' : ''}`} width="12" height="12" viewBox="0 0 16 16" aria-hidden="true">
-      <path d="M6 4l4 4-4 4" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
+    <span className={`ymc-chevron${open ? ' is-open' : ''}`} aria-hidden="true">
+      <ChevronRight className="ymc-chevron-icon ymc-chevron-right" size={12} strokeWidth={1.5} />
+      <ChevronDown className="ymc-chevron-icon ymc-chevron-down" size={12} strokeWidth={1.5} />
+    </span>
   )
 }
 
@@ -459,6 +471,9 @@ const TreeRow = React.memo(function TreeRow({ row, expanded, loading, selected, 
       className={className}
       style={{ ...style, paddingLeft: padding }}
       title={row.path}
+      data-dsh-ymc-sidebar-row=""
+      data-row-key={row.key}
+      aria-expanded={row.type === 'directory' ? expanded : undefined}
       onClick={() => {
         if (row.type === 'directory') onToggle(row)
         else if (row.type === 'file') onSelect(row)
@@ -479,14 +494,21 @@ interface TreeProps {
   dirs: Record<string, DirData>
   expanded: ReadonlySet<string>
   loading: ReadonlySet<string>
+  entering: ReadonlySet<string>
+  collapsing: ReadonlySet<string>
   selectedPath: string | undefined
   maxRows: number
   onToggle: (path: string) => void
   onSelectFile: (entry: SidebarEntry) => void
+  onCollapseEnd: (path: string) => void
+  onExpandEnd: (path: string) => void
 }
 
-function Tree({ root, dirs, expanded, loading, selectedPath, maxRows, onToggle, onSelectFile }: TreeProps) {
+function Tree({ root, dirs, expanded, loading, entering, collapsing, selectedPath, maxRows, onToggle, onSelectFile, onCollapseEnd, onExpandEnd }: TreeProps) {
   const scrollRef = useRef<HTMLDivElement>(null)
+  const spacerRef = useRef<HTMLDivElement>(null)
+  const collapseAnimationsRef = useRef(new Map<string, { revert(): void }>())
+  const expandAnimationsRef = useRef(new Map<string, { revert(): void }>())
   const [viewport, setViewport] = useState({ top: 0, height: 0 })
 
   useLayoutEffect(() => {
@@ -504,6 +526,261 @@ function Tree({ root, dirs, expanded, loading, selectedPath, maxRows, onToggle, 
 
   const flattened = useMemo(() => flattenTree(root, dirs, expanded, maxRows), [root, dirs, expanded, maxRows])
   const rows = flattened.rows
+
+  const enteringKeys = useMemo(() => {
+    const keys = new Set<string>()
+    for (const row of rows) {
+      for (const path of entering) {
+        if (isPathInside(row.path, path)) keys.add(row.key)
+      }
+    }
+    return keys
+  }, [rows, entering])
+
+  const leavingKeys = useMemo(() => {
+    const keys = new Set<string>()
+    for (const row of rows) {
+      for (const path of collapsing) {
+        if (isPathInside(row.path, path)) keys.add(row.key)
+      }
+    }
+    return keys
+  }, [rows, collapsing])
+
+  useEffect(() => {
+    if (collapsing.size === 0) return
+    const rowElements = Array.from(document.querySelectorAll<HTMLElement>('[data-dsh-ymc-sidebar-row]'))
+    const rowByKey = new Map<string, { index: number }>()
+    rows.forEach((row, index) => rowByKey.set(row.key, { index }))
+    const spacer = spacerRef.current
+
+    for (const path of collapsing) {
+      if (collapseAnimationsRef.current.has(path)) continue
+      if (typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        onCollapseEnd(path)
+        continue
+      }
+
+      const subtreeIndices: number[] = []
+      let lastSubtreeIndex = -1
+      for (let index = 0; index < rows.length; index += 1) {
+        if (isPathInside(rows[index].path, path)) {
+          subtreeIndices.push(index)
+          lastSubtreeIndex = index
+        }
+      }
+      if (subtreeIndices.length === 0) {
+        onCollapseEnd(path)
+        continue
+      }
+
+      const removalCount = subtreeIndices.length
+      const oldHeight = rows.length * TREE_ROW_HEIGHT
+      const newHeight = (rows.length - removalCount) * TREE_ROW_HEIGHT
+
+      const childTargets: HTMLElement[] = []
+      const afterTargets: Array<{ el: HTMLElement; from: number; to: number }> = []
+      for (const el of rowElements) {
+        const key = el.dataset.rowKey
+        if (!key) continue
+        const entry = rowByKey.get(key)
+        if (!entry) continue
+        if (leavingKeys.has(key)) {
+          childTargets.push(el)
+        } else if (entry.index > lastSubtreeIndex) {
+          afterTargets.push({
+            el,
+            from: entry.index * TREE_ROW_HEIGHT,
+            to: (entry.index - removalCount) * TREE_ROW_HEIGHT,
+          })
+        }
+      }
+
+      const animations: Array<ReturnType<typeof animate>> = []
+      let remaining = 0
+      let settled = false
+      const onOneComplete = () => {
+        remaining -= 1
+        if (remaining <= 0 && !settled) {
+          settled = true
+          collapseAnimationsRef.current.delete(path)
+          onCollapseEnd(path)
+        }
+      }
+
+      if (childTargets.length > 0) {
+        remaining += 1
+        animations.push(animate(childTargets, {
+          opacity: [1, 0],
+          translateY: [0, -6],
+          duration: COLLAPSE_MS,
+          ease: 'inOutQuad',
+          onComplete: onOneComplete,
+        }))
+      }
+      for (const item of afterTargets) {
+        remaining += 1
+        animations.push(animate(item.el, {
+          top: [item.from, item.to],
+          duration: COLLAPSE_MS,
+          ease: 'inOutQuad',
+          onComplete: onOneComplete,
+        }))
+      }
+      if (spacer) {
+        remaining += 1
+        animations.push(animate(spacer, {
+          height: [oldHeight, newHeight],
+          duration: COLLAPSE_MS,
+          ease: 'inOutQuad',
+          onComplete: onOneComplete,
+        }))
+      }
+
+      if (animations.length === 0) {
+        onCollapseEnd(path)
+        continue
+      }
+
+      collapseAnimationsRef.current.set(path, {
+        revert() {
+          for (const animation of animations) animation.revert()
+        },
+      })
+    }
+  }, [collapsing, leavingKeys, rows, onCollapseEnd])
+
+  useEffect(() => {
+    if (entering.size === 0) return
+    const rowElements = Array.from(document.querySelectorAll<HTMLElement>('[data-dsh-ymc-sidebar-row]'))
+    const rowByKey = new Map<string, { index: number }>()
+    rows.forEach((row, index) => rowByKey.set(row.key, { index }))
+    const spacer = spacerRef.current
+
+    for (const path of entering) {
+      if (expandAnimationsRef.current.has(path)) continue
+      if (typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        onExpandEnd(path)
+        continue
+      }
+
+      const subtreeIndices: number[] = []
+      let lastSubtreeIndex = -1
+      for (let index = 0; index < rows.length; index += 1) {
+        if (isPathInside(rows[index].path, path)) {
+          subtreeIndices.push(index)
+          lastSubtreeIndex = index
+        }
+      }
+
+      if (subtreeIndices.length === 0) {
+        // If the directory has already been loaded and is empty, finish immediately.
+        // Otherwise wait for the lazy directory load to populate rows.
+        if (dirs[path]) onExpandEnd(path)
+        continue
+      }
+
+      const addedCount = subtreeIndices.length
+      const oldHeight = (rows.length - addedCount) * TREE_ROW_HEIGHT
+      const newHeight = rows.length * TREE_ROW_HEIGHT
+
+      const childTargets: HTMLElement[] = []
+      const afterTargets: Array<{ el: HTMLElement; from: number; to: number }> = []
+      for (const el of rowElements) {
+        const key = el.dataset.rowKey
+        if (!key) continue
+        const entry = rowByKey.get(key)
+        if (!entry) continue
+        if (enteringKeys.has(key)) {
+          childTargets.push(el)
+        } else if (entry.index > lastSubtreeIndex) {
+          afterTargets.push({
+            el,
+            from: (entry.index - addedCount) * TREE_ROW_HEIGHT,
+            to: entry.index * TREE_ROW_HEIGHT,
+          })
+        }
+      }
+
+      const animations: Array<ReturnType<typeof animate>> = []
+      let remaining = 0
+      let settled = false
+      const onOneComplete = () => {
+        remaining -= 1
+        if (remaining <= 0 && !settled) {
+          settled = true
+          expandAnimationsRef.current.delete(path)
+          onExpandEnd(path)
+        }
+      }
+
+      if (childTargets.length > 0) {
+        remaining += 1
+        animations.push(animate(childTargets, {
+          opacity: [0, 1],
+          translateY: [-6, 0],
+          duration: ENTER_MS,
+          ease: 'outQuad',
+          onComplete: onOneComplete,
+        }))
+      }
+      for (const item of afterTargets) {
+        remaining += 1
+        animations.push(animate(item.el, {
+          top: [item.from, item.to],
+          duration: ENTER_MS,
+          ease: 'outQuad',
+          onComplete: onOneComplete,
+        }))
+      }
+      if (spacer) {
+        remaining += 1
+        animations.push(animate(spacer, {
+          height: [oldHeight, newHeight],
+          duration: ENTER_MS,
+          ease: 'outQuad',
+          onComplete: onOneComplete,
+        }))
+      }
+
+      if (animations.length === 0) {
+        onExpandEnd(path)
+        continue
+      }
+
+      expandAnimationsRef.current.set(path, {
+        revert() {
+          for (const animation of animations) animation.revert()
+        },
+      })
+    }
+  }, [entering, enteringKeys, rows, dirs, onExpandEnd])
+
+  useEffect(() => {
+    for (const [path, animation] of expandAnimationsRef.current) {
+      if (!entering.has(path)) {
+        animation.revert()
+        expandAnimationsRef.current.delete(path)
+      }
+    }
+  }, [entering])
+
+  useEffect(() => {
+    for (const [path, animation] of collapseAnimationsRef.current) {
+      if (!collapsing.has(path)) {
+        animation.revert()
+        collapseAnimationsRef.current.delete(path)
+      }
+    }
+  }, [collapsing])
+
+  useEffect(() => () => {
+    for (const animation of collapseAnimationsRef.current.values()) animation.revert()
+    collapseAnimationsRef.current.clear()
+    for (const animation of expandAnimationsRef.current.values()) animation.revert()
+    expandAnimationsRef.current.clear()
+  }, [])
+
   const start = Math.max(0, Math.floor(viewport.top / TREE_ROW_HEIGHT) - OVERSCAN)
   const end = Math.min(rows.length, Math.ceil((viewport.top + viewport.height) / TREE_ROW_HEIGHT) + OVERSCAN)
 
@@ -538,7 +815,7 @@ function Tree({ root, dirs, expanded, loading, selectedPath, maxRows, onToggle, 
       {rows.length === 0
         ? <div className="ymc-tree-empty flex h-full flex-col items-center justify-center">空目录</div>
         : (
-            <div className="ymc-tree-spacer relative min-w-full" style={{ height: rows.length * TREE_ROW_HEIGHT }}>
+            <div ref={spacerRef} className="ymc-tree-spacer relative min-w-full" style={{ height: rows.length * TREE_ROW_HEIGHT }}>
               {visible}
             </div>
           )}
@@ -689,18 +966,21 @@ interface PanelHeaderProps {
   root: string | undefined
   loadingRoot: boolean
   onRefresh: () => void
+  onClose: () => void
 }
 
-function PanelHeader({ root, loadingRoot, onRefresh }: PanelHeaderProps) {
+function PanelHeader({ root, loadingRoot, onRefresh, onClose }: PanelHeaderProps) {
   return (
     <div className="ymc-panel-header flex flex-none items-center gap-1.5 border-b border-[var(--dsw-alias-border-l2)] px-2.5">
+      <FolderTree className="ymc-panel-title-icon" size={14} strokeWidth={1.75} aria-hidden="true" />
       <span className="ymc-panel-title font-semibold whitespace-nowrap">文件树</span>
       {root && <span className="ymc-panel-root min-w-0 flex-1 truncate text-[var(--dsw-alias-label-tertiary)]" title={root}>{basename(root)}</span>}
       <div className="ymc-panel-actions ml-auto flex items-center gap-0.5">
         <button type="button" className="ymc-icon-button inline-flex cursor-pointer items-center rounded-md p-1.5" title="刷新" onClick={onRefresh}>
-          <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true">
-            <path d="M13.5 8a5.5 5.5 0 1 1-1.6-3.9M13.5 2v3h-3" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
+          <RefreshCw size={14} strokeWidth={1.75} aria-hidden="true" />
+        </button>
+        <button type="button" className="ymc-icon-button inline-flex cursor-pointer items-center rounded-md p-1.5" title="关闭文件树" aria-label="关闭文件树" onClick={onClose}>
+          <X size={14} strokeWidth={2} aria-hidden="true" />
         </button>
       </div>
       {loadingRoot && <span className="ymc-spinner" />}
@@ -713,14 +993,17 @@ interface FileTreePanelProps {
   sessionId: string | undefined
   sessions: SessionListLike
   workspaces: WorkspaceListLike
+  onClose: () => void
 }
 
-function FileTreePanel({ api, sessionId, sessions, workspaces }: FileTreePanelProps) {
+function FileTreePanel({ api, sessionId, sessions, workspaces, onClose }: FileTreePanelProps) {
   const root = useMemo(() => sessionId ? resolveRoot(sessionId, sessions, workspaces) : undefined, [sessionId, sessions, workspaces])
 
   const [limits, setLimits] = useState<Limits>(DEFAULT_LIMITS)
   const [dirs, setDirs] = useState<Record<string, DirData>>({})
   const [expanded, setExpanded] = useState<ReadonlySet<string>>(() => new Set<string>())
+  const [entering, setEntering] = useState<ReadonlySet<string>>(() => new Set<string>())
+  const [collapsing, setCollapsing] = useState<ReadonlySet<string>>(() => new Set<string>())
   const [loading, setLoading] = useState<ReadonlySet<string>>(() => new Set<string>())
   const [tabs, setTabs] = useState<SelectedFile[]>([])
   const [activePath, setActivePath] = useState<string | undefined>(undefined)
@@ -753,6 +1036,8 @@ function FileTreePanel({ api, sessionId, sessions, workspaces }: FileTreePanelPr
     inflightRef.current.clear()
     setDirs({})
     setExpanded(new Set(root ? [root] : []))
+    setEntering(new Set())
+    setCollapsing(new Set())
     setTabs([])
     setActivePath(undefined)
     setRootError(null)
@@ -762,6 +1047,28 @@ function FileTreePanel({ api, sessionId, sessions, workspaces }: FileTreePanelPr
   useEffect(() => () => {
     for (const controller of controllersRef.current.values()) controller.abort()
     controllersRef.current.clear()
+  }, [])
+
+  const finishCollapse = useCallback((path: string) => {
+    setExpanded((prev) => {
+      const next = new Set(prev)
+      next.delete(path)
+      return next
+    })
+    setCollapsing((prev) => {
+      const next = new Set(prev)
+      next.delete(path)
+      return next
+    })
+  }, [])
+
+  const finishExpand = useCallback((path: string) => {
+    setEntering((prev) => {
+      if (!prev.has(path)) return prev
+      const next = new Set(prev)
+      next.delete(path)
+      return next
+    })
   }, [])
 
   useEffect(() => {
@@ -838,12 +1145,38 @@ function FileTreePanel({ api, sessionId, sessions, workspaces }: FileTreePanelPr
   }, [expanded, dirs, loadDir])
 
   function toggleDirectory(path: string) {
-    setExpanded((prev) => {
-      const next = new Set(prev)
-      if (next.has(path)) next.delete(path)
-      else next.add(path)
-      return next
-    })
+    // If a collapse is already animating, this click cancels it and keeps the folder open.
+    if (collapsing.has(path)) {
+      setCollapsing((prev) => {
+        if (!prev.has(path)) return prev
+        const next = new Set(prev)
+        next.delete(path)
+        return next
+      })
+      return
+    }
+
+    if (expanded.has(path)) {
+      // Start a soft collapse: rows stay mounted while anime.js animates height,
+      // then Tree calls finishCollapse to remove the directory from the expanded set.
+      setEntering((prev) => {
+        if (!prev.has(path)) return prev
+        const next = new Set(prev)
+        next.delete(path)
+        return next
+      })
+      setCollapsing((prev) => new Set(prev).add(path))
+    } else {
+      // Cancel any pending collapse, then expand with the same height transition.
+      setCollapsing((prev) => {
+        if (!prev.has(path)) return prev
+        const next = new Set(prev)
+        next.delete(path)
+        return next
+      })
+      setExpanded((prev) => new Set(prev).add(path))
+      setEntering((prev) => new Set(prev).add(path))
+    }
   }
 
   function refresh() {
@@ -854,6 +1187,8 @@ function FileTreePanel({ api, sessionId, sessions, workspaces }: FileTreePanelPr
     setTabs([])
     setActivePath(undefined)
     setExpanded(new Set(root ? [root] : []))
+    setEntering(new Set())
+    setCollapsing(new Set())
   }
 
   function openFile(entry: SidebarEntry) {
@@ -896,12 +1231,12 @@ function FileTreePanel({ api, sessionId, sessions, workspaces }: FileTreePanelPr
     <div className={panelClassName}>
       {!root ? (
         <>
-          <PanelHeader root={undefined} loadingRoot={false} onRefresh={() => {}} />
+          <PanelHeader root={undefined} loadingRoot={false} onRefresh={() => {}} onClose={onClose} />
           <div className="ymc-panel-message flex h-full flex-col items-center justify-center text-[var(--dsw-alias-label-tertiary)]">{rootError ?? '没有可显示的工作区目录。'}</div>
         </>
       ) : (
         <>
-          <PanelHeader root={root} loadingRoot={rowLoading} onRefresh={refresh} />
+          <PanelHeader root={root} loadingRoot={rowLoading} onRefresh={refresh} onClose={onClose} />
           <div className="ymc-panel-body relative flex min-h-0 flex-1 flex-col" ref={bodyRef}>
             <div
               className="ymc-tree-pane relative flex min-h-[120px] shrink-0 flex-col overflow-hidden"
@@ -919,10 +1254,14 @@ function FileTreePanel({ api, sessionId, sessions, workspaces }: FileTreePanelPr
                       dirs={dirs}
                       expanded={expanded}
                       loading={loading}
+                      entering={entering}
+                      collapsing={collapsing}
                       selectedPath={activePath}
                       maxRows={limits.maxTreeRows}
                       onToggle={toggleDirectory}
                       onSelectFile={openFile}
+                      onCollapseEnd={finishCollapse}
+                      onExpandEnd={finishExpand}
                     />
                   )}
             </div>
@@ -1068,21 +1407,14 @@ function SidebarShell({ ctx, api }: SidebarShellProps) {
             onPointerMove={handleDragMove}
             onPointerUp={handleDragEnd}
           />
-          <div className="ymc-sidebar-header">
-            <span className="ymc-sidebar-title">文件树</span>
-            <span className="ymc-sidebar-spacer" />
-            <button
-              type="button"
-              className="ymc-sidebar-close"
-              aria-label="关闭文件树"
-              title="关闭文件树"
-              onClick={() => setOpen(false)}
-            >
-              <X size={14} strokeWidth={2.5} />
-            </button>
-          </div>
           <div className="ymc-sidebar-body">
-            <FileTreePanel api={api} sessionId={sessionId} sessions={sessions} workspaces={workspaces} />
+            <FileTreePanel
+              api={api}
+              sessionId={sessionId}
+              sessions={sessions}
+              workspaces={workspaces}
+              onClose={() => setOpen(false)}
+            />
           </div>
         </div>
       )}
