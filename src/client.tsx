@@ -887,7 +887,11 @@ function DetailsPanel({ api, closeDetails, sessionId, useSessions, useWorkspaces
       <div className="ymc-panel-body relative flex min-h-0 flex-1 flex-col" ref={bodyRef}>
         <div
           className="ymc-tree-pane relative flex min-h-[120px] shrink-0 flex-col overflow-hidden"
-          style={{ flexBasis: `${Math.round(split * 100)}%`, flexGrow: 0, flexShrink: 0, minHeight: 120 }}
+          style={
+            tabs.length > 0
+              ? { flexBasis: `${Math.round(split * 100)}%`, flexGrow: 0, flexShrink: 0, minHeight: 120 }
+              : { flexGrow: 1, flexShrink: 1, flexBasis: 'auto', minHeight: 120 }
+          }
         >
           {hasRootError
             ? <div className="ymc-preview-error overflow-auto text-[var(--dsw-alias-state-error-primary)]">{rootData!.error}</div>
@@ -904,19 +908,23 @@ function DetailsPanel({ api, closeDetails, sessionId, useSessions, useWorkspaces
                 />
               )}
         </div>
-        <div className="ymc-divider relative flex h-[7px] flex-none touch-none items-center justify-center" onPointerDown={onDividerPointerDown}>
-          <span className="ymc-divider-grip h-[3px] w-[26px] rounded-sm bg-[var(--dsw-alias-border-l2)]" />
-        </div>
-        <div className="ymc-preview-pane relative flex min-h-[60px] flex-1 flex-col">
-          <PreviewPane
-            api={api}
-            tabs={tabs}
-            activePath={activePath}
-            limits={limits}
-            onCloseTab={closeTab}
-            onSelectTab={selectTab}
-          />
-        </div>
+        {tabs.length > 0 && (
+          <>
+            <div className="ymc-divider relative flex h-[7px] flex-none touch-none items-center justify-center" onPointerDown={onDividerPointerDown}>
+              <span className="ymc-divider-grip h-[3px] w-[26px] rounded-sm bg-[var(--dsw-alias-border-l2)]" />
+            </div>
+            <div className="ymc-preview-pane relative flex min-h-[60px] flex-1 flex-col">
+              <PreviewPane
+                api={api}
+                tabs={tabs}
+                activePath={activePath}
+                limits={limits}
+                onCloseTab={closeTab}
+                onSelectTab={selectTab}
+              />
+            </div>
+          </>
+        )}
       </div>
     </div>
   )
