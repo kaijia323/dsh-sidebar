@@ -309,16 +309,10 @@ interface SelectedFile {
 
 interface InjectedDetails {
   api: FsApi
-  closeDetails: () => void
-}
-
-type DetailsProps = PropsRuntime<'details'> & InjectedDetails
-
-interface InjectedHeaderAction {
   openDetails: () => void
 }
 
-type HeaderActionProps = PropsRuntime<'conversation.session.header.actions'> & InjectedHeaderAction
+type DetailsProps = PropsRuntime<'details'> & InjectedDetails
 
 function Chevron({ open }: { open: boolean }) {
   return (
@@ -669,10 +663,9 @@ interface PanelHeaderProps {
   root: string | undefined
   loadingRoot: boolean
   onRefresh: () => void
-  onClose: () => void
 }
 
-function PanelHeader({ root, loadingRoot, onRefresh, onClose }: PanelHeaderProps) {
+function PanelHeader({ root, loadingRoot, onRefresh }: PanelHeaderProps) {
   return (
     <div className="ymc-panel-header flex flex-none items-center gap-1.5 border-b border-[var(--dsw-alias-border-l2)] px-2.5">
       <span className="ymc-panel-title font-semibold whitespace-nowrap">文件树</span>
@@ -683,18 +676,13 @@ function PanelHeader({ root, loadingRoot, onRefresh, onClose }: PanelHeaderProps
             <path d="M13.5 8a5.5 5.5 0 1 1-1.6-3.9M13.5 2v3h-3" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </button>
-        <button type="button" className="ymc-icon-button inline-flex cursor-pointer items-center rounded-md p-1.5" title="关闭右侧栏" onClick={onClose}>
-          <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true">
-            <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-          </svg>
-        </button>
       </div>
       {loadingRoot && <span className="ymc-spinner" />}
     </div>
   )
 }
 
-function DetailsPanel({ api, closeDetails, sessionId, useSessions, useWorkspaces }: DetailsProps) {
+function DetailsPanel({ api, openDetails, sessionId, useSessions, useWorkspaces }: DetailsProps) {
   const sessions = useSessions((state) => state) as SessionListLike
   const workspaces = useWorkspaces((state) => state) as WorkspaceListLike
   const root = useMemo(() => resolveRoot(sessionId, sessions, workspaces), [sessionId, sessions, workspaces])
@@ -739,6 +727,13 @@ function DetailsPanel({ api, closeDetails, sessionId, useSessions, useWorkspaces
     setRootError(null)
     if (!root) setRootError('当前会话没有工作区目录（cwd）。请先打开一个工作区会话。')
   }, [root])
+
+  // Keep the native details column open; the panel's own expanded state only
+  // controls whether the tree body is visible. The state is session-independent,
+  // so blank → !blank does not collapse it.
+  useEffect(() => {
+    openDetails()
+  }, [sessionId, openDetails])
 
   useEffect(() => () => {
     for (const controller of controllersRef.current.values()) controller.abort()
@@ -868,77 +863,66 @@ function DetailsPanel({ api, closeDetails, sessionId, useSessions, useWorkspaces
     setSplit(next)
   }
 
-  if (!root) {
-    return (
-      <div className="ymc-panel flex h-full min-h-0 flex-col bg-[var(--dsw-alias-bg-layer-2)] text-[var(--dsw-alias-label-primary)]">
-        <PanelHeader root={undefined} loadingRoot={false} onRefresh={() => {}} onClose={closeDetails} />
-        <div className="ymc-panel-message flex h-full flex-col items-center justify-center text-[var(--dsw-alias-label-tertiary)]">{rootError ?? '没有可显示的工作区目录。'}</div>
-      </div>
-    )
-  }
-
-  const rootData = dirs[root]
-  const rowLoading = loading.has(root)
-  const hasRootError = rootData?.error && rootData.entries.length === 0
+  const panelClassName = 'ymc-panel flex h-full min-h-0 flex-col bg-[var(--dsw-alias-bg-layer-2)] text-[var(--dsw-alias-label-primary)]'
+  const rootData = root ? dirs[root] : undefined
+  const rowLoading = root ? loading.has(root) : false
+  const hasRootError = !!(rootData?.error && rootData.entries.length === 0)
 
   return (
-    <div className="ymc-panel flex h-full min-h-0 flex-col bg-[var(--dsw-alias-bg-layer-2)] text-[var(--dsw-alias-label-primary)]">
-      <PanelHeader root={root} loadingRoot={rowLoading} onRefresh={refresh} onClose={closeDetails} />
-      <div className="ymc-panel-body relative flex min-h-0 flex-1 flex-col" ref={bodyRef}>
-        <div
-          className="ymc-tree-pane relative flex min-h-[120px] shrink-0 flex-col overflow-hidden"
-          style={
-            tabs.length > 0
-              ? { flexBasis: `${Math.round(split * 100)}%`, flexGrow: 0, flexShrink: 0, minHeight: 120 }
-              : { flexGrow: 1, flexShrink: 1, flexBasis: 'auto', minHeight: 120 }
-          }
-        >
-          {hasRootError
-            ? <div className="ymc-preview-error overflow-auto text-[var(--dsw-alias-state-error-primary)]">{rootData!.error}</div>
-            : (
-                <Tree
-                  root={root}
-                  dirs={dirs}
-                  expanded={expanded}
-                  loading={loading}
-                  selectedPath={activePath}
-                  maxRows={limits.maxTreeRows}
-                  onToggle={toggleDirectory}
-                  onSelectFile={openFile}
-                />
-              )}
-        </div>
-        {tabs.length > 0 && (
-          <>
-            <div className="ymc-divider relative flex h-[7px] flex-none touch-none items-center justify-center" onPointerDown={onDividerPointerDown}>
-              <span className="ymc-divider-grip h-[3px] w-[26px] rounded-sm bg-[var(--dsw-alias-border-l2)]" />
+    <div className={panelClassName}>
+      {!root ? (
+        <>
+          <PanelHeader root={undefined} loadingRoot={false} onRefresh={() => {}} />
+          <div className="ymc-panel-message flex h-full flex-col items-center justify-center text-[var(--dsw-alias-label-tertiary)]">{rootError ?? '没有可显示的工作区目录。'}</div>
+        </>
+      ) : (
+        <>
+          <PanelHeader root={root} loadingRoot={rowLoading} onRefresh={refresh} />
+          <div className="ymc-panel-body relative flex min-h-0 flex-1 flex-col" ref={bodyRef}>
+            <div
+              className="ymc-tree-pane relative flex min-h-[120px] shrink-0 flex-col overflow-hidden"
+              style={
+                tabs.length > 0
+                  ? { flexBasis: `${Math.round(split * 100)}%`, flexGrow: 0, flexShrink: 0, minHeight: 120 }
+                  : { flexGrow: 1, flexShrink: 1, flexBasis: 'auto', minHeight: 120 }
+              }
+            >
+              {hasRootError
+                ? <div className="ymc-preview-error overflow-auto text-[var(--dsw-alias-state-error-primary)]">{rootData!.error}</div>
+                : (
+                    <Tree
+                      root={root}
+                      dirs={dirs}
+                      expanded={expanded}
+                      loading={loading}
+                      selectedPath={activePath}
+                      maxRows={limits.maxTreeRows}
+                      onToggle={toggleDirectory}
+                      onSelectFile={openFile}
+                    />
+                  )}
             </div>
-            <div className="ymc-preview-pane relative flex min-h-[60px] flex-1 flex-col">
-              <PreviewPane
-                api={api}
-                tabs={tabs}
-                activePath={activePath}
-                limits={limits}
-                onCloseTab={closeTab}
-                onSelectTab={selectTab}
-              />
-            </div>
-          </>
-        )}
-      </div>
+            {tabs.length > 0 && (
+              <>
+                <div className="ymc-divider relative flex h-[7px] flex-none touch-none items-center justify-center" onPointerDown={onDividerPointerDown}>
+                  <span className="ymc-divider-grip h-[3px] w-[26px] rounded-sm bg-[var(--dsw-alias-border-l2)]" />
+                </div>
+                <div className="ymc-preview-pane relative flex min-h-[60px] flex-1 flex-col">
+                  <PreviewPane
+                    api={api}
+                    tabs={tabs}
+                    activePath={activePath}
+                    limits={limits}
+                    onCloseTab={closeTab}
+                    onSelectTab={selectTab}
+                  />
+                </div>
+              </>
+            )}
+          </div>
+        </>
+      )}
     </div>
-  )
-}
-
-function FileTreeButton({ openDetails }: HeaderActionProps) {
-  return (
-    <button type="button" className="ymc-header-button inline-flex cursor-pointer items-center gap-1 rounded-md px-2 py-1 text-xs whitespace-nowrap text-[var(--dsw-alias-label-secondary)] hover:bg-[var(--dsw-alias-interactive-bg-hover)]" title="文件树" onClick={openDetails}>
-      <svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true">
-        <path d="M1.5 3.5h4l1.5 2h7.5v7.5a1 1 0 0 1-1 1h-12a1 1 0 0 1-1-1v-8a1 1 0 0 1 1-1z" fill="none" stroke="currentColor" strokeWidth="1.2" />
-        <path d="M5 7.5h6M5 10h4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
-      </svg>
-      <span>文件树</span>
-    </button>
   )
 }
 
@@ -959,7 +943,6 @@ function installStyles(): () => void {
 
 export function apply(ctx: ClientContext) {
   const api = createFsApi(ctx)
-  const closeDetails = () => ctx.layout.closeDetails()
   const openDetails = () => ctx.layout.openDetails()
 
   ctx.effect(() => installStyles())
@@ -967,14 +950,6 @@ export function apply(ctx: ClientContext) {
   ctx.slots.inject('details', () => ctx.slots.register({
     name: 'details',
     priority: -1,
-    inject: (): InjectedDetails => ({ api, closeDetails }),
+    inject: (): InjectedDetails => ({ api, openDetails }),
   }, DetailsPanel))
-
-  ctx.slots.inject('conversation.session.header.actions', () => ctx.slots.register({
-    name: 'conversation.session.header.actions',
-    id: 'dsh-ymc-sidebar.open',
-    order: 120,
-    label: () => '文件树',
-    inject: (): InjectedHeaderAction => ({ openDetails }),
-  }, FileTreeButton))
 }

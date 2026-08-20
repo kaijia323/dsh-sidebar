@@ -14,6 +14,24 @@ test('details registration shadows the built-in panel with priority -1', async (
   assert.match(source, /name: 'details',\s*\n\s*priority: -1,/, 'details must register at a lower priority than the built-in occupant')
 })
 
+test('details column is kept open without a separate expand/collapse control', async () => {
+  const source = await readFile(new URL('../src/client.tsx', import.meta.url), 'utf8')
+  assert.doesNotMatch(source, /conversation\.session\.header\.actions/, 'file tree trigger must not be registered in the session header')
+  assert.doesNotMatch(source, /panelExpanded|setPanelExpanded/, 'must not keep a confusing internal expand/collapse state')
+  assert.match(source, /openDetails\(\)/, 'must keep the native details column open')
+})
+
+test('native details implementation does not use overlay or fixed positioning', async () => {
+  const [source, css, fallback] = await Promise.all([
+    readFile(new URL('../src/client.tsx', import.meta.url), 'utf8'),
+    readFile(new URL('../src/client.css', import.meta.url), 'utf8'),
+    readFile(new URL('../src/client.fallback.css', import.meta.url), 'utf8'),
+  ])
+  assert.doesNotMatch(source, /shell\.overlay/, 'must not register into shell overlay')
+  assert.doesNotMatch(source + css + fallback, /ymc-overlay-panel|ymc-panel-overlay|ymc-details-toggle/, 'must not keep overlay/floating panel styles')
+  assert.doesNotMatch(css + fallback, /position:\s*fixed|position:fixed/, 'must not use fixed positioning')
+})
+
 test('client styles follow DSH alias tokens and use Tailwind entry', async () => {
   const [css, fallback, source] = await Promise.all([
     readFile(new URL('../src/client.css', import.meta.url), 'utf8'),

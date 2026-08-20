@@ -1,6 +1,6 @@
 # dsh-ymc-sidebar
 
-DSH Web Client 的 VSCode 风格文件树侧栏。在会话标题栏新增“文件树”按钮，打开右侧 `details` 列后：
+DSH Web Client 的 VSCode 风格文件树侧栏。基于 DSH 原生 `details` 右栏，保持右侧文件树常驻；打开后：
 
 - 以当前会话工作区目录（session cwd）为根展示文件树
 - 目录按需懒加载，树与代码视图都做了虚拟滚动
@@ -16,7 +16,7 @@ DSH Web Client 的 VSCode 风格文件树侧栏。在会话标题栏新增“文
 - **Host half（`src/index.ts`）**：注入 `fs` 与 `connection`，在 `/dsh-ymc-sidebar` 注册一个仅 loopback 可访问的 Connection RPC channel，提供 `meta` / `list` / `read` 三个端点。
 - **Browser half（`src/client.tsx`）**：注入 `slots`、`sessions`、`workspaces`、`connection`、`layout`，注册：
   - `details`（single）：整个右栏，包含虚拟化文件树 + 可拖拽上下分割的预览区
-  - `conversation.session.header.actions`（list）：标题栏“文件树”按钮
+  - 右栏保持打开，文件树内容常驻展示，不依赖标题栏或额外展开/收起按钮
 
 > `details` 是 single slot：注册后替换 DSH 内置工具详情面板；插件卸载后原生面板自动恢复。
 
@@ -32,7 +32,7 @@ pnpm build
 dsh plugin --profile web add .
 ```
 
-重启 `dsh web` 后，进入某个有 cwd 的会话，点击标题栏“文件树”按钮即可。
+重启 `dsh web` 后，进入某个会话，右侧 `details` 面板会自动保持打开并展示文件树。
 
 本地开发时修改源码后重跑 `pnpm build`，然后重启 `dsh web`。只改 `cordis.yml` 里的 `config` 时 DSH 会热替换插件实例。
 
@@ -82,7 +82,7 @@ pnpm test
 
 ## 常见问题
 
-- **没有“文件树”按钮？** 当前会话必须带工作区 cwd；无 cwd 时右栏会显示提示。
+- **右侧看不到文件树内容？** 当前会话必须带工作区 cwd；无 cwd 时右栏会显示提示。右栏会保持打开。
 - **点了文件显示“二进制文件”？** 非 UTF-8 文本会回退为二进制提示，这是 `dsh-fs` 的文本语义。
 - **图片看不到？** 仅支持 png / jpg / jpeg / gif / webp / bmp / ico / avif，且大小不能超过 `maxImageBytes`。
 - **升级 DSH 后 slot 不生效？** slot 清单随版本变化，先用 `ctx.slots.snapshot()` 复验目标版本。
