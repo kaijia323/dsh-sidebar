@@ -3,7 +3,7 @@
  * component CSS in src/client.css, using DSH alias tokens, so the plugin can
  * still load during local development without Tailwind installed. */
 [data-dsh-ymc-sidebar-style] { display: none; }
-.ymc-panel { display: flex; flex-direction: column; height: 100%; min-height: 0; max-width: none; background: var(--dsw-alias-bg-layer-2); color: var(--dsw-alias-label-primary); font-size: 12px; font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif; isolation: isolate; }
+.ymc-panel { display: flex; flex-direction: column; height: 100%; min-height: 0; max-width: none; background: transparent; color: var(--dsw-alias-label-primary); font-size: 12px; font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif; isolation: isolate; }
 .ymc-panel-header { display: flex; align-items: center; gap: 6px; height: 34px; padding: 0 8px 0 10px; border-bottom: 1px solid var(--dsw-alias-border-l2); flex: none; }
 .ymc-panel-title { font-weight: 600; letter-spacing: 0.02em; white-space: nowrap; }
 .ymc-panel-root { color: var(--dsw-alias-label-tertiary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; flex: 1; }
@@ -84,3 +84,21 @@
 .ymc-md-code { background: var(--dsw-alias-bg-layer-1); border-radius: 4px; padding: 1px 4px; }
 .ymc-image { display: block; max-width: 100%; max-height: 100%; margin: 0 auto; object-fit: contain; }
 .ymc-tree-scroll, .ymc-code-scroll, .ymc-markdown-scroll, .ymc-image-preview { scrollbar-color: var(--dsw-alias-scrollbar-bg-l2, var(--dsw-alias-border-l2)) transparent; scrollbar-width: thin; }
+
+/* Body-mounted sidebar shell: layout push + fixed right panel. */
+#root { margin-right: var(--dsh-ymc-sidebar-width, 0px); transition: margin-right var(--ds-transition-duration-slow) var(--ds-ease-in-out); }
+body[data-dsh-ymc-sidebar-dragging] #root { transition: none; }
+[data-dsh-ymc-sidebar-root], .ymc-sidebar-root { background: var(--dsw-specific-sidebar-fill); }
+.ymc-sidebar-root { position: fixed; top: 0; right: 0; bottom: 0; z-index: 10; display: flex; flex-direction: column; min-width: 280px; max-width: 640px; border-left: 1px solid var(--dsw-alias-border-l2); }
+.ymc-sidebar-drag-handle { position: absolute; left: -4px; top: 0; bottom: 0; width: 8px; cursor: col-resize; touch-action: none; }
+.ymc-sidebar-drag-handle::after { content: ''; position: absolute; left: 3px; top: 0; bottom: 0; width: 2px; background: transparent; transition: background-color 120ms ease; }
+.ymc-sidebar-drag-handle:hover::after, .ymc-sidebar-root[data-dragging] .ymc-sidebar-drag-handle::after { background: var(--dsw-alias-brand-primary); opacity: 0.5; }
+.ymc-sidebar-toggle { position: fixed; top: 8px; right: 8px; z-index: 11; display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; padding: 0; border: 1px solid var(--dsw-alias-border-l2); border-radius: 6px; background: var(--dsw-specific-sidebar-fill); color: var(--dsw-alias-label-secondary); cursor: pointer; font: inherit; }
+.ymc-sidebar-toggle:hover { background: var(--dsw-alias-interactive-bg-hover); color: var(--dsw-alias-label-primary); }
+.ymc-sidebar-header { display: flex; align-items: center; flex: none; gap: 6px; height: 34px; padding: 0 8px 0 10px; border-bottom: 1px solid var(--dsw-alias-border-l2); background: var(--dsw-specific-sidebar-fill); }
+.ymc-sidebar-title { font-weight: 600; letter-spacing: 0.02em; white-space: nowrap; }
+.ymc-sidebar-spacer { flex: 1; }
+.ymc-sidebar-close { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; padding: 0; border: 0; border-radius: 4px; background: transparent; color: var(--dsw-alias-label-tertiary); cursor: pointer; font: inherit; }
+.ymc-sidebar-close:hover { background: var(--dsw-alias-interactive-bg-hover); color: var(--dsw-alias-label-primary); }
+.ymc-sidebar-body { display: flex; flex: 1; min-height: 0; flex-direction: column; background: var(--dsw-specific-sidebar-fill); }
+@media (prefers-reduced-motion: reduce) { #root { transition: none; } }

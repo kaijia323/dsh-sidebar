@@ -42,7 +42,7 @@ await writeFile('lib/index.js', hostCode + '\n', 'utf8')
 const clientBundle = await rolldown({
   input: 'src/client.tsx',
   platform: 'browser',
-  external: ['react', 'react/jsx-runtime'],
+  external: ['react', 'react/jsx-runtime', 'react-dom', 'react-dom/client'],
   treeshake: true,
 })
 const clientOutput = await clientBundle.generate({ format: 'cjs' })

@@ -6,12 +6,13 @@ import {
   useMemo,
   useRef,
   useState,
+  useSyncExternalStore,
   type CSSProperties,
   type ReactNode,
 } from 'react'
+import { createRoot, type Root } from 'react-dom/client'
 import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
 import type { RpcResult } from '@deepseek-ai/dsh-client-connection/client'
-import type { PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import { File, FileText, Image as ImageIcon, X } from 'lucide-react'
 import { basename, clamp, flattenTree, formatBytes, isImagePath, isMarkdownPath, resolveRoot } from './client-model'
 import type { DirData, EntryType, FlatRow, SessionListLike, SidebarEntry, WorkspaceListLike } from './client-model'
@@ -19,12 +20,17 @@ import type { DirData, EntryType, FlatRow, SessionListLike, SidebarEntry, Worksp
 declare const __DSH_YMC_CLIENT_CSS__: string
 
 export const name = 'dsh-ymc-sidebar'
-export const inject = ['slots', 'sessions', 'workspaces', 'connection', 'layout']
+export const inject = ['sessions', 'workspaces', 'connection']
 
 const CHANNEL = '/dsh-ymc-sidebar'
 const TREE_ROW_HEIGHT = 24
 const CODE_ROW_HEIGHT = 20
 const OVERSCAN = 10
+
+const SIDEBAR_MIN = 280
+const SIDEBAR_MAX = 640
+const SIDEBAR_DEFAULT = 360
+const SIDEBAR_STORAGE_KEY = 'dsh-ymc-sidebar:v1'
 
 const DEFAULT_LIMITS = {
   maxTextBytes: 2 * 1024 * 1024,
@@ -75,6 +81,11 @@ interface FsApi {
   meta(signal?: AbortSignal): Promise<Limits>
 }
 
+interface SnapshotStore<T> {
+  subscribe(callback: () => void): () => void
+  getSnapshot(): T
+}
+
 function isDomainError(value: unknown): value is DomainError {
   return typeof value === 'object' && value !== null && (value as { kind?: unknown }).kind === 'domain-error'
 }
@@ -105,6 +116,28 @@ function createFsApi(ctx: ClientContext): FsApi {
   }
 }
 
+function useSnapshotStore<T>(store: SnapshotStore<T>): T {
+  const subscribe = useCallback((callback: () => void) => store.subscribe(callback), [store])
+  const getSnapshot = useCallback(() => store.getSnapshot(), [store])
+  return useSyncExternalStore(subscribe, getSnapshot)
+}
+
+function loadSidebarOpen(): boolean {
+  try {
+    return localStorage.getItem(`${SIDEBAR_STORAGE_KEY}:open`) !== 'false'
+  } catch {
+    return true
+  }
+}
+
+function loadSidebarWidth(): number {
+  try {
+    const raw = Number(localStorage.getItem(`${SIDEBAR_STORAGE_KEY}:width`))
+    return Number.isFinite(raw) ? clamp(raw, SIDEBAR_MIN, SIDEBAR_MAX) : SIDEBAR_DEFAULT
+  } catch {
+    return SIDEBAR_DEFAULT
+  }
+}
 
 const TEXT_RE = /(\/\/.*$)|("(?:[^"\\\n]|\\.)*"|'(?:[^'\\\n]|\\.)*'|`(?:[^`\\]|\\.)*`)|\b(0x[0-9a-fA-F]+|\d+(?:\.\d+)?)\b|\b([A-Za-z_$][\w$]*)\b/g
 
@@ -306,13 +339,6 @@ interface SelectedFile {
   path: string
   name: string
 }
-
-interface InjectedDetails {
-  api: FsApi
-  openDetails: () => void
-}
-
-type DetailsProps = PropsRuntime<'details'> & InjectedDetails
 
 function Chevron({ open }: { open: boolean }) {
   return (
@@ -682,10 +708,15 @@ function PanelHeader({ root, loadingRoot, onRefresh }: PanelHeaderProps) {
   )
 }
 
-function DetailsPanel({ api, openDetails, sessionId, useSessions, useWorkspaces }: DetailsProps) {
-  const sessions = useSessions((state) => state) as SessionListLike
-  const workspaces = useWorkspaces((state) => state) as WorkspaceListLike
-  const root = useMemo(() => resolveRoot(sessionId, sessions, workspaces), [sessionId, sessions, workspaces])
+interface FileTreePanelProps {
+  api: FsApi
+  sessionId: string | undefined
+  sessions: SessionListLike
+  workspaces: WorkspaceListLike
+}
+
+function FileTreePanel({ api, sessionId, sessions, workspaces }: FileTreePanelProps) {
+  const root = useMemo(() => sessionId ? resolveRoot(sessionId, sessions, workspaces) : undefined, [sessionId, sessions, workspaces])
 
   const [limits, setLimits] = useState<Limits>(DEFAULT_LIMITS)
   const [dirs, setDirs] = useState<Record<string, DirData>>({})
@@ -725,15 +756,8 @@ function DetailsPanel({ api, openDetails, sessionId, useSessions, useWorkspaces 
     setTabs([])
     setActivePath(undefined)
     setRootError(null)
-    if (!root) setRootError('当前会话没有工作区目录（cwd）。请先打开一个工作区会话。')
+    if (!root) setRootError('当前没有可用的工作区目录。请先打开一个工作区会话。')
   }, [root])
-
-  // Keep the native details column open; the panel's own expanded state only
-  // controls whether the tree body is visible. The state is session-independent,
-  // so blank → !blank does not collapse it.
-  useEffect(() => {
-    openDetails()
-  }, [sessionId, openDetails])
 
   useEffect(() => () => {
     for (const controller of controllersRef.current.values()) controller.abort()
@@ -863,7 +887,7 @@ function DetailsPanel({ api, openDetails, sessionId, useSessions, useWorkspaces 
     setSplit(next)
   }
 
-  const panelClassName = 'ymc-panel flex h-full min-h-0 flex-col bg-[var(--dsw-alias-bg-layer-2)] text-[var(--dsw-alias-label-primary)]'
+  const panelClassName = 'ymc-panel flex h-full min-h-0 flex-col bg-transparent text-[var(--dsw-alias-label-primary)]'
   const rootData = root ? dirs[root] : undefined
   const rowLoading = root ? loading.has(root) : false
   const hasRootError = !!(rootData?.error && rootData.entries.length === 0)
@@ -941,15 +965,145 @@ function installStyles(): () => void {
   return () => element.remove()
 }
 
+interface SidebarShellProps {
+  ctx: ClientContext
+  api: FsApi
+}
+
+function SidebarShell({ ctx, api }: SidebarShellProps) {
+  const sessions = useSnapshotStore(ctx.sessions.list)
+  const workspaces = useSnapshotStore(ctx.workspaces.list)
+  const [open, setOpen] = useState<boolean>(loadSidebarOpen)
+  const [width, setWidth] = useState<number>(loadSidebarWidth)
+  const panelRef = useRef<HTMLDivElement>(null)
+  const widthRef = useRef(width)
+  const dragRef = useRef<{ startX: number; startWidth: number } | null>(null)
+
+  useEffect(() => { widthRef.current = width }, [width])
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(`${SIDEBAR_STORAGE_KEY}:open`, String(open))
+    } catch { /* storage unavailable */ }
+  }, [open])
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(`${SIDEBAR_STORAGE_KEY}:width`, String(width))
+    } catch { /* storage unavailable */ }
+  }, [width])
+
+  useEffect(() => {
+    // HMR overlap safety: only the fiber that last wrote the CSS variable is
+    // allowed to remove it. An old fiber's disposer must not delete the new
+    // fiber's live layout push.
+    const owner = `dsh-ymc-sidebar-${Math.random().toString(36).slice(2)}`
+    document.documentElement.setAttribute('data-dsh-ymc-sidebar-owner', owner)
+    document.documentElement.style.setProperty('--dsh-ymc-sidebar-width', open ? `${width}px` : '0px')
+    if (open) document.body.setAttribute('data-dsh-ymc-sidebar-open', '')
+    else document.body.removeAttribute('data-dsh-ymc-sidebar-open')
+    return () => {
+      if (document.documentElement.getAttribute('data-dsh-ymc-sidebar-owner') === owner) {
+        document.documentElement.style.removeProperty('--dsh-ymc-sidebar-width')
+        document.documentElement.removeAttribute('data-dsh-ymc-sidebar-owner')
+      }
+      document.body.removeAttribute('data-dsh-ymc-sidebar-open')
+      document.body.removeAttribute('data-dsh-ymc-sidebar-dragging')
+    }
+  }, [open, width])
+
+  function handleDragStart(event: React.PointerEvent<HTMLDivElement>) {
+    event.preventDefault()
+    event.currentTarget.setPointerCapture(event.pointerId)
+    dragRef.current = { startX: event.clientX, startWidth: widthRef.current }
+    panelRef.current?.setAttribute('data-dragging', '')
+    document.body.setAttribute('data-dsh-ymc-sidebar-dragging', '')
+  }
+
+  function handleDragMove(event: React.PointerEvent<HTMLDivElement>) {
+    const drag = dragRef.current
+    if (!drag || !event.currentTarget.hasPointerCapture(event.pointerId)) return
+    const next = clamp(drag.startWidth - (event.clientX - drag.startX), SIDEBAR_MIN, SIDEBAR_MAX)
+    if (panelRef.current) panelRef.current.style.width = `${next}px`
+    document.documentElement.style.setProperty('--dsh-ymc-sidebar-width', `${next}px`)
+  }
+
+  function handleDragEnd(event: React.PointerEvent<HTMLDivElement>) {
+    const drag = dragRef.current
+    if (!drag) return
+    event.currentTarget.releasePointerCapture(event.pointerId)
+    const next = clamp(drag.startWidth - (event.clientX - drag.startX), SIDEBAR_MIN, SIDEBAR_MAX)
+    dragRef.current = null
+    panelRef.current?.removeAttribute('data-dragging')
+    document.body.removeAttribute('data-dsh-ymc-sidebar-dragging')
+    setWidth(next)
+  }
+
+  const sessionId = sessions.current
+
+  return (
+    <>
+      {!open && (
+        <button
+          type="button"
+          className="ymc-sidebar-toggle"
+          aria-label="打开文件树"
+          title="打开文件树"
+          onClick={() => setOpen(true)}
+        >
+          <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
+            <path d="M1.5 3.5h4l1.5 2h7.5v7.5a1 1 0 0 1-1 1h-12a1 1 0 0 1-1-1v-8a1 1 0 0 1 1-1z" fill="none" stroke="currentColor" strokeWidth="1.2" />
+          </svg>
+        </button>
+      )}
+      {open && (
+        <div
+          ref={panelRef}
+          className="ymc-sidebar-root"
+          style={{ width }}
+        >
+          <div
+            className="ymc-sidebar-drag-handle"
+            onPointerDown={handleDragStart}
+            onPointerMove={handleDragMove}
+            onPointerUp={handleDragEnd}
+          />
+          <div className="ymc-sidebar-header">
+            <span className="ymc-sidebar-title">文件树</span>
+            <span className="ymc-sidebar-spacer" />
+            <button
+              type="button"
+              className="ymc-sidebar-close"
+              aria-label="关闭文件树"
+              title="关闭文件树"
+              onClick={() => setOpen(false)}
+            >
+              <X size={14} strokeWidth={2.5} />
+            </button>
+          </div>
+          <div className="ymc-sidebar-body">
+            <FileTreePanel api={api} sessionId={sessionId} sessions={sessions} workspaces={workspaces} />
+          </div>
+        </div>
+      )}
+    </>
+  )
+}
+
 export function apply(ctx: ClientContext) {
   const api = createFsApi(ctx)
-  const openDetails = () => ctx.layout.openDetails()
 
   ctx.effect(() => installStyles())
 
-  ctx.slots.inject('details', () => ctx.slots.register({
-    name: 'details',
-    priority: -1,
-    inject: (): InjectedDetails => ({ api, openDetails }),
-  }, DetailsPanel))
+  ctx.effect(() => {
+    const host = document.createElement('div')
+    host.setAttribute('data-dsh-ymc-sidebar-root', '')
+    document.body.appendChild(host)
+    const root = createRoot(host)
+    root.render(<SidebarShell ctx={ctx} api={api} />)
+    return () => {
+      root.unmount()
+      host.remove()
+    }
+  })
 }

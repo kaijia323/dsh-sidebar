@@ -1,6 +1,6 @@
 # dsh-ymc-sidebar
 
-DSH Web Client 的 VSCode 风格文件树侧栏。基于 DSH 原生 `details` 右栏，保持右侧文件树常驻；打开后：
+DSH Web Client 的 VSCode 风格文件树侧栏。作为 `#root` 的兄弟节点挂载在 `document.body` 上，通过 CSS layout push 让 DSH 原生界面让出右侧空间；不占用 DSH 原生 `details` slot，因此 blank 会话也能打开。特性：
 
 - 以当前会话工作区目录（session cwd）为根展示文件树
 - 目录按需懒加载，树与代码视图都做了虚拟滚动
@@ -11,14 +11,15 @@ DSH Web Client 的 VSCode 风格文件树侧栏。基于 DSH 原生 `details` �
 
 ## 架构
 
-插件分两半，与 DSH 的 `dsh.client` + slot 体系对齐：
+插件分两半：
 
 - **Host half（`src/index.ts`）**：注入 `fs` 与 `connection`，在 `/dsh-ymc-sidebar` 注册一个仅 loopback 可访问的 Connection RPC channel，提供 `meta` / `list` / `read` 三个端点。
-- **Browser half（`src/client.tsx`）**：注入 `slots`、`sessions`、`workspaces`、`connection`、`layout`，注册：
-  - `details`（single）：整个右栏，包含虚拟化文件树 + 可拖拽上下分割的预览区
-  - 右栏保持打开，文件树内容常驻展示，不依赖标题栏或额外展开/收起按钮
+- **Browser half（`src/client.tsx`）**：注入 `sessions`、`workspaces`、`connection`，在 `document.body` 上创建自己的 React root 并挂载右侧栏。右侧栏是 `#root` 的兄弟节点，不注册任何 DSH slot：
+  - 打开时通过 `--dsh-ymc-sidebar-width` 让 `#root` 让出宽度，形成“真占位”的 VSCode 式侧栏，而不是 overlay；
+  - 面板本身可拖拽调整宽度（280–640px），宽度与开关状态按 localStorage 持久化；
+  - 不依赖 `ctx.layout.openDetails()`，所以 blank / 无消息会话也能打开。
 
-> `details` 是 single slot：注册后替换 DSH 内置工具详情面板；插件卸载后原生面板自动恢复。
+> 不修改 DSH 源码，也不替换 DSH 原生 `details` 面板；原生 `details` 是否打开与本插件互不影响。
 
 前端样式直接消费 DSH 的主题 alias token（`--dsw-alias-*`），不维护独立色板；组件使用 Tailwind CSS 编写，构建时由 `tailwindcss` 从 `src/client.css` 生成 utility CSS 并内联进客户端 bundle。
 
@@ -32,7 +33,7 @@ pnpm build
 dsh plugin --profile web add .
 ```
 
-重启 `dsh web` 后，进入某个会话，右侧 `details` 面板会自动保持打开并展示文件树。
+重启 `dsh web` 后，右侧文件树会自动作为 body 兄弟节点打开并展示；即使当前会话是 blank 也能打开。可通过面板右上角 `×` 收起，收起后右上角按钮可重新展开，左侧边缘可拖拽调整宽度。
 
 本地开发时修改源码后重跑 `pnpm build`，然后重启 `dsh web`。只改 `cordis.yml` 里的 `config` 时 DSH 会热替换插件实例。
 
@@ -77,7 +78,7 @@ pnpm test
 
 - 客户端纯模型：路径处理、根目录解析、懒加载扁平化、行数上限、循环引用保护
 - Host RPC：`meta` / `list` / `read` 成功路径、截断、二进制回退、超大文件、非法路径
-- 客户端契约回归：标准 hooks 必须传 selector（本插件最初的空详情 bug 根因）、`details` 必须以 `priority: -1` shadow 内置面板、lazy-CJS bundle 可物化
+- 客户端契约回归：标准 hooks 必须传 selector、侧栏必须作为 body 兄弟节点挂载且不注册 `details` / `shell.overlay`、必须通过 `#root` margin-right 做 layout push、lazy-CJS bundle 可物化
 - 前端契约：样式必须使用 DSH alias token + Tailwind 入口（且不注入 preflight）、style installer 必须按 fiber 独立创建/移除（热插拔安全）
 
 ## 常见问题
@@ -85,7 +86,7 @@ pnpm test
 - **右侧看不到文件树内容？** 当前会话必须带工作区 cwd；无 cwd 时右栏会显示提示。右栏会保持打开。
 - **点了文件显示“二进制文件”？** 非 UTF-8 文本会回退为二进制提示，这是 `dsh-fs` 的文本语义。
 - **图片看不到？** 仅支持 png / jpg / jpeg / gif / webp / bmp / ico / avif，且大小不能超过 `maxImageBytes`。
-- **升级 DSH 后 slot 不生效？** slot 清单随版本变化，先用 `ctx.slots.snapshot()` 复验目标版本。
+- **升级 DSH 后布局异常？** 本插件依赖 `#root` 作为 DSH 原生根节点和 `--dsh-ymc-sidebar-width` 做 layout push；升级后若 DSH 调整根节点结构，先检查 `#root` 的 margin-right 是否仍生效。
 
 ## License
 

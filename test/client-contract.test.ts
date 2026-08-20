@@ -9,27 +9,27 @@ test('client source always passes a selector to standard snapshot hooks', async 
   assert.doesNotMatch(source, /useWorkspaces\s*\(\s*\)/, 'useWorkspaces must receive a selector')
 })
 
-test('details registration shadows the built-in panel with priority -1', async () => {
+test('sidebar mounts as a body sibling instead of taking the native details slot', async () => {
   const source = await readFile(new URL('../src/client.tsx', import.meta.url), 'utf8')
-  assert.match(source, /name: 'details',\s*\n\s*priority: -1,/, 'details must register at a lower priority than the built-in occupant')
+  assert.match(source, /document\.body\.appendChild/, 'sidebar host must be appended to document.body')
+  assert.match(source, /data-dsh-ymc-sidebar-root/, 'sidebar host must carry a stable marker')
+  assert.match(source, /createRoot\(host\)/, 'sidebar must render through its own React root')
+  assert.doesNotMatch(source, /name: 'details'/, 'must not register into the native details slot')
+  assert.doesNotMatch(source, /shell\.overlay/, 'must not register into shell overlay')
+  assert.doesNotMatch(source, /ctx\.layout\.openDetails/, 'must not depend on the native details layout service')
 })
 
-test('details column is kept open without a separate expand/collapse control', async () => {
-  const source = await readFile(new URL('../src/client.tsx', import.meta.url), 'utf8')
-  assert.doesNotMatch(source, /conversation\.session\.header\.actions/, 'file tree trigger must not be registered in the session header')
-  assert.doesNotMatch(source, /panelExpanded|setPanelExpanded/, 'must not keep a confusing internal expand/collapse state')
-  assert.match(source, /openDetails\(\)/, 'must keep the native details column open')
-})
-
-test('native details implementation does not use overlay or fixed positioning', async () => {
+test('sidebar keeps its own open state and pushes #root instead of overlaying', async () => {
   const [source, css, fallback] = await Promise.all([
     readFile(new URL('../src/client.tsx', import.meta.url), 'utf8'),
     readFile(new URL('../src/client.css', import.meta.url), 'utf8'),
     readFile(new URL('../src/client.fallback.css', import.meta.url), 'utf8'),
   ])
-  assert.doesNotMatch(source, /shell\.overlay/, 'must not register into shell overlay')
-  assert.doesNotMatch(source + css + fallback, /ymc-overlay-panel|ymc-panel-overlay|ymc-details-toggle/, 'must not keep overlay/floating panel styles')
-  assert.doesNotMatch(css + fallback, /position:\s*fixed|position:fixed/, 'must not use fixed positioning')
+  assert.match(source, /--dsh-ymc-sidebar-width/, 'sidebar must drive a layout-push CSS variable')
+  assert.match(source, /setOpen/, 'sidebar must own its open/close state')
+  assert.match(css + fallback, /#root\s*\{[^}]*margin-right:\s*var\(--dsh-ymc-sidebar-width/, 'root must give up width while the sidebar is open')
+  assert.match(css + fallback, /\.ymc-sidebar-root\s*\{[^}]*position:\s*fixed/, 'panel may be fixed as long as root is pushed')
+  assert.doesNotMatch(css + fallback, /ymc-overlay-panel|ymc-panel-overlay|ymc-details-toggle/, 'must not keep old overlay/floating panel styles')
 })
 
 test('client styles follow DSH alias tokens and use Tailwind entry', async () => {
@@ -84,10 +84,11 @@ test('client bundle materializes as a lazy-CJS plugin factory', async () => {
       }
     }
     if (specifier === 'react/jsx-runtime') return {}
+    if (specifier === 'react-dom/client') return { createRoot: () => ({ render: () => {}, unmount: () => {} }) }
     throw new Error('unexpected require: ' + specifier)
   }) as { name: string; inject: string[]; apply: (ctx: unknown) => void }
 
   assert.equal(plugin.name, 'dsh-ymc-sidebar')
-  assert.deepEqual(Array.from(plugin.inject), ['slots', 'sessions', 'workspaces', 'connection', 'layout'])
+  assert.deepEqual(Array.from(plugin.inject), ['sessions', 'workspaces', 'connection'])
   assert.equal(typeof plugin.apply, 'function')
 })

@@ -1,7 +1,7 @@
 {
   "name": "dsh-ymc-sidebar",
   "version": "0.1.0",
-  "description": "VSCode-style file explorer for the DeepSeek Harness web client: virtualized, lazily loaded file tree in the right details column with text / Markdown / image preview.",
+  "description": "VSCode-style file explorer for the DeepSeek Harness web client: a body-mounted, draggable right sidebar with virtualized lazy file tree and text / Markdown / image preview. Does not depend on the native details slot, so it works on blank sessions.",
   "type": "module",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
@@ -29,8 +29,7 @@
       "platform": "web",
       "inject": [
         "@deepseek-ai/dsh-client-connection",
-        "@deepseek-ai/dsh-client-runtime",
-        "@deepseek-ai/dsh-client-ui-layout"
+        "@deepseek-ai/dsh-client-runtime"
       ]
     }
   },
@@ -42,14 +41,14 @@
   "dependencies": {
     "@deepseek-ai/dsh-client-connection": "^0.1.0-rc.8",
     "@deepseek-ai/dsh-client-runtime": "^0.1.0-rc.8",
-    "@deepseek-ai/dsh-client-ui-layout": "^0.1.0-rc.8",
     "@deepseek-ai/dsh-fs": "^0.1.0-rc.8",
     "@deepseek-ai/schemastery": "^3.18.1",
     "lucide-react": "^1.33.0"
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.1",
-    "react": "^18.2.0"
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
   },
   "devDependencies": {
     "rolldown": "1.0.0-rc.9",
