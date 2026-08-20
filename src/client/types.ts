@@ -1,0 +1,53 @@
+import type { SidebarEntry } from '../client-model'
+
+export interface Limits {
+  maxTextBytes: number
+  maxImageBytes: number
+  maxEntriesPerDirectory: number
+  maxTreeRows: number
+}
+
+export interface ListOk {
+  kind: 'list'
+  path: string
+  entries: SidebarEntry[]
+  truncated: boolean
+}
+
+export interface DomainError {
+  kind: 'domain-error'
+  code: string
+  message: string
+}
+
+export type ListValue = ListOk | DomainError
+
+export interface ReadOk {
+  kind: 'read'
+  path: string
+  size: number
+  result:
+    | { kind: 'text'; content: string }
+    | { kind: 'image'; mime: string; base64: string }
+    | { kind: 'binary' }
+    | { kind: 'too-large'; limit: number }
+    | { kind: 'error'; code: string; message: string }
+}
+
+export type ReadValue = ReadOk | DomainError
+
+export interface FsApi {
+  list(path: string, signal?: AbortSignal): Promise<ListValue>
+  read(path: string, signal?: AbortSignal): Promise<ReadValue>
+  meta(signal?: AbortSignal): Promise<Limits>
+}
+
+export interface SnapshotStore<T> {
+  subscribe(callback: () => void): () => void
+  getSnapshot(): T
+}
+
+export interface SelectedFile {
+  path: string
+  name: string
+}

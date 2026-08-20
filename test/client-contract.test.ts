@@ -1,16 +1,29 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { readFile } from 'node:fs/promises'
+import { readFile, readdir } from 'node:fs/promises'
 import { runInNewContext } from 'node:vm'
 
+const CLIENT_SOURCE_DIR = new URL('../src/client/', import.meta.url)
+
+async function readClientSources(): Promise<string> {
+  const entry = await readFile(new URL('../src/client.tsx', import.meta.url), 'utf8')
+  const files = await readdir(CLIENT_SOURCE_DIR, { withFileTypes: true })
+  const moduleSources = await Promise.all(
+    files
+      .filter((file) => file.isFile() && /\.(ts|tsx)$/.test(file.name))
+      .map((file) => readFile(new URL(file.name, CLIENT_SOURCE_DIR), 'utf8')),
+  )
+  return [entry, ...moduleSources].join('\n')
+}
+
 test('client source always passes a selector to standard snapshot hooks', async () => {
-  const source = await readFile(new URL('../src/client.tsx', import.meta.url), 'utf8')
+  const source = await readClientSources()
   assert.doesNotMatch(source, /useSessions\s*\(\s*\)/, 'useSessions must receive a selector')
   assert.doesNotMatch(source, /useWorkspaces\s*\(\s*\)/, 'useWorkspaces must receive a selector')
 })
 
 test('sidebar mounts as a body sibling instead of taking the native details slot', async () => {
-  const source = await readFile(new URL('../src/client.tsx', import.meta.url), 'utf8')
+  const source = await readClientSources()
   assert.match(source, /document\.body\.appendChild/, 'sidebar host must be appended to document.body')
   assert.match(source, /data-dsh-ymc-sidebar-root/, 'sidebar host must carry a stable marker')
   assert.match(source, /createRoot\(host\)/, 'sidebar must render through its own React root')
@@ -21,7 +34,7 @@ test('sidebar mounts as a body sibling instead of taking the native details slot
 
 test('sidebar keeps its own open state and pushes #root instead of overlaying', async () => {
   const [source, css, fallback] = await Promise.all([
-    readFile(new URL('../src/client.tsx', import.meta.url), 'utf8'),
+    readClientSources(),
     readFile(new URL('../src/client.css', import.meta.url), 'utf8'),
     readFile(new URL('../src/client.fallback.css', import.meta.url), 'utf8'),
   ])
@@ -36,7 +49,7 @@ test('client styles follow DSH alias tokens and use Tailwind entry', async () =>
   const [css, fallback, source] = await Promise.all([
     readFile(new URL('../src/client.css', import.meta.url), 'utf8'),
     readFile(new URL('../src/client.fallback.css', import.meta.url), 'utf8'),
-    readFile(new URL('../src/client.tsx', import.meta.url), 'utf8'),
+    readClientSources(),
   ])
   assert.match(css, /@tailwind (components|utilities)/, 'client.css must be a Tailwind entry')
   assert.doesNotMatch(css, /@tailwind base/, 'must not inject Tailwind preflight into the DSH host')
@@ -46,7 +59,7 @@ test('client styles follow DSH alias tokens and use Tailwind entry', async () =>
 
 test('chevron flips in the same render that starts collapse and keeps 200ms rotation', async () => {
   const [source, css, fallback] = await Promise.all([
-    readFile(new URL('../src/client.tsx', import.meta.url), 'utf8'),
+    readClientSources(),
     readFile(new URL('../src/client.css', import.meta.url), 'utf8'),
     readFile(new URL('../src/client.fallback.css', import.meta.url), 'utf8'),
   ])
@@ -56,14 +69,14 @@ test('chevron flips in the same render that starts collapse and keeps 200ms rota
 })
 
 test('rapid directory clicks are throttled slightly beyond the animation duration', async () => {
-  const source = await readFile(new URL('../src/client.tsx', import.meta.url), 'utf8')
+  const source = await readClientSources()
   assert.match(source, /const TOGGLE_THROTTLE_MS = Math\.max\(ENTER_MS, COLLAPSE_MS\) \+ 50/)
   assert.match(source, /now - lastToggle < TOGGLE_THROTTLE_MS/)
 })
 
 test('tree rows use opaque sidebar background so overlapping rows occlude without z-index', async () => {
   const [source, css, fallback] = await Promise.all([
-    readFile(new URL('../src/client.tsx', import.meta.url), 'utf8'),
+    readClientSources(),
     readFile(new URL('../src/client.css', import.meta.url), 'utf8'),
     readFile(new URL('../src/client.fallback.css', import.meta.url), 'utf8'),
   ])
@@ -75,7 +88,7 @@ test('tree rows use opaque sidebar background so overlapping rows occlude withou
 })
 
 test('client style installer is hot-swap safe (one style element per fiber)', async () => {
-  const source = await readFile(new URL('../src/client.tsx', import.meta.url), 'utf8')
+  const source = await readClientSources()
   assert.match(source, /const element = document\.createElement\('style'\)/, 'installStyles must create a fresh style element')
   assert.doesNotMatch(source, /querySelector\('style\[data-dsh-ymc-sidebar-style\]'\)/, 'installStyles must not steal another fiber\'s style element')
   assert.match(source, /return \(\) => element\.remove\(\)/, 'installStyles must remove only its own element')

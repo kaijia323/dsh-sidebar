@@ -21,6 +21,12 @@ DSH Web Client 的 VSCode 风格文件树侧栏。作为 `#root` 的兄弟节点
 
 > 不修改 DSH 源码，也不替换 DSH 原生 `details` 面板；原生 `details` 是否打开与本插件互不影响。
 
+源码按职责拆分，入口文件只保留插件注册逻辑：
+
+- `src/index.ts`：Host 插件入口；RPC、文件系统、配置等逻辑在 `src/host/`（`config` / `fs` / `handlers` / `rpc` / `result` / `utils`）。
+- `src/client.tsx`：Browser 插件入口；React 组件、状态与 API 封装在 `src/client/`（`api` / `tree` / `preview` / `sidebar-shell` / `styles` 等）。
+- `src/client-model.ts`：与 React 无关的纯模型（路径、扁平化、树交互 reducer），可独立单测。
+
 前端样式直接消费 DSH 的主题 alias token（`--dsw-alias-*`），不维护独立色板；组件使用 Tailwind CSS 编写，构建时由 `tailwindcss` 从 `src/client.css` 生成 utility CSS 并内联进客户端 bundle。
 
 ## 安装 / 开发
