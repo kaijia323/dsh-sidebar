@@ -7,7 +7,7 @@ DSH Web Client 的 VSCode 风格文件树侧栏。作为 `#root` 的兄弟节点
 - 默认不显示内容预览区；点击文件后，在右栏下方预览内容（上方为文件树）
 - 支持多文件 tabs：可同时打开多个文件、横向滚动、点击 `×` 关闭
 - 支持文本/代码（带行号与基础语法高亮）、Markdown 渲染 / 源码切换、常见图片预览
-- 使用 `chokidar` 监听当前工作区文件变化，文件/目录的新增、修改、删除会自动刷新文件树和当前预览，无需手动点刷新
+- 使用 `chokidar` 监听当前工作区文件变化，文件/目录的新增、修改、删除会自动刷新文件树，并自动重读当前激活的文件预览；未激活的 tab 在切换时读取最新内容，无需手动点刷新
 - 不预置目录忽略规则，文件系统里有什么就展示什么（`node_modules` 等大目录靠懒加载 + 虚拟化抗压；文件监听默认忽略 `node_modules` 和 `.git`，可通过 `watchIgnored` 调整）
 
 ## 架构
@@ -15,7 +15,7 @@ DSH Web Client 的 VSCode 风格文件树侧栏。作为 `#root` 的兄弟节点
 插件分两半：
 
 - **Host half（`src/index.ts`）**：注入 `fs`、`connection` 与 `webServer`，在 `/dsh-ymc-sidebar` 注册一个仅 loopback 可访问的 Connection RPC channel，提供 `meta` / `list` / `read` 三个端点；同时在 `/dsh-ymc-sidebar/events` 注册同源 SSE 通道，用 `chokidar` 监听当前工作区并把文件变化推送给浏览器。
-- **Browser half（`src/client.tsx`）**：注入 `sessions`、`workspaces`、`connection`，在 `document.body` 上创建自己的 React root 并挂载右侧栏；通过 `EventSource` 订阅文件变化事件，自动失效并重载受影响的目录和当前预览。右侧栏是 `#root` 的兄弟节点，不注册任何 DSH slot：
+- **Browser half（`src/client.tsx`）**：注入 `sessions`、`workspaces`、`connection`，在 `document.body` 上创建自己的 React root 并挂载右侧栏；通过 `EventSource` 订阅文件变化事件，自动失效并重载受影响的目录，同时重读当前激活的预览。右侧栏是 `#root` 的兄弟节点，不注册任何 DSH slot：
   - 打开时通过 `--dsh-ymc-sidebar-width` 让 `#root` 让出宽度，形成“真占位”的 VSCode 式侧栏，而不是 overlay；
   - 面板本身可拖拽调整宽度（280–640px），宽度与开关状态按 localStorage 持久化；
   - 不依赖 `ctx.layout.openDetails()`，所以 blank / 无消息会话也能打开。
@@ -79,7 +79,7 @@ dsh plugin --profile web add .
 | `maxImageBytes` | `8388608` | 单张图片预览上限（字节，经 base64 返回） |
 | `maxEntriesPerDirectory` | `2000` | 单目录最多返回的条目数；超出时截断并在树上提示 |
 | `maxTreeRows` | `100000` | 客户端展开后可扁平化的最大树行数，防止超大目录打爆内存 |
-| `watchEnabled` | `true` | 是否开启文件监听实时刷新；关闭后侧栏退化为手动刷新 |
+| `watchEnabled` | `true` | 是否开启文件监听实时刷新（文件树与当前激活预览）；关闭后侧栏退化为手动刷新 |
 | `watchDebounceMs` | `200` | `chokidar` 写入稳定后触发通知的等待时间（同时是客户端批量刷新窗口） |
 | `watchIgnored` | `['**/node_modules/**', '**/.git/**']` | 文件监听忽略的 glob 列表；仅影响自动刷新通知，不影响文件树展示 |
 
