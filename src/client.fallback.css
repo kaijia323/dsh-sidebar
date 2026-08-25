@@ -16,6 +16,18 @@
 .ymc-header-button:hover { border-color: var(--dsw-alias-border-l2); }
 .ymc-toolbar-active { background: var(--dsw-alias-interactive-bg-hover); color: var(--dsw-alias-brand-primary); }
 .ymc-panel-body { display: flex; flex-direction: column; min-height: 0; flex: 1; }
+.ymc-git-body { position: relative; display: flex; flex-direction: column; min-height: 0; flex: 1; }
+.ymc-git-list { position: relative; min-height: 0; flex: 1; overflow: auto; }
+.ymc-git-empty { position: relative; min-height: 0; flex: 1; overflow: hidden; }
+.ymc-git-spacer { position: relative; min-width: 100%; }
+.ymc-git-section-header { position: absolute; left: 0; right: 0; display: flex; align-items: center; gap: 6px; padding: 0 10px; border-bottom: 1px solid var(--dsw-alias-border-l2); font-size: 11px; font-weight: 500; color: var(--dsw-alias-label-tertiary); }
+.ymc-git-row { position: absolute; left: 0; right: 0; display: flex; align-items: center; gap: 8px; padding: 0 10px; text-align: left; border: 0; border-left: 2px solid transparent; background: transparent; color: inherit; cursor: pointer; font: inherit; font-size: 12px; transition: background-color 120ms ease, border-color 120ms ease; }
+.ymc-git-row:hover { background: var(--dsw-alias-interactive-bg-hover); }
+.ymc-git-row-selected, .ymc-git-row-selected:hover { border-left-color: var(--dsw-alias-brand-primary); background: var(--dsw-alias-interactive-bg-hover); }
+.ymc-git-status { flex: none; font-size: 10px; font-weight: 500; }
+.ymc-git-diff { display: flex; min-height: 60px; flex: 1; flex-direction: column; }
+.ymc-git-diff-header { display: flex; align-items: center; gap: 6px; height: 30px; padding: 0 10px; border-bottom: 1px solid var(--dsw-alias-border-l2); flex: none; }
+.ymc-git-diff-content { position: relative; min-height: 0; flex: 1; overflow: auto; }
 .ymc-activity-bar { display: flex; width: 40px; flex: none; flex-direction: column; align-items: center; gap: 2px; padding: 4px 0; border-left: 1px solid var(--dsw-alias-border-l2); }
 .ymc-activity-item { position: relative; display: inline-flex; width: 32px; height: 32px; flex: none; align-items: center; justify-content: center; padding: 0; border: 0; border-radius: 6px; background: transparent; color: var(--dsw-alias-label-secondary); cursor: pointer; font: inherit; transition: background-color 120ms ease, color 120ms ease, transform 120ms ease; }
 .ymc-activity-item:hover { background: var(--dsw-alias-interactive-bg-hover); color: var(--dsw-alias-label-primary); }
@@ -47,7 +59,7 @@
 .ymc-tab-close { display: inline-flex; width: 16px; height: 16px; flex: none; align-items: center; justify-content: center; padding: 0; border: 0; background: transparent; border-radius: 4px; color: var(--dsw-alias-label-tertiary); cursor: pointer; font: inherit; opacity: 0; transition: opacity 120ms ease, background-color 120ms ease, color 120ms ease; }
 .ymc-tab:hover .ymc-tab-close, .ymc-tab-active .ymc-tab-close { opacity: 1; }
 .ymc-tab-close:hover { background: var(--dsw-alias-interactive-bg-hover); color: var(--dsw-alias-label-primary); }
-.ymc-tree-scroll, .ymc-code-scroll, .ymc-markdown-scroll, .ymc-image-preview { position: relative; flex: 1; min-height: 0; overflow: auto; }
+.ymc-tree-scroll, .ymc-code-scroll, .ymc-markdown-scroll, .ymc-image-preview, .ymc-git-list, .ymc-git-diff-content { position: relative; flex: 1; min-height: 0; overflow: auto; }
 .ymc-tree-scroll { outline: none; }
 .ymc-tree-spacer, .ymc-code-spacer { position: relative; min-width: 100%; }
 .ymc-tree-row { position: absolute; left: 0; right: 0; height: 24px; display: flex; align-items: center; gap: 4px; cursor: pointer; user-select: none; white-space: nowrap; background: var(--dsw-specific-sidebar-fill); transition: background-color 80ms ease; }
@@ -96,7 +108,7 @@
 .ymc-md-code { background: var(--dsw-alias-bg-layer-1); border-radius: 4px; padding: 1px 4px; }
 .ymc-image { display: block; max-width: 100%; max-height: 100%; margin: 0 auto; object-fit: contain; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1); }
 body[data-ds-dark-theme] .ymc-image { box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1); }
-.ymc-tree-scroll, .ymc-code-scroll, .ymc-markdown-scroll, .ymc-image-preview { scrollbar-color: var(--dsw-alias-scrollbar-bg-l2, var(--dsw-alias-border-l2)) transparent; scrollbar-width: thin; }
+.ymc-tree-scroll, .ymc-code-scroll, .ymc-markdown-scroll, .ymc-image-preview, .ymc-git-list, .ymc-git-diff-content { scrollbar-color: var(--dsw-alias-scrollbar-bg-l2, var(--dsw-alias-border-l2)) transparent; scrollbar-width: thin; }
 
 /* Body-mounted sidebar shell: layout push + fixed right panel. */
 #root { margin-right: var(--dsh-ymc-sidebar-width, 0px); transition: margin-right var(--ds-transition-duration-slow) var(--ds-ease-in-out); }

@@ -67,6 +67,58 @@
     @apply flex min-h-0 flex-1 flex-col;
   }
 
+  .ymc-git-body {
+    @apply relative flex min-h-0 flex-1 flex-col;
+  }
+
+  .ymc-git-list {
+    @apply relative min-h-0 flex-1 overflow-auto;
+  }
+
+  .ymc-git-empty {
+    @apply relative min-h-0 flex-1 overflow-hidden;
+  }
+
+  .ymc-git-spacer {
+    @apply relative min-w-full;
+  }
+
+  .ymc-git-section-header {
+    @apply absolute left-0 right-0 flex items-center gap-1.5 border-b border-[var(--dsw-alias-border-l2)] px-2.5 text-[11px] font-medium text-[var(--dsw-alias-label-tertiary)];
+  }
+
+  .ymc-git-row {
+    @apply absolute left-0 right-0 flex cursor-pointer items-center gap-2 border-0 border-l-2 border-l-transparent bg-transparent px-2.5 text-left text-xs;
+    font: inherit;
+    color: inherit;
+    transition: background-color 120ms ease, border-color 120ms ease;
+  }
+
+  .ymc-git-row:hover {
+    @apply bg-[var(--dsw-alias-interactive-bg-hover)];
+  }
+
+  .ymc-git-row-selected,
+  .ymc-git-row-selected:hover {
+    @apply border-l-[var(--dsw-alias-brand-primary)] bg-[var(--dsw-alias-interactive-bg-hover)];
+  }
+
+  .ymc-git-status {
+    @apply flex-none text-[10px] font-medium;
+  }
+
+  .ymc-git-diff {
+    @apply flex min-h-[60px] flex-1 flex-col;
+  }
+
+  .ymc-git-diff-header {
+    @apply flex h-[30px] flex-none items-center gap-1.5 border-b border-[var(--dsw-alias-border-l2)] px-2.5;
+  }
+
+  .ymc-git-diff-content {
+    @apply relative min-h-0 flex-1 overflow-auto;
+  }
+
   .ymc-activity-bar {
     @apply flex w-10 flex-none flex-col items-center gap-0.5 border-l border-[var(--dsw-alias-border-l2)] py-1;
   }
@@ -220,7 +272,9 @@
   .ymc-tree-scroll,
   .ymc-code-scroll,
   .ymc-markdown-scroll,
-  .ymc-image-preview {
+  .ymc-image-preview,
+  .ymc-git-list,
+  .ymc-git-diff-content {
     @apply relative min-h-0 flex-1 overflow-auto;
   }
 
@@ -453,7 +507,9 @@
 .ymc-tree-scroll,
 .ymc-code-scroll,
 .ymc-markdown-scroll,
-.ymc-image-preview {
+.ymc-image-preview,
+.ymc-git-list,
+.ymc-git-diff-content {
   scrollbar-color: var(--dsw-alias-scrollbar-bg-l2, var(--dsw-alias-border-l2)) transparent;
   scrollbar-width: thin;
 }

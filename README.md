@@ -7,16 +7,16 @@ DSH Web Client 的 VSCode 风格文件树侧栏。作为 `#root` 的兄弟节点
 - 目录按需懒加载，树与代码视图都做了虚拟滚动
 - 默认不显示内容预览区；点击文件后，在右栏下方预览内容（上方为文件树）
 - 支持多文件 tabs：可同时打开多个文件、横向滚动、点击 `×` 关闭
-- “Git 追踪”视图当前为布局占位：已接入视图切换入口，真实改动/暂存列表留待下一步实现
+- “Git 追踪”视图展示当前 Git 仓库状态：当前分支、暂存区改动、工作区未暂存改动与未跟踪文件；点击改动可在下方预览对应 diff，状态随文件监听自动刷新
 - 支持文本/代码（带行号与基础语法高亮）、Markdown 渲染 / 源码切换、常见图片预览
 - 使用 `chokidar` 监听当前工作区文件变化，文件/目录的新增、修改、删除会自动刷新文件树，并自动重读当前激活的文件预览；未激活的 tab 在切换时读取最新内容，因此面板内不再保留手动刷新按钮
-- 不预置目录忽略规则，文件系统里有什么就展示什么（`node_modules` 等大目录靠懒加载 + 虚拟化抗压；文件监听默认忽略 `node_modules` 和 `.git`，可通过 `watchIgnored` 调整）
+- 不预置目录忽略规则，文件系统里有什么就展示什么（`node_modules` 等大目录靠懒加载 + 虚拟化抗压；文件监听默认忽略 `node_modules` 和 `.git`，并自动遵循工作区 `.gitignore` 声明的忽略路径，避免监听构建产物等大目录；可通过 `watchIgnored` 追加忽略规则）
 
 ## 架构
 
 插件分两半：
 
-- **Host half（`src/index.ts`）**：注入 `fs`、`connection` 与 `webServer`，在 `/dsh-ymc-sidebar` 注册一个仅 loopback 可访问的 Connection RPC channel，提供 `meta` / `list` / `read` 三个端点；同时在 `/dsh-ymc-sidebar/events` 注册同源 SSE 通道，用 `chokidar` 监听当前工作区并把文件变化推送给浏览器。
+- **Host half（`src/index.ts`）**：注入 `fs`、`connection` 与 `webServer`，在 `/dsh-ymc-sidebar` 注册一个仅 loopback 可访问的 Connection RPC channel，提供 `meta` / `list` / `read` / `git-status` / `git-diff` 等端点；同时在 `/dsh-ymc-sidebar/events` 注册同源 SSE 通道，用 `chokidar` 监听当前工作区并把文件变化推送给浏览器。
 - **Browser half（`src/client.tsx`）**：注入 `sessions`、`workspaces`、`connection`，在 `document.body` 上创建自己的 React root 并挂载右侧栏；通过 `EventSource` 订阅文件变化事件，自动失效并重载受影响的目录，同时重读当前激活的预览。右侧栏是 `#root` 的兄弟节点，不注册任何 DSH slot：
   - 打开时通过 `--dsh-ymc-sidebar-width` 让 `#root` 让出宽度，形成“真占位”的 VSCode 式侧栏，而不是 overlay；收起时至少让出 40px 给常驻 Activity Bar；
   - 面板本身可拖拽调整宽度（280–640px），宽度与开关状态按 localStorage 持久化；
@@ -28,7 +28,7 @@ DSH Web Client 的 VSCode 风格文件树侧栏。作为 `#root` 的兄弟节点
 
 源码按职责拆分，入口文件只保留插件注册逻辑：
 
-- `src/index.ts`：Host 插件入口；RPC、文件系统、配置等逻辑在 `src/host/`（`config` / `fs` / `handlers` / `rpc` / `result` / `utils`）。
+- `src/index.ts`：Host 插件入口；RPC、文件系统、Git、配置等逻辑在 `src/host/`（`config` / `fs` / `git` / `handlers` / `rpc` / `result` / `utils`）。
 - `src/client.tsx`：Browser 插件入口；React 组件、状态与 API 封装在 `src/client/`（`api` / `activity-bar` / `git-panel` / `tree` / `preview` / `sidebar-shell` / `styles` 等）。
 - `src/client-model.ts`：与 React 无关的纯模型（路径、扁平化、树交互 reducer），可独立单测。
 
@@ -105,6 +105,7 @@ pnpm test
 - **右侧看不到文件树内容？** 当前会话必须带工作区 cwd；无 cwd 时右栏会显示提示。右栏会保持打开。
 - **点了文件显示“二进制文件”？** 非 UTF-8 文本会回退为二进制提示，这是 `dsh-fs` 的文本语义。
 - **图片看不到？** 仅支持 png / jpg / jpeg / gif / webp / bmp / ico / avif，且大小不能超过 `maxImageBytes`。
+- **Git 追踪显示错误？** “Git 追踪”视图依赖本机 `git` 命令；当前工作区目录需要处于 Git 仓库内，才能显示分支、改动和 diff。
 - **升级 DSH 后布局异常？** 本插件依赖 `#root` 作为 DSH 原生根节点和 `--dsh-ymc-sidebar-width` 做 layout push；升级后若 DSH 调整根节点结构，先检查 `#root` 的 margin-right 是否仍生效。
 
 ## License

@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
+import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
 import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
-import { clamp } from '../client-model'
+import { clamp, resolveRoot } from '../client-model'
 import { ActivityBar, type SidebarView } from './activity-bar'
 import { ACTIVITY_BAR_WIDTH, SIDEBAR_MAX, SIDEBAR_MIN, SIDEBAR_STORAGE_KEY } from './constants'
 import { FileTreePanel } from './file-tree-panel'
@@ -90,6 +90,10 @@ export function SidebarShell({ ctx, api }: SidebarShellProps) {
   }
 
   const sessionId = sessions.current
+  const root = useMemo(
+    () => (sessionId ? resolveRoot(sessionId, sessions, workspaces) : undefined),
+    [sessionId, sessions, workspaces],
+  )
 
   function selectView(next: SidebarView) {
     if (!open || next !== view) {
@@ -125,7 +129,7 @@ export function SidebarShell({ ctx, api }: SidebarShellProps) {
             />
           </div>
           <div className={`ymc-sidebar-view-pane${view === 'git' ? '' : ' ymc-sidebar-view-hidden'}`}>
-            <GitPanel />
+            <GitPanel api={api} root={root} active={view === 'git'} />
           </div>
         </div>
         <ActivityBar view={view} onSelect={selectView} />

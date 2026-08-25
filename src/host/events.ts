@@ -1,9 +1,38 @@
+import { execFile } from 'node:child_process'
 import { isAbsolute } from 'node:path'
 import type { IncomingMessage, ServerResponse } from 'node:http'
+import { promisify } from 'node:util'
 import type { Context } from '@deepseek-ai/cordis'
 import type {} from '@deepseek-ai/dsh-host-webserver'
 import { watch, type FSWatcher } from 'chokidar'
 import type { Config } from './config'
+
+const execFileAsync = promisify(execFile)
+const gitIgnoredCache = new Map<string, string[]>()
+
+async function collectGitIgnored(root: string): Promise<string[]> {
+  const cached = gitIgnoredCache.get(root)
+  if (cached) return cached
+  try {
+    const { stdout } = await execFileAsync('git', [
+      '-C', root,
+      '-c', 'core.untrackedCache=true',
+      'ls-files', '--others', '--ignored', '--exclude-standard', '--directory', '-z',
+    ], {
+      encoding: 'utf8',
+      maxBuffer: 4 * 1024 * 1024,
+      timeout: 5000,
+    })
+    const ignored = stdout.split('\0')
+      .filter(Boolean)
+      .map((entry) => entry.replace(/\/$/, ''))
+      .filter((entry) => entry !== '.' && entry !== './')
+    gitIgnoredCache.set(root, ignored)
+    return ignored
+  } catch {
+    return []
+  }
+}
 
 export const EVENTS_PATH = '/dsh-ymc-sidebar/events'
 
@@ -39,6 +68,7 @@ function isLoopbackAuthority(hostHeader: string | undefined): boolean {
 export class FileWatchHub {
   private readonly clients = new Set<SseClient>()
   private readonly watchers = new Map<string, FSWatcher>()
+  private readonly watcherTasks = new Map<string, Promise<void>>()
   private nextClientId = 1
 
   constructor(private readonly config: Pick<Config, 'watchEnabled' | 'watchDebounceMs' | 'watchIgnored'>) {}
@@ -86,7 +116,7 @@ export class FileWatchHub {
     }, 15000)
 
     res.on('close', () => this.removeClient(client))
-    this.ensureWatcher(root)
+    void this.ensureWatcher(root)
   }
 
   private removeClient(client: SseClient): void {
@@ -102,10 +132,22 @@ export class FileWatchHub {
     return false
   }
 
-  private ensureWatcher(root: string): void {
+  private async ensureWatcher(root: string): Promise<void> {
     if (!this.config.watchEnabled) return
     if (this.watchers.has(root)) return
+    const pending = this.watcherTasks.get(root)
+    if (pending) return pending
 
+    const task = this.createWatcher(root)
+    this.watcherTasks.set(root, task)
+    try {
+      await task
+    } finally {
+      this.watcherTasks.delete(root)
+    }
+  }
+
+  private async createWatcher(root: string): Promise<void> {
     const watcher = watch(root, {
       ignoreInitial: true,
       persistent: true,
@@ -125,6 +167,13 @@ export class FileWatchHub {
     })
 
     this.watchers.set(root, watcher)
+    void this.applyGitIgnored(root, watcher)
+  }
+
+  private async applyGitIgnored(root: string, watcher: FSWatcher): Promise<void> {
+    const ignored = await collectGitIgnored(root)
+    if (this.watchers.get(root) !== watcher || ignored.length === 0) return
+    watcher.unwatch(ignored)
   }
 
   private stopWatcher(root: string): void {
@@ -135,7 +184,7 @@ export class FileWatchHub {
   }
 
   private broadcast(root: string, payload: FileChangePayload): void {
-    const data = `data: ${JSON.stringify(payload)}\n\n`
+    const data = `event: change\ndata: ${JSON.stringify(payload)}\n\n`
     for (const client of this.clients) {
       if (client.root !== root || client.response.writableEnded) continue
       try {

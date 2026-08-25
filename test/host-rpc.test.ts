@@ -1,9 +1,20 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
+import { execFile, execFileSync } from 'node:child_process'
 import { mkdtemp, mkdir, readdir, readFile, rm, stat, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
+import { promisify } from 'node:util'
 import * as plugin from '../lib/index.js'
+
+const execFileAsync = promisify(execFile)
+
+let gitAvailable = true
+try {
+  execFileSync('git', ['--version'], { stdio: 'ignore' })
+} catch {
+  gitAvailable = false
+}
 
 interface MockFsOptions {
   readTextError?: { code: string; message: string }
@@ -157,6 +168,86 @@ test('read reports binary files and too-large files as domain values', async () 
     const tooLarge = await captured('read', { path: path.join(dir, 'big.txt') }, new AbortController().signal)
     assert.equal(tooLarge.value.result.kind, 'too-large')
     assert.equal(tooLarge.value.result.limit, 4)
+  } finally {
+    await rm(dir, { recursive: true, force: true })
+  }
+})
+
+test('git-status returns branch and categorized changes', async () => {
+  if (!gitAvailable) return
+  const { dir, handler } = await createHandler()
+  try {
+    await execFileAsync('git', ['init', '-q', '-b', 'main'], { cwd: dir })
+    await execFileAsync('git', ['config', 'user.email', 'test@example.com'], { cwd: dir })
+    await execFileAsync('git', ['config', 'user.name', 'Test'], { cwd: dir })
+    await writeFile(path.join(dir, 'a.txt'), 'base', 'utf8')
+    await execFileAsync('git', ['add', '.'], { cwd: dir })
+    await execFileAsync('git', ['commit', '-q', '-m', 'init'], { cwd: dir })
+
+    await writeFile(path.join(dir, 'a.txt'), 'modified', 'utf8')
+    await writeFile(path.join(dir, 'new.txt'), 'new', 'utf8')
+    await execFileAsync('git', ['add', 'a.txt'], { cwd: dir })
+
+    const result = await handler('git-status', { root: dir }, new AbortController().signal)
+    assert.equal(result.ok, true)
+    assert.equal(result.value.kind, 'git-status')
+    assert.equal(result.value.branch, 'main')
+    const paths = result.value.entries.map((entry: { path: string }) => entry.path)
+    assert.ok(paths.includes('a.txt'))
+    assert.ok(paths.includes('new.txt'))
+  } finally {
+    await rm(dir, { recursive: true, force: true })
+  }
+})
+
+test('git-diff returns staged diff text', async () => {
+  if (!gitAvailable) return
+  const { dir, handler } = await createHandler()
+  try {
+    await execFileAsync('git', ['init', '-q', '-b', 'main'], { cwd: dir })
+    await execFileAsync('git', ['config', 'user.email', 'test@example.com'], { cwd: dir })
+    await execFileAsync('git', ['config', 'user.name', 'Test'], { cwd: dir })
+    await writeFile(path.join(dir, 'a.txt'), 'base', 'utf8')
+    await execFileAsync('git', ['add', '.'], { cwd: dir })
+    await execFileAsync('git', ['commit', '-q', '-m', 'init'], { cwd: dir })
+
+    await writeFile(path.join(dir, 'a.txt'), 'modified', 'utf8')
+    await execFileAsync('git', ['add', 'a.txt'], { cwd: dir })
+
+    const result = await handler('git-diff', { root: dir, path: 'a.txt', staged: true }, new AbortController().signal)
+    assert.equal(result.ok, true)
+    assert.equal(result.value.kind, 'git-diff')
+    assert.equal(result.value.staged, true)
+    assert.match(result.value.diff, /\+modified/)
+  } finally {
+    await rm(dir, { recursive: true, force: true })
+  }
+})
+
+test('git status scopes to a subdirectory workspace and diff resolves the repo root', async () => {
+  if (!gitAvailable) return
+  const { dir, handler } = await createHandler()
+  try {
+    await execFileAsync('git', ['init', '-q', '-b', 'main'], { cwd: dir })
+    await execFileAsync('git', ['config', 'user.email', 'test@example.com'], { cwd: dir })
+    await execFileAsync('git', ['config', 'user.name', 'Test'], { cwd: dir })
+    const sub = path.join(dir, 'sub')
+    await mkdir(sub)
+    await writeFile(path.join(sub, 'a.txt'), 'base', 'utf8')
+    await execFileAsync('git', ['add', '.'], { cwd: dir })
+    await execFileAsync('git', ['commit', '-q', '-m', 'init'], { cwd: dir })
+
+    await writeFile(path.join(sub, 'a.txt'), 'modified', 'utf8')
+    await writeFile(path.join(dir, 'root.txt'), 'outside', 'utf8')
+
+    const status = await handler('git-status', { root: sub }, new AbortController().signal)
+    assert.equal(status.ok, true)
+    assert.deepEqual(status.value.entries.map((entry: { path: string }) => entry.path).sort(), ['a.txt'])
+
+    const diff = await handler('git-diff', { root: sub, path: 'a.txt', staged: false }, new AbortController().signal)
+    assert.equal(diff.ok, true)
+    assert.equal(diff.value.kind, 'git-diff')
+    assert.match(diff.value.diff, /\+modified/)
   } finally {
     await rm(dir, { recursive: true, force: true })
   }

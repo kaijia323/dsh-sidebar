@@ -1,7 +1,7 @@
 import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
 import type { RpcResult } from '@deepseek-ai/dsh-client-connection/client'
 import { CHANNEL } from './constants'
-import type { DomainError, FsApi, Limits, ListValue, ReadValue } from './types'
+import type { DomainError, FsApi, GitDiffValue, GitStatusValue, Limits, ListValue, ReadValue } from './types'
 
 export function isDomainError(value: unknown): value is DomainError {
   return typeof value === 'object' && value !== null && (value as { kind?: unknown }).kind === 'domain-error'
@@ -20,6 +20,12 @@ export function createFsApi(ctx: ClientContext): FsApi {
     },
     read(path, signal) {
       return callValue<ReadValue>('read', { path }, signal)
+    },
+    gitStatus(root, signal) {
+      return callValue<GitStatusValue>('git-status', { root }, signal)
+    },
+    gitDiff(root, path, staged, signal) {
+      return callValue<GitDiffValue>('git-diff', { root, path, staged }, signal)
     },
     async meta(signal) {
       const value = await callValue<{ kind: 'meta' } & Limits>('meta', {}, signal)

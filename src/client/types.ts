@@ -37,10 +37,37 @@ export interface ReadOk {
 
 export type ReadValue = ReadOk | DomainError
 
+export interface GitStatusEntry {
+  status: string
+  path: string
+  originalPath?: string
+}
+
+export interface GitStatusOk {
+  kind: 'git-status'
+  root: string
+  branch: string | null
+  entries: GitStatusEntry[]
+}
+
+export type GitStatusValue = GitStatusOk | DomainError
+
+export interface GitDiffOk {
+  kind: 'git-diff'
+  root: string
+  path: string
+  staged: boolean
+  diff: string
+}
+
+export type GitDiffValue = GitDiffOk | DomainError
+
 export interface FsApi {
   list(path: string, signal?: AbortSignal): Promise<ListValue>
   read(path: string, signal?: AbortSignal): Promise<ReadValue>
   meta(signal?: AbortSignal): Promise<Limits>
+  gitStatus(root: string, signal?: AbortSignal): Promise<GitStatusValue>
+  gitDiff(root: string, path: string, staged: boolean, signal?: AbortSignal): Promise<GitDiffValue>
 }
 
 export interface SnapshotStore<T> {
