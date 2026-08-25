@@ -4,6 +4,7 @@ export const TREE_ROW_HEIGHT = 24
 export const CODE_ROW_HEIGHT = 20
 export const OVERSCAN = 10
 
+export const ACTIVITY_BAR_WIDTH = 40
 export const SIDEBAR_MIN = 280
 export const SIDEBAR_MAX = 640
 export const SIDEBAR_DEFAULT = 360

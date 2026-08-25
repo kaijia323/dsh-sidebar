@@ -16,6 +16,16 @@
 .ymc-header-button:hover { border-color: var(--dsw-alias-border-l2); }
 .ymc-toolbar-active { background: var(--dsw-alias-interactive-bg-hover); color: var(--dsw-alias-brand-primary); }
 .ymc-panel-body { display: flex; flex-direction: column; min-height: 0; flex: 1; }
+.ymc-activity-bar { display: flex; width: 40px; flex: none; flex-direction: column; align-items: center; gap: 2px; padding: 4px 0; border-left: 1px solid var(--dsw-alias-border-l2); }
+.ymc-activity-item { position: relative; display: inline-flex; width: 32px; height: 32px; flex: none; align-items: center; justify-content: center; padding: 0; border: 0; border-radius: 6px; background: transparent; color: var(--dsw-alias-label-secondary); cursor: pointer; font: inherit; transition: background-color 120ms ease, color 120ms ease, transform 120ms ease; }
+.ymc-activity-item:hover { background: var(--dsw-alias-interactive-bg-hover); color: var(--dsw-alias-label-primary); }
+.ymc-activity-item:active { transform: scale(0.96); }
+.ymc-activity-item-active, .ymc-activity-item-active:hover { background: var(--dsw-alias-interactive-bg-hover); color: var(--dsw-alias-label-primary); }
+.ymc-activity-item-active::before { content: ''; position: absolute; left: -4px; top: 6px; bottom: 6px; width: 2px; border-radius: 0 1px 1px 0; background: var(--dsw-alias-brand-primary); }
+.ymc-sidebar-view { position: relative; display: flex; flex: 1; min-width: 0; min-height: 0; flex-direction: column; }
+.ymc-sidebar-view-pane { position: absolute; inset: 0; display: flex; min-width: 0; min-height: 0; flex-direction: column; }
+.ymc-sidebar-view-hidden { visibility: hidden; pointer-events: none; }
+.ymc-sidebar-view-closed { position: absolute; inset: 0; visibility: hidden; pointer-events: none; }
 .ymc-tree-pane { display: flex; flex-direction: column; min-height: 120px; position: relative; overflow: hidden; }
 .ymc-divider { flex: none; height: 7px; display: flex; align-items: center; justify-content: center; cursor: row-resize; touch-action: none; position: relative; }
 .ymc-divider::before { content: ''; position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-50%); width: 100%; height: 3px; background: transparent; transition: background 0.12s ease; }
@@ -92,13 +102,13 @@ body[data-ds-dark-theme] .ymc-image { box-shadow: 0 0 0 1px rgba(255, 255, 255, 
 #root { margin-right: var(--dsh-ymc-sidebar-width, 0px); transition: margin-right var(--ds-transition-duration-slow) var(--ds-ease-in-out); }
 body[data-dsh-ymc-sidebar-dragging] #root { transition: none; }
 [data-dsh-ymc-sidebar-root], .ymc-sidebar-root { background: var(--dsw-specific-sidebar-fill); }
-.ymc-sidebar-root { position: fixed; top: 0; right: 0; bottom: 0; z-index: 10; display: flex; flex-direction: column; min-width: 280px; max-width: 640px; border-left: 1px solid var(--dsw-alias-border-l2); }
+.ymc-sidebar-root { position: fixed; top: 0; right: 0; bottom: 0; z-index: 10; display: flex; flex-direction: column; border-left: 1px solid var(--dsw-alias-border-l2); }
+.ymc-sidebar-root.ymc-sidebar-open { min-width: 280px; max-width: 640px; }
+.ymc-sidebar-root.ymc-sidebar-collapsed { width: 40px; min-width: 40px; max-width: 40px; border-left: none; }
 .ymc-sidebar-drag-handle { position: absolute; left: -4px; top: 0; bottom: 0; width: 8px; cursor: col-resize; touch-action: none; }
 .ymc-sidebar-drag-handle::after { content: ''; position: absolute; left: 3px; top: 0; bottom: 0; width: 2px; background: transparent; transition: background-color 120ms ease; }
 .ymc-sidebar-drag-handle:hover::after, .ymc-sidebar-root[data-dragging] .ymc-sidebar-drag-handle::after { background: var(--dsw-alias-brand-primary); opacity: 0.5; }
-.ymc-sidebar-toggle { position: fixed; top: 8px; right: 8px; z-index: 11; display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; padding: 0; border: 1px solid var(--dsw-alias-border-l2); border-radius: 6px; background: var(--dsw-specific-sidebar-fill); color: var(--dsw-alias-label-secondary); cursor: pointer; font: inherit; }
-.ymc-sidebar-toggle:hover { background: var(--dsw-alias-interactive-bg-hover); color: var(--dsw-alias-label-primary); }
-.ymc-sidebar-body { display: flex; flex: 1; min-height: 0; flex-direction: column; background: var(--dsw-specific-sidebar-fill); }
+.ymc-sidebar-body { display: flex; flex: 1; min-height: 0; flex-direction: row; background: var(--dsw-specific-sidebar-fill); }
 @media (prefers-reduced-motion: reduce) {
   #root { transition: none; }
   .ymc-chevron { transition: none; will-change: auto; }

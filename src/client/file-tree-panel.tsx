@@ -22,10 +22,9 @@ interface FileTreePanelProps {
   sessionId: string | undefined
   sessions: SessionListLike
   workspaces: WorkspaceListLike
-  onClose: () => void
 }
 
-export function FileTreePanel({ api, sessionId, sessions, workspaces, onClose }: FileTreePanelProps) {
+export function FileTreePanel({ api, sessionId, sessions, workspaces }: FileTreePanelProps) {
   const root = useMemo(() => sessionId ? resolveRoot(sessionId, sessions, workspaces) : undefined, [sessionId, sessions, workspaces])
 
   const [limits, setLimits] = useState<Limits>(DEFAULT_LIMITS)
@@ -244,17 +243,6 @@ export function FileTreePanel({ api, sessionId, sessions, workspaces, onClose }:
     dispatch({ type: 'toggle', path })
   }
 
-  function refresh() {
-    for (const controller of controllersRef.current.values()) controller.abort()
-    controllersRef.current.clear()
-    toggleThrottleRef.current.clear()
-    inflightRef.current.clear()
-    setDirs({})
-    dispatch({ type: 'reset', root })
-    setTabs([])
-    setActivePath(undefined)
-  }
-
   function openFile(entry: SidebarEntry) {
     setTabs((prev) => prev.some((tab) => tab.path === entry.path) ? prev : [...prev, { path: entry.path, name: entry.name }])
     setActivePath(entry.path)
@@ -295,12 +283,12 @@ export function FileTreePanel({ api, sessionId, sessions, workspaces, onClose }:
     <div className={panelClassName}>
       {!root ? (
         <>
-          <PanelHeader root={undefined} loadingRoot={false} onRefresh={() => {}} onClose={onClose} />
+          <PanelHeader root={undefined} loadingRoot={false} />
           <div className="ymc-panel-message flex h-full flex-col items-center justify-center text-[var(--dsw-alias-label-tertiary)]">{rootError ?? '没有可显示的工作区目录。'}</div>
         </>
       ) : (
         <>
-          <PanelHeader root={root} loadingRoot={rowLoading} onRefresh={refresh} onClose={onClose} />
+          <PanelHeader root={root} loadingRoot={rowLoading} />
           <div className="ymc-panel-body relative flex min-h-0 flex-1 flex-col" ref={bodyRef}>
             <div
               className="ymc-tree-pane relative flex min-h-[120px] shrink-0 flex-col overflow-hidden"

@@ -67,6 +67,60 @@
     @apply flex min-h-0 flex-1 flex-col;
   }
 
+  .ymc-activity-bar {
+    @apply flex w-10 flex-none flex-col items-center gap-0.5 border-l border-[var(--dsw-alias-border-l2)] py-1;
+  }
+
+  .ymc-activity-item {
+    @apply relative inline-flex h-8 w-8 flex-none cursor-pointer items-center justify-center rounded-md border-0 bg-transparent text-[var(--dsw-alias-label-secondary)];
+    font: inherit;
+    transition: background-color 120ms ease, color 120ms ease, transform 120ms ease;
+  }
+
+  .ymc-activity-item:hover {
+    @apply bg-[var(--dsw-alias-interactive-bg-hover)] text-[var(--dsw-alias-label-primary)];
+  }
+
+  .ymc-activity-item:active {
+    transform: scale(0.96);
+  }
+
+  .ymc-activity-item-active,
+  .ymc-activity-item-active:hover {
+    @apply bg-[var(--dsw-alias-interactive-bg-hover)] text-[var(--dsw-alias-label-primary)];
+  }
+
+  .ymc-activity-item-active::before {
+    content: '';
+    position: absolute;
+    left: -4px;
+    top: 6px;
+    bottom: 6px;
+    width: 2px;
+    border-radius: 0 1px 1px 0;
+    background: var(--dsw-alias-brand-primary);
+  }
+
+  .ymc-sidebar-view {
+    @apply relative flex min-h-0 min-w-0 flex-1 flex-col;
+  }
+
+  .ymc-sidebar-view-pane {
+    @apply absolute inset-0 flex min-h-0 min-w-0 flex-col;
+  }
+
+  .ymc-sidebar-view-hidden {
+    visibility: hidden;
+    pointer-events: none;
+  }
+
+  .ymc-sidebar-view-closed {
+    position: absolute;
+    inset: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
+
   .ymc-tree-pane {
     @apply relative flex min-h-[120px] shrink-0 flex-col overflow-hidden;
   }
@@ -406,10 +460,11 @@
 
 /* Body-mounted sidebar shell.
  *
- * The panel is a sibling of #root. While open, #root gives up the panel width
- * through a CSS variable so the sidebar behaves like a real column (VSCode
- * style) instead of an overlay. The panel itself stays position:fixed; the
- * layout push is what keeps it from covering the app. */
+ * The panel is a sibling of #root. #root gives up the panel width, or the
+ * 40px activity bar when collapsed, through a CSS variable so the sidebar
+ * behaves like a real column (VSCode style) instead of an overlay. The panel
+ * itself stays position:fixed; the layout push is what keeps it from covering
+ * the app. */
 #root {
   margin-right: var(--dsh-ymc-sidebar-width, 0px);
   transition: margin-right var(--ds-transition-duration-slow) var(--ds-ease-in-out);
@@ -434,9 +489,19 @@ body[data-dsh-ymc-sidebar-dragging] #root {
   z-index: 10;
   display: flex;
   flex-direction: column;
+  border-left: 1px solid var(--dsw-alias-border-l2);
+}
+
+.ymc-sidebar-root.ymc-sidebar-open {
   min-width: 280px;
   max-width: 640px;
-  border-left: 1px solid var(--dsw-alias-border-l2);
+}
+
+.ymc-sidebar-root.ymc-sidebar-collapsed {
+  width: 40px;
+  min-width: 40px;
+  max-width: 40px;
+  border-left: none;
 }
 
 .ymc-sidebar-drag-handle {
@@ -466,35 +531,11 @@ body[data-dsh-ymc-sidebar-dragging] #root {
   opacity: 0.5;
 }
 
-.ymc-sidebar-toggle {
-  position: fixed;
-  top: 8px;
-  right: 8px;
-  z-index: 11;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  padding: 0;
-  border: 1px solid var(--dsw-alias-border-l2);
-  border-radius: 6px;
-  background: var(--dsw-specific-sidebar-fill);
-  color: var(--dsw-alias-label-secondary);
-  cursor: pointer;
-  font: inherit;
-}
-
-.ymc-sidebar-toggle:hover {
-  background: var(--dsw-alias-interactive-bg-hover);
-  color: var(--dsw-alias-label-primary);
-}
-
 .ymc-sidebar-body {
   display: flex;
   flex: 1;
   min-height: 0;
-  flex-direction: column;
+  flex-direction: row;
   background: var(--dsw-specific-sidebar-fill);
 }
 

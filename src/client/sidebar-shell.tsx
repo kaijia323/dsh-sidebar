@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
 import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
 import { clamp } from '../client-model'
-import { SIDEBAR_MAX, SIDEBAR_MIN, SIDEBAR_STORAGE_KEY } from './constants'
+import { ActivityBar, type SidebarView } from './activity-bar'
+import { ACTIVITY_BAR_WIDTH, SIDEBAR_MAX, SIDEBAR_MIN, SIDEBAR_STORAGE_KEY } from './constants'
 import { FileTreePanel } from './file-tree-panel'
-import { loadSidebarOpen, loadSidebarWidth, useSnapshotStore } from './hooks'
+import { GitPanel } from './git-panel'
+import { loadSidebarOpen, loadSidebarView, loadSidebarWidth, useSnapshotStore } from './hooks'
 import type { FsApi } from './types'
 
 interface SidebarShellProps {
@@ -16,6 +18,7 @@ export function SidebarShell({ ctx, api }: SidebarShellProps) {
   const workspaces = useSnapshotStore(ctx.workspaces.list)
   const [open, setOpen] = useState<boolean>(loadSidebarOpen)
   const [width, setWidth] = useState<number>(loadSidebarWidth)
+  const [view, setView] = useState<SidebarView>(loadSidebarView)
   const panelRef = useRef<HTMLDivElement>(null)
   const widthRef = useRef(width)
   const dragRef = useRef<{ startX: number; startWidth: number } | null>(null)
@@ -35,12 +38,18 @@ export function SidebarShell({ ctx, api }: SidebarShellProps) {
   }, [width])
 
   useEffect(() => {
+    try {
+      localStorage.setItem(`${SIDEBAR_STORAGE_KEY}:view`, view)
+    } catch { /* storage unavailable */ }
+  }, [view])
+
+  useEffect(() => {
     // HMR overlap safety: only the fiber that last wrote the CSS variable is
     // allowed to remove it. An old fiber's disposer must not delete the new
     // fiber's live layout push.
     const owner = `dsh-ymc-sidebar-${Math.random().toString(36).slice(2)}`
     document.documentElement.setAttribute('data-dsh-ymc-sidebar-owner', owner)
-    document.documentElement.style.setProperty('--dsh-ymc-sidebar-width', open ? `${width}px` : '0px')
+    document.documentElement.style.setProperty('--dsh-ymc-sidebar-width', open ? `${width}px` : `${ACTIVITY_BAR_WIDTH}px`)
     if (open) document.body.setAttribute('data-dsh-ymc-sidebar-open', '')
     else document.body.removeAttribute('data-dsh-ymc-sidebar-open')
     return () => {
@@ -82,44 +91,45 @@ export function SidebarShell({ ctx, api }: SidebarShellProps) {
 
   const sessionId = sessions.current
 
+  function selectView(next: SidebarView) {
+    if (!open || next !== view) {
+      setView(next)
+      setOpen(true)
+    } else {
+      setOpen(false)
+    }
+  }
+
   return (
-    <>
-      {!open && (
-        <button
-          type="button"
-          className="ymc-sidebar-toggle"
-          aria-label="打开文件树"
-          title="打开文件树"
-          onClick={() => setOpen(true)}
-        >
-          <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
-            <path d="M1.5 3.5h4l1.5 2h7.5v7.5a1 1 0 0 1-1 1h-12a1 1 0 0 1-1-1v-8a1 1 0 0 1 1-1z" fill="none" stroke="currentColor" strokeWidth="1.2" />
-          </svg>
-        </button>
-      )}
+    <div
+      ref={panelRef}
+      className={`ymc-sidebar-root${open ? ' ymc-sidebar-open' : ' ymc-sidebar-collapsed'}`}
+      style={open ? { width } : undefined}
+    >
       {open && (
         <div
-          ref={panelRef}
-          className="ymc-sidebar-root"
-          style={{ width }}
-        >
-          <div
-            className="ymc-sidebar-drag-handle"
-            onPointerDown={handleDragStart}
-            onPointerMove={handleDragMove}
-            onPointerUp={handleDragEnd}
-          />
-          <div className="ymc-sidebar-body">
+          className="ymc-sidebar-drag-handle"
+          onPointerDown={handleDragStart}
+          onPointerMove={handleDragMove}
+          onPointerUp={handleDragEnd}
+        />
+      )}
+      <div className="ymc-sidebar-body">
+        <div className={`ymc-sidebar-view${open ? '' : ' ymc-sidebar-view-closed'}`}>
+          <div className={`ymc-sidebar-view-pane${view === 'explorer' ? '' : ' ymc-sidebar-view-hidden'}`}>
             <FileTreePanel
               api={api}
               sessionId={sessionId}
               sessions={sessions}
               workspaces={workspaces}
-              onClose={() => setOpen(false)}
             />
           </div>
+          <div className={`ymc-sidebar-view-pane${view === 'git' ? '' : ' ymc-sidebar-view-hidden'}`}>
+            <GitPanel />
+          </div>
         </div>
-      )}
-    </>
+        <ActivityBar view={view} onSelect={selectView} />
+      </div>
+    </div>
   )
 }
