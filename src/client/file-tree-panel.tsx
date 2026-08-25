@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
 import {
   clamp,
+  dirname,
+  isPathInside,
   resolveRoot,
   treeInteractionReducer,
   type DirData,
@@ -46,8 +48,12 @@ export function FileTreePanel({ api, sessionId, sessions, workspaces, onClose }:
   const controllersRef = useRef(new Map<string, AbortController>())
   const toggleThrottleRef = useRef(new Map<string, number>())
   const dirsRef = useRef(dirs)
+  const activePathRef = useRef(activePath)
+  const pendingChangesRef = useRef(new Set<string>())
+  const watcherTimerRef = useRef<number | undefined>(undefined)
 
   useEffect(() => { dirsRef.current = dirs }, [dirs])
+  useEffect(() => { activePathRef.current = activePath }, [activePath])
 
   useEffect(() => {
     const controller = new AbortController()
@@ -74,6 +80,73 @@ export function FileTreePanel({ api, sessionId, sessions, workspaces, onClose }:
     for (const controller of controllersRef.current.values()) controller.abort()
     controllersRef.current.clear()
   }, [])
+
+  useEffect(() => {
+    if (!root || !limits.watchEnabled) return
+
+    const source = new EventSource(`/dsh-ymc-sidebar/events?root=${encodeURIComponent(root)}`)
+
+    const applyChanges = () => {
+      watcherTimerRef.current = undefined
+      const changed: string[] = Array.from(pendingChangesRef.current)
+      pendingChangesRef.current.clear()
+      if (changed.length === 0) return
+
+      const affected = new Set<string>()
+      const active = activePathRef.current
+      let activeDirty = false
+
+      for (const path of changed) {
+        const parent = dirname(path)
+        if (parent) affected.add(parent)
+        if (dirsRef.current[path]) affected.add(path)
+        if (active && (path === active || isPathInside(active, path))) {
+          activeDirty = true
+        }
+      }
+
+      if (affected.size > 0) {
+        setDirs((prev) => {
+          const next = { ...prev }
+          for (const path of affected) delete next[path]
+          return next
+        })
+      }
+
+      if (activeDirty && active) {
+        // Force PreviewPane to re-read the active tab by giving it a new object.
+        setTabs((prev) => prev.map((tab) => tab.path === active ? { ...tab } : tab))
+      }
+    }
+
+    const handleChange = (event: MessageEvent<string>) => {
+      try {
+        const payload = JSON.parse(event.data) as { path?: unknown }
+        if (typeof payload.path !== 'string') return
+        pendingChangesRef.current.add(payload.path)
+        if (watcherTimerRef.current === undefined) {
+          watcherTimerRef.current = window.setTimeout(applyChanges, 150)
+        }
+      } catch {
+        // Ignore malformed or unknown server frames; EventSource stays open.
+      }
+    }
+
+    source.addEventListener('change', handleChange as EventListener)
+    source.onerror = () => {
+      // EventSource reconnects automatically; no user action needed.
+    }
+
+    return () => {
+      source.close()
+      source.removeEventListener('change', handleChange as EventListener)
+      if (watcherTimerRef.current !== undefined) {
+        window.clearTimeout(watcherTimerRef.current)
+        watcherTimerRef.current = undefined
+      }
+      pendingChangesRef.current.clear()
+    }
+  }, [root, limits.watchEnabled])
 
   const finishCollapse = useCallback((path: string) => {
     dispatch({ type: 'finishCollapse', path })

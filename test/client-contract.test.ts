@@ -87,6 +87,15 @@ test('tree rows use opaque sidebar background so overlapping rows occlude withou
   assert.doesNotMatch(css + fallback, /\.ymc-tree-row-animating/)
 })
 
+test('sidebar subscribes to file-change SSE and auto-invalidates loaded directories', async () => {
+  const source = await readClientSources()
+  assert.match(source, /new EventSource\(/, 'sidebar must open an EventSource for file changes')
+  assert.match(source, /\/dsh-ymc-sidebar\/events/, 'sidebar must subscribe to the plugin SSE channel')
+  assert.match(source, /source\.addEventListener\('change'/, 'sidebar must listen to change SSE frames')
+  assert.match(source, /setDirs\(/, 'sidebar must invalidate loaded directory snapshots on changes')
+  assert.match(source, /setTabs\(/, 'sidebar must refresh the active preview after file changes')
+})
+
 test('client style installer is hot-swap safe (one style element per fiber)', async () => {
   const source = await readClientSources()
   assert.match(source, /const element = document\.createElement\('style'\)/, 'installStyles must create a fresh style element')

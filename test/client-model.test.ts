@@ -3,10 +3,12 @@ import assert from 'node:assert/strict'
 import {
   basename,
   clamp,
+  dirname,
   flattenTree,
   formatBytes,
   isImagePath,
   isMarkdownPath,
+  isPathInside,
   resolveRoot,
   treeInteractionReducer,
 } from '../src/client-model.ts'
@@ -17,6 +19,21 @@ test('basename handles windows and posix paths', () => {
   assert.equal(basename('C:\\repo\\demo\\'), 'demo')
   assert.equal(basename('C:\\'), 'C:')
   assert.equal(basename('/'), '')
+})
+
+test('dirname handles windows and posix paths', () => {
+  assert.equal(dirname('C:\\repo\\demo\\a.txt'), 'C:\\repo\\demo')
+  assert.equal(dirname('/home/me/work/a.txt'), '/home/me/work')
+  assert.equal(dirname('C:\\repo\\demo'), 'C:\\repo')
+  assert.equal(dirname('/root'), '/')
+})
+
+test('isPathInside handles equal and descendant paths', () => {
+  assert.equal(isPathInside('/repo', '/repo'), true)
+  assert.equal(isPathInside('/repo/sub/a.txt', '/repo'), true)
+  assert.equal(isPathInside('/repo-other/a.txt', '/repo'), false)
+  assert.equal(isPathInside('C:\\repo\\sub', 'C:\\repo'), true)
+  assert.equal(isPathInside('C:\\repo-file', 'C:\\repo'), false)
 })
 
 test('formatBytes and clamp', () => {

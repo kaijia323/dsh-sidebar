@@ -13,7 +13,7 @@ export type ReadResult =
   | { kind: 'error'; code: string; message: string }
 
 export type SidebarValue =
-  | { kind: 'meta'; maxTextBytes: number; maxImageBytes: number; maxEntriesPerDirectory: number; maxTreeRows: number }
+  | { kind: 'meta'; maxTextBytes: number; maxImageBytes: number; maxEntriesPerDirectory: number; maxTreeRows: number; watchEnabled: boolean }
   | { kind: 'list'; path: string; entries: SidebarEntry[]; truncated: boolean }
   | { kind: 'read'; path: string; size: number; result: ReadResult }
   | { kind: 'domain-error'; code: string; message: string }

@@ -44,6 +44,20 @@ export function basename(path: string): string {
   const parts = normalized.split(/[\\/]/)
   return parts[parts.length - 1] ?? ''
 }
+
+export function dirname(path: string): string {
+  const normalized = path.replace(/[\\/]+$/, '')
+  const index = Math.max(normalized.lastIndexOf('/'), normalized.lastIndexOf('\\'))
+  if (index <= 0) return normalized.slice(0, 1) || normalized
+  return normalized.slice(0, index)
+}
+
+export function isPathInside(path: string, ancestor: string): boolean {
+  if (path === ancestor) return true
+  const separator = ancestor.includes('\\') ? '\\' : '/'
+  const prefix = ancestor.endsWith(separator) ? ancestor : ancestor + separator
+  return path.startsWith(prefix)
+}
 export function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`

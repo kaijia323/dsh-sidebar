@@ -75,6 +75,9 @@ export interface Config {
   maxImageBytes: number
   maxEntriesPerDirectory: number
   maxTreeRows: number
+  watchEnabled: boolean
+  watchDebounceMs: number
+  watchIgnored: string[]
 }
 
 export declare const Config: Schema<Config>

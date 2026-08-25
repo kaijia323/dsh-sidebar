@@ -16,6 +16,7 @@ export function createRpcHandler(ctx: Context, config: Config): ConnectionRpcHan
             maxImageBytes: config.maxImageBytes,
             maxEntriesPerDirectory: config.maxEntriesPerDirectory,
             maxTreeRows: config.maxTreeRows,
+            watchEnabled: config.watchEnabled,
           })
         }
         case 'list': {

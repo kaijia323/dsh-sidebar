@@ -28,6 +28,7 @@ export function createFsApi(ctx: ClientContext): FsApi {
         maxImageBytes: value.maxImageBytes,
         maxEntriesPerDirectory: value.maxEntriesPerDirectory,
         maxTreeRows: value.maxTreeRows,
+        watchEnabled: value.watchEnabled,
       }
     },
   }

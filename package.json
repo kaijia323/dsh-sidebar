@@ -42,8 +42,10 @@
     "@deepseek-ai/dsh-client-connection": "^0.1.0-rc.8",
     "@deepseek-ai/dsh-client-runtime": "^0.1.0-rc.8",
     "@deepseek-ai/dsh-fs": "^0.1.0-rc.8",
+    "@deepseek-ai/dsh-host-webserver": "0.1.0-rc.8",
     "@deepseek-ai/schemastery": "^3.18.1",
     "animejs": "^4.5.0",
+    "chokidar": "^3.6.0",
     "lucide-react": "^1.33.0"
   },
   "peerDependencies": {

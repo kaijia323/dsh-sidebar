@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { formatBytes, isMarkdownPath } from '../client-model'
 import { isDomainError } from './api'
 import { CodeView } from './code-view'
@@ -21,18 +21,22 @@ export function PreviewPane({ api, tabs, activePath, limits, onCloseTab, onSelec
   const [value, setValue] = useState<ReadValue | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [markdown, setMarkdown] = useState(true)
+  const lastPathRef = useRef<string | null>(null)
 
   useEffect(() => {
     if (!file) {
       setPhase('idle')
       setValue(null)
       setError(null)
+      lastPathRef.current = null
       return
     }
+    const pathChanged = lastPathRef.current !== file.path
+    lastPathRef.current = file.path
     setPhase('loading')
     setValue(null)
     setError(null)
-    setMarkdown(true)
+    if (pathChanged) setMarkdown(true)
     const controller = new AbortController()
     api.read(file.path, controller.signal).then((response) => {
       if (controller.signal.aborted) return

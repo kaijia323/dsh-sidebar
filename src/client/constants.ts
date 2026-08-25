@@ -18,4 +18,5 @@ export const DEFAULT_LIMITS = {
   maxImageBytes: 8 * 1024 * 1024,
   maxEntriesPerDirectory: 2000,
   maxTreeRows: 100000,
+  watchEnabled: true,
 }

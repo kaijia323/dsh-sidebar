@@ -5,6 +5,7 @@ export interface Limits {
   maxImageBytes: number
   maxEntriesPerDirectory: number
   maxTreeRows: number
+  watchEnabled: boolean
 }
 
 export interface ListOk {

@@ -73,6 +73,9 @@ async function createHandler(config: Partial<plugin.Config> = {}) {
     maxImageBytes: 2048,
     maxEntriesPerDirectory: 10,
     maxTreeRows: 100,
+    watchEnabled: true,
+    watchDebounceMs: 200,
+    watchIgnored: ['**/node_modules/**', '**/.git/**'],
     ...config,
   })
   return { dir, handler: captured!.handler }
@@ -85,6 +88,7 @@ test('meta returns resolved limits', async () => {
     assert.equal(result.ok, true)
     assert.equal(result.value.kind, 'meta')
     assert.equal(result.value.maxTextBytes, 333)
+    assert.equal(result.value.watchEnabled, true)
   } finally {
     await rm(dir, { recursive: true, force: true })
   }
@@ -143,7 +147,7 @@ test('read reports binary files and too-large files as domain values', async () 
     fs,
     connection: { rpc: { handle(_channel: string, handler: any) { captured = handler } } },
     effect() {},
-  }, { maxTextBytes: 4, maxImageBytes: 16, maxEntriesPerDirectory: 10, maxTreeRows: 100 })
+  }, { maxTextBytes: 4, maxImageBytes: 16, maxEntriesPerDirectory: 10, maxTreeRows: 100, watchEnabled: true, watchDebounceMs: 200, watchIgnored: [] })
   try {
     await writeFile(path.join(dir, 'blob.bin'), Buffer.from([0, 1, 2]))
     const binary = await captured('read', { path: path.join(dir, 'blob.bin') }, new AbortController().signal)
