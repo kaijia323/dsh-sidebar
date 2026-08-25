@@ -89,7 +89,7 @@ export async function handleGitStatus(root: string, signal: AbortSignal): Promis
   if (!isAbsolute(root)) return domainError('invalid-path', 'root must be absolute')
   try {
     const [output, repoRoot] = await Promise.all([
-      runGit(root, ['-c', 'core.untrackedCache=true', 'status', '--porcelain=v1', '-z', '--branch', '--', '.'], signal),
+      runGit(root, ['-c', 'core.untrackedCache=true', 'status', '--porcelain=v1', '-z', '--branch', '--untracked-files=all', '--', '.'], signal),
       getRepoRoot(root, signal),
     ])
     const parts = output.split('\0')

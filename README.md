@@ -7,7 +7,7 @@ DSH Web Client 的 VSCode 风格文件树侧栏。作为 `#root` 的兄弟节点
 - 目录按需懒加载，树与代码视图都做了虚拟滚动
 - 默认不显示内容预览区；点击文件后，在右栏下方预览内容（上方为文件树）
 - 支持多文件 tabs：可同时打开多个文件、横向滚动、点击 `×` 关闭
-- “Git 追踪”视图展示当前 Git 仓库状态：当前分支、暂存区改动、工作区未暂存改动与未跟踪文件；点击改动可在下方预览对应 diff，状态随文件监听自动刷新
+- “Git 追踪”视图展示当前 Git 仓库状态：当前分支、暂存区改动、工作区未暂存改动与未跟踪文件；点击改动可在下方预览带行级高亮的 diff，点击未跟踪文件可直接查看文件内容预览；状态、diff 与未跟踪内容都会随文件监听自动刷新，无需手动刷新
 - 支持文本/代码（带行号与基础语法高亮）、Markdown 渲染 / 源码切换、常见图片预览
 - 使用 `chokidar` 监听当前工作区文件变化，文件/目录的新增、修改、删除会自动刷新文件树，并自动重读当前激活的文件预览；未激活的 tab 在切换时读取最新内容，因此面板内不再保留手动刷新按钮
 - 不预置目录忽略规则，文件系统里有什么就展示什么（`node_modules` 等大目录靠懒加载 + 虚拟化抗压；文件监听默认忽略 `node_modules` 和 `.git`，并自动遵循工作区 `.gitignore` 声明的忽略路径，避免监听构建产物等大目录；可通过 `watchIgnored` 追加忽略规则）
@@ -29,7 +29,7 @@ DSH Web Client 的 VSCode 风格文件树侧栏。作为 `#root` 的兄弟节点
 源码按职责拆分，入口文件只保留插件注册逻辑：
 
 - `src/index.ts`：Host 插件入口；RPC、文件系统、Git、配置等逻辑在 `src/host/`（`config` / `fs` / `git` / `handlers` / `rpc` / `result` / `utils`）。
-- `src/client.tsx`：Browser 插件入口；React 组件、状态与 API 封装在 `src/client/`（`api` / `activity-bar` / `git-panel` / `tree` / `preview` / `sidebar-shell` / `styles` 等）。
+- `src/client.tsx`：Browser 插件入口；React 组件、状态与 API 封装在 `src/client/`（`api` / `activity-bar` / `git-panel` / `diff-view` / `tree` / `preview` / `sidebar-shell` / `styles` 等）。
 - `src/client-model.ts`：与 React 无关的纯模型（路径、扁平化、树交互 reducer），可独立单测。
 
 前端样式直接消费 DSH 的主题 alias token（`--dsw-alias-*`），不维护独立色板；组件使用 Tailwind CSS 编写，构建时由 `tailwindcss` 从 `src/client.css` 生成 utility CSS 并内联进客户端 bundle。

@@ -1,7 +1,11 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type UIEvent } from 'react'
-import { AlertCircle, FileDiff, FolderGit2, GitBranch, RefreshCw } from 'lucide-react'
+import { AlertCircle, FileDiff, FolderGit2, GitBranch } from 'lucide-react'
+import { isMarkdownPath } from '../client-model'
 import { isDomainError } from './api'
-import type { FsApi, GitDiffValue, GitStatusEntry, GitStatusValue } from './types'
+import { CodeView } from './code-view'
+import { DiffView } from './diff-view'
+import { MarkdownView } from './markdown-view'
+import type { FsApi, GitDiffValue, GitStatusEntry, GitStatusValue, ReadOk, ReadValue } from './types'
 
 interface GitPanelProps {
   api: FsApi
@@ -77,6 +81,13 @@ function statusClass(entry: GitStatusEntry): string {
     default:
       return 'text-[var(--dsw-alias-label-secondary)]'
   }
+}
+
+function joinWorkspacePath(root: string, relative: string): string {
+  const separator = root.includes('\\') ? '\\' : '/'
+  const base = root.replace(/[\\/]+$/, '')
+  const rel = relative.replace(/^[\\/]+/, '')
+  return `${base}${separator}${rel}`
 }
 
 interface GitVirtualListProps {
@@ -156,13 +167,71 @@ function GitVirtualList({ rows, selected, onSelect }: GitVirtualListProps) {
   )
 }
 
+function UntrackedFilePreview({ value }: { value: ReadValue }) {
+  if (isDomainError(value)) {
+    return (
+      <div className="ymc-preview-error overflow-auto text-[var(--dsw-alias-state-error-primary)]">
+        <div className="flex items-center gap-1.5">
+          <AlertCircle size={14} strokeWidth={1.75} aria-hidden="true" />
+          <span>{value.message}</span>
+        </div>
+      </div>
+    )
+  }
+
+  const read = value as ReadOk
+  const result = read.result
+  if (result.kind === 'binary') {
+    return (
+      <div className="ymc-preview-message">
+        <p>二进制文件，无法预览。</p>
+      </div>
+    )
+  }
+  if (result.kind === 'too-large') {
+    return (
+      <div className="ymc-preview-message">
+        <p>文件超过预览大小限制（{result.limit} 字节）。</p>
+      </div>
+    )
+  }
+  if (result.kind === 'error') {
+    return (
+      <div className="ymc-preview-message">
+        <p>{result.message}</p>
+      </div>
+    )
+  }
+  if (result.kind === 'image') {
+    const source = `data:${result.mime};base64,${result.base64}`
+    return (
+      <div className="ymc-image-preview">
+        <img className="ymc-image" src={source} alt={read.path} />
+      </div>
+    )
+  }
+  if (isMarkdownPath(read.path)) {
+    return (
+      <div className="ymc-markdown-scroll relative min-h-0 flex-1 overflow-auto">
+        <MarkdownView text={result.content} />
+      </div>
+    )
+  }
+  return (
+    <div className="ymc-text-preview flex min-h-0 flex-1 flex-col">
+      <CodeView text={result.content} />
+    </div>
+  )
+}
+
 export function GitPanel({ api, root, active = true }: GitPanelProps) {
   const [value, setValue] = useState<GitStatusValue | null>(null)
   const [loading, setLoading] = useState(false)
   const [reloadToken, setReloadToken] = useState(0)
   const [selection, setSelection] = useState<ChangeSelection | null>(null)
   const [diff, setDiff] = useState<GitDiffValue | null>(null)
-  const [diffLoading, setDiffLoading] = useState(false)
+  const [preview, setPreview] = useState<ReadValue | null>(null)
+  const [detailLoading, setDetailLoading] = useState(false)
   const rootRef = useRef<string | undefined>(undefined)
   const statusCacheRef = useRef(new Map<string, GitStatusValue>())
 
@@ -173,7 +242,9 @@ export function GitPanel({ api, root, active = true }: GitPanelProps) {
       setValue(null)
       setSelection(null)
       setDiff(null)
+      setPreview(null)
       setLoading(false)
+      setDetailLoading(false)
       return
     }
     if (!active) {
@@ -181,7 +252,9 @@ export function GitPanel({ api, root, active = true }: GitPanelProps) {
         setValue(null)
         setSelection(null)
         setDiff(null)
+        setPreview(null)
         setLoading(false)
+        setDetailLoading(false)
       }
       return
     }
@@ -191,6 +264,7 @@ export function GitPanel({ api, root, active = true }: GitPanelProps) {
     if (rootChanged) {
       setSelection(null)
       setDiff(null)
+      setPreview(null)
       setValue(statusCacheRef.current.get(root) ?? null)
     }
 
@@ -224,7 +298,9 @@ export function GitPanel({ api, root, active = true }: GitPanelProps) {
     let timer: number | undefined
     const handleChange = () => {
       if (timer !== undefined) window.clearTimeout(timer)
-      timer = window.setTimeout(() => setReloadToken((token) => token + 1), 500)
+      timer = window.setTimeout(() => {
+        setReloadToken((token) => token + 1)
+      }, 500)
     }
     source.addEventListener('change', handleChange as EventListener)
     return () => {
@@ -237,46 +313,60 @@ export function GitPanel({ api, root, active = true }: GitPanelProps) {
   useEffect(() => {
     if (!root || !active || !selection) {
       setDiff(null)
-      setDiffLoading(false)
+      setPreview(null)
+      setDetailLoading(false)
       return
     }
 
     const { entry, group } = selection
+    const controller = new AbortController()
+    setDiff(null)
+    setPreview(null)
+    setDetailLoading(true)
+
     if (group === 'untracked') {
-      setDiffLoading(false)
-      setDiff({
-        kind: 'domain-error',
-        code: 'no-diff',
-        message: '未跟踪文件没有 Git diff。',
-      })
-      return
+      const absolutePath = joinWorkspacePath(root, entry.path)
+      api.read(absolutePath, controller.signal)
+        .then((next) => {
+          if (!controller.signal.aborted) setPreview(next)
+        })
+        .catch((error: unknown) => {
+          if (controller.signal.aborted) return
+          const raw = error instanceof Error ? error.message : String(error)
+          setPreview({
+            kind: 'domain-error',
+            code: 'internal',
+            message: /unknown endpoint/i.test(raw)
+              ? '宿主插件尚未加载 Git RPC，请重启 dsh web 后再试。'
+              : raw,
+          })
+        })
+        .finally(() => {
+          if (!controller.signal.aborted) setDetailLoading(false)
+        })
+    } else {
+      api.gitDiff(root, entry.path, group === 'staged', controller.signal)
+        .then((next) => {
+          if (!controller.signal.aborted) setDiff(next)
+        })
+        .catch((error: unknown) => {
+          if (controller.signal.aborted) return
+          const raw = error instanceof Error ? error.message : String(error)
+          setDiff({
+            kind: 'domain-error',
+            code: 'internal',
+            message: /unknown endpoint/i.test(raw)
+              ? '宿主插件尚未加载 Git RPC，请重启 dsh web 后再试。'
+              : raw,
+          })
+        })
+        .finally(() => {
+          if (!controller.signal.aborted) setDetailLoading(false)
+        })
     }
 
-    const controller = new AbortController()
-    setDiffLoading(true)
-    setDiff(null)
-
-    api.gitDiff(root, entry.path, group === 'staged', controller.signal)
-      .then((next) => {
-        if (!controller.signal.aborted) setDiff(next)
-      })
-      .catch((error: unknown) => {
-        if (controller.signal.aborted) return
-        const raw = error instanceof Error ? error.message : String(error)
-        setDiff({
-          kind: 'domain-error',
-          code: 'internal',
-          message: /unknown endpoint/i.test(raw)
-            ? '宿主插件尚未加载 Git RPC，请重启 dsh web 后再试。'
-            : raw,
-        })
-      })
-      .finally(() => {
-        if (!controller.signal.aborted) setDiffLoading(false)
-      })
-
     return () => controller.abort()
-  }, [api, root, active, selection])
+  }, [api, root, active, selection, reloadToken])
 
   const groups = useMemo<GroupedChanges>(() => {
     if (!value || isDomainError(value)) return { staged: [], unstaged: [], untracked: [] }
@@ -318,16 +408,6 @@ export function GitPanel({ api, root, active = true }: GitPanelProps) {
             {statusOk.branch}
           </span>
         )}
-        <button
-          type="button"
-          className="ymc-header-button ml-auto"
-          onClick={() => setReloadToken((token) => token + 1)}
-          disabled={!root}
-          title="刷新 Git 状态"
-          aria-label="刷新 Git 状态"
-        >
-          <RefreshCw size={13} strokeWidth={1.75} aria-hidden="true" />
-        </button>
       </div>
 
       <div className="ymc-git-body relative flex min-h-0 flex-1 flex-col">
@@ -380,17 +460,18 @@ export function GitPanel({ api, root, active = true }: GitPanelProps) {
                   {selection.group === 'staged' ? '已暂存' : selection.group === 'unstaged' ? '工作区' : '未跟踪'}
                 </span>
               </div>
-              <div className="ymc-git-diff-content min-h-0 flex-1 overflow-auto">
-                {diffLoading ? (
+              <div className="ymc-git-diff-content flex min-h-0 flex-1 flex-col overflow-hidden">
+                {detailLoading ? (
                   <div className="flex h-full items-center justify-center gap-2 text-[var(--dsw-alias-label-tertiary)]">
-                    <span className="ymc-spinner" />正在读取 diff…
+                    <span className="ymc-spinner" />
+                    {selection.group === 'untracked' ? '正在读取文件…' : '正在读取 diff…'}
                   </div>
+                ) : selection.group === 'untracked' ? (
+                  preview ? <UntrackedFilePreview value={preview} /> : null
                 ) : diff && isDomainError(diff) ? (
                   <div className="p-3 text-[var(--dsw-alias-label-tertiary)]">{diff.message}</div>
                 ) : diff ? (
-                  <pre className="whitespace-pre-wrap break-words p-3 font-mono text-[11px] leading-[1.5] text-[var(--dsw-alias-label-primary)]">
-                    {diff.diff || '（没有差异）'}
-                  </pre>
+                  diff.diff ? <DiffView diff={diff.diff} /> : <div className="p-3 text-[var(--dsw-alias-label-tertiary)]">（没有差异）</div>
                 ) : null}
               </div>
             </div>

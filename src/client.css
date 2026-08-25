@@ -116,7 +116,50 @@
   }
 
   .ymc-git-diff-content {
+    @apply relative flex min-h-0 flex-1 flex-col overflow-hidden;
+  }
+
+  .ymc-diff-scroll {
     @apply relative min-h-0 flex-1 overflow-auto;
+  }
+
+  .ymc-diff-spacer {
+    @apply relative min-w-full;
+  }
+
+  .ymc-diff-line {
+    @apply absolute left-0 right-0 flex items-center px-2.5 font-mono text-xs leading-5;
+  }
+
+  .ymc-diff-text {
+    @apply whitespace-pre pr-2;
+  }
+
+  .ymc-diff-line-add,
+  .ymc-diff-add {
+    background: color-mix(in srgb, var(--dsw-alias-state-success-primary) 14%, transparent);
+    color: var(--dsw-alias-state-success-primary);
+  }
+
+  .ymc-diff-line-del,
+  .ymc-diff-del {
+    background: color-mix(in srgb, var(--dsw-alias-state-error-primary) 14%, transparent);
+    color: var(--dsw-alias-state-error-primary);
+  }
+
+  .ymc-diff-line-hunk,
+  .ymc-diff-hunk {
+    background: color-mix(in srgb, var(--dsw-alias-state-business-primary) 12%, transparent);
+    color: var(--dsw-alias-state-business-primary);
+  }
+
+  .ymc-diff-line-meta,
+  .ymc-diff-meta {
+    color: var(--dsw-alias-label-tertiary);
+  }
+
+  .ymc-diff-line-context {
+    color: var(--dsw-alias-label-primary);
   }
 
   .ymc-activity-bar {
@@ -274,7 +317,7 @@
   .ymc-markdown-scroll,
   .ymc-image-preview,
   .ymc-git-list,
-  .ymc-git-diff-content {
+  .ymc-diff-scroll {
     @apply relative min-h-0 flex-1 overflow-auto;
   }
 
@@ -509,7 +552,8 @@
 .ymc-markdown-scroll,
 .ymc-image-preview,
 .ymc-git-list,
-.ymc-git-diff-content {
+.ymc-git-diff-content,
+.ymc-diff-scroll {
   scrollbar-color: var(--dsw-alias-scrollbar-bg-l2, var(--dsw-alias-border-l2)) transparent;
   scrollbar-width: thin;
 }
