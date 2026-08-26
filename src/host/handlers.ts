@@ -1,43 +1,57 @@
-import { isAbsolute } from 'node:path'
+import { readdir, stat } from 'node:fs/promises'
+import { isAbsolute, join } from 'node:path'
 import type { Context } from '@deepseek-ai/cordis'
-import type { FsDirEntry } from '@deepseek-ai/dsh-fs'
 import type { Config } from './config'
 import { bufferToBase64, IMAGE_EXTENSIONS, MIME_BY_EXTENSION, sortEntries } from './fs'
 import { domainError } from './result'
 import type { SidebarValue } from './types'
 import { errorMessage, fsCode, readString } from './utils'
 
-export async function handleList(ctx: Context, config: Config, payload: unknown, signal: AbortSignal): Promise<SidebarValue> {
+export async function handleList(config: Config, payload: unknown, signal: AbortSignal): Promise<SidebarValue> {
   const requested = readString(payload, 'path')
   if (!isAbsolute(requested)) {
     return domainError('invalid-path', 'path must be absolute')
   }
 
-  const target = await ctx.fs.resolve(requested, { signal })
-  const info = await ctx.fs.stat(target, signal)
-  if (!info) return domainError('not-found', `directory not found: ${requested}`)
-  if (info.type !== 'directory') return domainError('not-directory', `not a directory: ${requested}`)
-
-  let entries: FsDirEntry[]
+  // The DSH fs service's listDir performs a realpath + stat for every child,
+  // which makes large directories very slow to appear in the sidebar. The file
+  // tree only needs names, types and paths, so list directly through Node's
+  // readdir (still read-only; file contents / Git still go through DSH APIs).
+  let rawEntries
   try {
-    entries = sortEntries(await ctx.fs.listDir(target, signal))
+    rawEntries = await readdir(requested, { withFileTypes: true, encoding: 'utf8' })
   } catch (error) {
     const code = fsCode(error)
-    if (code === 'FS_PERMISSION_DENIED') return domainError('permission-denied', errorMessage(error))
+    if (code === 'ENOENT') return domainError('not-found', `directory not found: ${requested}`)
+    if (code === 'ENOTDIR') return domainError('not-directory', `not a directory: ${requested}`)
+    if (code === 'EACCES' || code === 'EPERM') return domainError('permission-denied', errorMessage(error))
     throw error
   }
+  if (signal.aborted) throw new DOMException('The operation was aborted.', 'AbortError')
 
-  const visible = entries.slice(0, config.maxEntriesPerDirectory)
+  const entries = await Promise.all(rawEntries.map(async (entry) => {
+    const childPath = join(requested, entry.name)
+    let type: 'file' | 'directory' | 'other'
+    if (entry.isSymbolicLink()) {
+      try {
+        const info = await stat(childPath)
+        type = info.isDirectory() ? 'directory' : info.isFile() ? 'file' : 'other'
+      } catch {
+        type = 'other'
+      }
+    } else {
+      type = entry.isDirectory() ? 'directory' : entry.isFile() ? 'file' : 'other'
+    }
+    return { name: entry.name, path: childPath, type }
+  }))
+
+  const sorted = sortEntries(entries)
+  const visible = sorted.slice(0, config.maxEntriesPerDirectory)
   return {
     kind: 'list',
-    path: target.displayPath,
-    truncated: entries.length > visible.length,
-    entries: visible.map((entry) => ({
-      name: entry.name,
-      path: entry.target.displayPath,
-      type: entry.type,
-      size: entry.size,
-    })),
+    path: requested,
+    truncated: sorted.length > visible.length,
+    entries: visible,
   }
 }
 

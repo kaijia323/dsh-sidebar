@@ -1,5 +1,4 @@
 import { Buffer } from 'node:buffer'
-import type { FsDirEntry } from '@deepseek-ai/dsh-fs'
 
 export const IMAGE_EXTENSIONS = new Set([
   '.png', '.jpg', '.jpeg', '.gif', '.webp', '.bmp', '.ico', '.avif',
@@ -18,7 +17,12 @@ export const MIME_BY_EXTENSION: Record<string, string> = {
 
 const NAME_COLLATOR = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' })
 
-export function sortEntries(entries: FsDirEntry[]): FsDirEntry[] {
+export interface SortableEntry {
+  name: string
+  type: 'file' | 'directory' | 'other'
+}
+
+export function sortEntries<T extends SortableEntry>(entries: T[]): T[] {
   const collator = NAME_COLLATOR
   return entries.slice().sort((a, b) => {
     if (a.type !== b.type) {

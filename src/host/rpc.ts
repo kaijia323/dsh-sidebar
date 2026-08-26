@@ -30,7 +30,7 @@ export function createRpcHandler(ctx: Context, config: Config): ConnectionRpcHan
           })
         }
         case 'list': {
-          return ok(await handleList(ctx, config, payload, signal))
+          return ok(await handleList(config, payload, signal))
         }
         case 'read': {
           return ok(await handleRead(ctx, config, payload, signal))

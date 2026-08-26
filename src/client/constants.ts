@@ -13,6 +13,7 @@ export const SIDEBAR_STORAGE_KEY = 'dsh-sidebar:v1'
 export const COLLAPSE_MS = 240
 export const ENTER_MS = 200
 export const TOGGLE_THROTTLE_MS = Math.max(ENTER_MS, COLLAPSE_MS) + 50
+export const ROOT_CACHE_FRESH_MS = 2000
 
 export const DEFAULT_LIMITS = {
   maxTextBytes: 2 * 1024 * 1024,

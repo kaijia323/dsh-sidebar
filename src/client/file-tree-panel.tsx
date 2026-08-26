@@ -11,7 +11,7 @@ import {
   type WorkspaceListLike,
 } from '../client-model'
 import { isDomainError } from './api'
-import { DEFAULT_LIMITS, TOGGLE_THROTTLE_MS } from './constants'
+import { DEFAULT_LIMITS, ROOT_CACHE_FRESH_MS, TOGGLE_THROTTLE_MS } from './constants'
 import { PanelHeader } from './panel-header'
 import { PreviewPane } from './preview'
 import { Tree } from './tree'
@@ -47,7 +47,9 @@ export function FileTreePanel({ api, sessionId, sessions, workspaces }: FileTree
   const controllersRef = useRef(new Map<string, AbortController>())
   const toggleThrottleRef = useRef(new Map<string, number>())
   const dirsRef = useRef(dirs)
+  const dirsLoadedAtRef = useRef(new Map<string, number>())
   const activePathRef = useRef(activePath)
+  const rootChangedRef = useRef(false)
   const pendingChangesRef = useRef(new Set<string>())
   const watcherTimerRef = useRef<number | undefined>(undefined)
 
@@ -67,7 +69,9 @@ export function FileTreePanel({ api, sessionId, sessions, workspaces }: FileTree
     controllersRef.current.clear()
     toggleThrottleRef.current.clear()
     inflightRef.current.clear()
-    setDirs({})
+    rootChangedRef.current = true
+    // Keep previously loaded directories in memory: switching back to a session
+    // whose root was already visited can render its cache immediately.
     dispatch({ type: 'reset', root })
     setTabs([])
     setActivePath(undefined)
@@ -173,9 +177,9 @@ export function FileTreePanel({ api, sessionId, sessions, workspaces }: FileTree
     }
   }, [])
 
-  const loadDir = useCallback(async (path: string): Promise<void> => {
+  const loadDir = useCallback(async (path: string, force = false): Promise<void> => {
     if (!path) return
-    if (dirsRef.current[path]) return
+    if (dirsRef.current[path] && !force) return
     const existing = inflightRef.current.get(path)
     if (existing) return existing
     setLoading((prev) => new Set(prev).add(path))
@@ -193,7 +197,7 @@ export function FileTreePanel({ api, sessionId, sessions, workspaces }: FileTree
         }
         setDirs((prev) => {
           const previous = prev[path]
-          if (previous && previous.entries.length > 0) return prev
+          if (previous && previous.entries.length > 0 && !force) return prev
           return {
             ...prev,
             [path]: {
@@ -203,6 +207,7 @@ export function FileTreePanel({ api, sessionId, sessions, workspaces }: FileTree
             },
           }
         })
+        dirsLoadedAtRef.current.set(path, Date.now())
       } catch (error) {
         if (controller.signal.aborted || (error instanceof DOMException && error.name === 'AbortError')) return
         const message = error instanceof Error ? error.message : String(error)
@@ -223,10 +228,21 @@ export function FileTreePanel({ api, sessionId, sessions, workspaces }: FileTree
   }, [api, limits.maxEntriesPerDirectory])
 
   useEffect(() => {
+    const forceRoot = rootChangedRef.current ? root : undefined
+    const forceRootStale = forceRoot
+      ? !dirs[forceRoot] || Date.now() - (dirsLoadedAtRef.current.get(forceRoot) ?? 0) >= ROOT_CACHE_FRESH_MS
+      : false
     for (const path of expanded) {
-      if (!dirs[path] && !inflightRef.current.has(path)) void loadDir(path)
+      if ((!dirs[path] || path === forceRoot) && !inflightRef.current.has(path)) {
+        void loadDir(path, path === forceRoot && forceRootStale)
+      }
     }
-  }, [expanded, dirs, loadDir])
+    // Keep the flag until the render that contains the new root in `expanded`;
+    // the first effect run after a root change may still see the old expanded set.
+    if (rootChangedRef.current && forceRoot && expanded.has(forceRoot)) {
+      rootChangedRef.current = false
+    }
+  }, [expanded, dirs, loadDir, root])
 
   function toggleDirectory(path: string) {
     // Throttle rapid clicks on the same directory. The window is slightly longer
