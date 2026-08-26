@@ -5,6 +5,11 @@ import { rolldown } from 'rolldown'
 
 await mkdir('lib', { recursive: true })
 
+const packageJson = JSON.parse(await readFile(new URL('./package.json', import.meta.url), 'utf8'))
+// DSH's client-modules loader keys bundles by package name; the handoff id
+// must match the boot-graph entry id (here the scoped npm package name).
+const clientModuleId = packageJson.name
+
 async function buildClientCss() {
   let cliPath
   try {
@@ -49,7 +54,7 @@ const clientOutput = await clientBundle.generate({ format: 'cjs' })
 const clientCode = clientOutput.output[0].code
   .replace('__DSH_KAIJIA_CLIENT_CSS__', JSON.stringify(clientCss))
 const clientFactory = `window.__ModuleLoader__.load({
-  id: "dsh-sidebar",
+  id: ${JSON.stringify(clientModuleId)},
   factory: (require) => {
     var module = { exports: {} };
     var exports = module.exports;

@@ -104,13 +104,14 @@ test('client style installer is hot-swap safe (one style element per fiber)', as
 })
 
 test('client bundle materializes as a lazy-CJS plugin factory', async () => {
+  const packageJson = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8'))
   const code = await readFile(new URL('../lib/client.js', import.meta.url), 'utf8')
   let factory: ((require: (specifier: string) => unknown) => unknown) | undefined
   const context = {
     window: {
       __ModuleLoader__: {
         load(handoff: { id: string; factory: typeof factory }) {
-          assert.equal(handoff.id, 'dsh-sidebar')
+          assert.equal(handoff.id, packageJson.name)
           factory = handoff.factory
         },
       },
