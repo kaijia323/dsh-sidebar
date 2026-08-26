@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type UIEvent } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent, type UIEvent } from 'react'
 import {
   AlertCircle,
   ArrowDownToLine,
@@ -9,7 +9,7 @@ import {
   History,
   ListTree,
 } from 'lucide-react'
-import { isMarkdownPath } from '../client-model'
+import { clamp, isMarkdownPath } from '../client-model'
 import { isDomainError } from './api'
 import { CodeView } from './code-view'
 import { DiffView } from './diff-view'
@@ -260,15 +260,16 @@ function UntrackedFilePreview({ value }: { value: ReadValue }) {
   )
 }
 
-function ChangeDetail({ selection, loading, diff, preview }: {
+function ChangeDetail({ selection, loading, diff, preview, onDividerPointerDown }: {
   selection: ChangeSelection
   loading: boolean
   diff: GitDiffValue | null
   preview: ReadValue | null
+  onDividerPointerDown: (event: ReactPointerEvent<HTMLDivElement>) => void
 }) {
   return (
     <>
-      <div className="kaijia-divider relative flex h-[7px] flex-none touch-none items-center justify-center">
+      <div className="kaijia-divider relative flex h-[7px] flex-none touch-none items-center justify-center" onPointerDown={onDividerPointerDown}>
         <span className="kaijia-divider-grip h-[3px] w-[26px] rounded-sm bg-[var(--dsw-alias-border-l2)]" />
       </div>
       <div className="kaijia-git-diff flex min-h-[60px] flex-1 flex-col">
@@ -339,6 +340,39 @@ export function GitPanel({ api, root, active = true }: GitPanelProps) {
   const [operationMessage, setOperationMessage] = useState<{ tone: 'info' | 'error'; text: string } | null>(null)
   const rootRef = useRef<string | undefined>(undefined)
   const statusCacheRef = useRef(new Map<string, GitStatusValue>())
+  const bodyRef = useRef<HTMLDivElement>(null)
+  const dragRef = useRef<{ startY: number; startSplit: number } | null>(null)
+  const [split, setSplit] = useState(0.55)
+
+  useEffect(() => {
+    const handlePointerMove = (event: PointerEvent) => {
+      const drag = dragRef.current
+      const body = bodyRef.current
+      if (!drag || !body) return
+      const rect = body.getBoundingClientRect()
+      const ratio = (event.clientY - rect.top) / Math.max(rect.height, 1)
+      setSplit(clamp(ratio, 0.2, 0.8))
+    }
+    const handlePointerUp = () => { dragRef.current = null }
+    window.addEventListener('pointermove', handlePointerMove)
+    window.addEventListener('pointerup', handlePointerUp)
+    window.addEventListener('pointercancel', handlePointerUp)
+    return () => {
+      window.removeEventListener('pointermove', handlePointerMove)
+      window.removeEventListener('pointerup', handlePointerUp)
+      window.removeEventListener('pointercancel', handlePointerUp)
+    }
+  }, [])
+
+  function onDividerPointerDown(event: ReactPointerEvent<HTMLDivElement>) {
+    const body = bodyRef.current
+    if (!body) return
+    event.preventDefault()
+    const rect = body.getBoundingClientRect()
+    const ratio = (event.clientY - rect.top) / Math.max(rect.height, 1)
+    dragRef.current = { startY: event.clientY, startSplit: split }
+    setSplit(clamp(ratio, 0.2, 0.8))
+  }
 
   useEffect(() => {
     const rootChanged = rootRef.current !== root
@@ -624,6 +658,7 @@ export function GitPanel({ api, root, active = true }: GitPanelProps) {
   const logOk = logValue && !isDomainError(logValue) ? logValue : null
   const logError = logValue && isDomainError(logValue) ? logValue.message : null
   const branchTotal = branchesValue && !isDomainError(branchesValue) ? branchesValue.branches.length : 0
+  const hasDetail = (subView === 'changes' && changeSelection) || (subView === 'history' && selectedCommit)
 
   function selectChange(entry: GitStatusEntry, group: ChangeGroup) {
     setChangeSelection({ entry, group })
@@ -811,7 +846,7 @@ export function GitPanel({ api, root, active = true }: GitPanelProps) {
         </button>
       </div>
 
-      <div className="kaijia-git-body relative flex min-h-0 flex-1 flex-col">
+      <div ref={bodyRef} className="kaijia-git-body relative flex min-h-0 flex-1 flex-col">
         {operationMessage && (
           <div className={`kaijia-git-notice flex-none border-b border-[var(--dsw-alias-border-l2)] px-2.5 py-1.5 text-[11px] ${
             operationMessage.tone === 'error'
@@ -822,7 +857,12 @@ export function GitPanel({ api, root, active = true }: GitPanelProps) {
           </div>
         )}
 
-        <div className="kaijia-git-main flex min-h-0 flex-1 flex-col">
+        <div
+          className="kaijia-git-main flex min-h-0 flex-1 flex-col"
+          style={hasDetail
+            ? { flexBasis: `${Math.round(split * 100)}%`, flexGrow: 0, flexShrink: 0, minHeight: 120 }
+            : undefined}
+        >
           {subView === 'changes' && (
             !root ? <NoRootMessage /> : (
               loading && !value ? (
@@ -884,12 +924,13 @@ export function GitPanel({ api, root, active = true }: GitPanelProps) {
             loading={detailLoading}
             diff={diff}
             preview={preview}
+            onDividerPointerDown={onDividerPointerDown}
           />
         )}
 
         {subView === 'history' && selectedCommit && (
           <>
-            <div className="kaijia-divider relative flex h-[7px] flex-none touch-none items-center justify-center">
+            <div className="kaijia-divider relative flex h-[7px] flex-none touch-none items-center justify-center" onPointerDown={onDividerPointerDown}>
               <span className="kaijia-divider-grip h-[3px] w-[26px] rounded-sm bg-[var(--dsw-alias-border-l2)]" />
             </div>
             <div className="kaijia-git-diff flex min-h-[60px] flex-1 flex-col">
