@@ -33,10 +33,16 @@ export function PreviewPane({ api, tabs, activePath, limits, onCloseTab, onSelec
     }
     const pathChanged = lastPathRef.current !== file.path
     lastPathRef.current = file.path
-    setPhase('loading')
-    setValue(null)
-    setError(null)
-    if (pathChanged) setMarkdown(true)
+    if (pathChanged) {
+      // Switching to a different file: show a fresh loading state.
+      setPhase('loading')
+      setValue(null)
+      setError(null)
+      setMarkdown(true)
+    }
+    // Same-path re-reads (file changed on disk / watcher refresh) keep the
+    // existing content mounted and only swap in the new value when it arrives,
+    // so the preview does not blink through an empty loading state.
     const controller = new AbortController()
     api.read(file.path, controller.signal).then((response) => {
       if (controller.signal.aborted) return
@@ -45,6 +51,7 @@ export function PreviewPane({ api, tabs, activePath, limits, onCloseTab, onSelec
         setPhase('ready')
         return
       }
+      setError(null)
       setValue(response)
       setPhase('ready')
     }).catch((cause: unknown) => {
