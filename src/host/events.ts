@@ -1,5 +1,5 @@
 import { execFile } from 'node:child_process'
-import { isAbsolute } from 'node:path'
+import { isAbsolute, relative, resolve } from 'node:path'
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import { promisify } from 'node:util'
 import type { Context } from '@deepseek-ai/cordis'
@@ -42,6 +42,26 @@ export interface FileChangePayload {
   event: string
 }
 
+export interface GitChangePayload {
+  kind: 'git-change'
+  path: string
+  event: string
+}
+
+/**
+ * Git metadata directories that can produce huge, high-frequency events (and
+ * whose contents are not needed by the sidebar). The git watcher still sees
+ * HEAD, index, packed-refs, refs/, logs/ and other small state files. Linked
+ * worktree metadata under `worktrees/` is also watched because each worktree
+ * has its own HEAD/index/logs and must trigger Git refreshes too.
+ */
+function isHeavyGitPath(gitDir: string, candidate: string): boolean {
+  const rel = relative(gitDir, candidate)
+  if (!rel || rel === '.') return false
+  const parts = rel.split(/[\\/]/)
+  return parts.some((part) => part === 'objects' || part === 'hooks' || part === 'info')
+}
+
 interface SseClient {
   id: number
   root: string
@@ -60,15 +80,18 @@ function isLoopbackAuthority(hostHeader: string | undefined): boolean {
 }
 
 /**
- * Broadcasts filesystem changes detected by chokidar to browser sidebar
- * clients over a same-origin SSE stream. One chokidar watcher is shared per
- * watched root; watchers are created lazily on first subscriber and closed
- * when the last subscriber for that root disconnects.
+ * Broadcasts filesystem and Git metadata changes detected by chokidar to
+ * browser sidebar clients over a same-origin SSE stream. One file watcher and
+ * one Git metadata watcher are shared per watched root; watchers are created
+ * lazily on first subscriber and closed when the last subscriber for that root
+ * disconnects.
  */
 export class FileWatchHub {
   private readonly clients = new Set<SseClient>()
   private readonly watchers = new Map<string, FSWatcher>()
   private readonly watcherTasks = new Map<string, Promise<void>>()
+  private readonly gitWatchers = new Map<string, FSWatcher>()
+  private readonly gitWatcherTasks = new Map<string, Promise<void>>()
   private nextClientId = 1
 
   constructor(private readonly config: Pick<Config, 'watchEnabled' | 'watchDebounceMs' | 'watchIgnored'>) {}
@@ -93,7 +116,6 @@ export class FileWatchHub {
       res.end('missing absolute root query parameter')
       return
     }
-
     const client: SseClient = {
       id: this.nextClientId,
       root,
@@ -117,12 +139,16 @@ export class FileWatchHub {
 
     res.on('close', () => this.removeClient(client))
     void this.ensureWatcher(root)
+    void this.ensureGitWatcher(root)
   }
 
   private removeClient(client: SseClient): void {
     if (!this.clients.delete(client)) return
     if (client.heartbeat) clearInterval(client.heartbeat)
-    if (!this.hasSubscribers(client.root)) this.stopWatcher(client.root)
+    if (!this.hasSubscribers(client.root)) {
+      this.stopWatcher(client.root)
+      this.stopGitWatcher(client.root)
+    }
   }
 
   private hasSubscribers(root: string): boolean {
@@ -166,8 +192,79 @@ export class FileWatchHub {
       console.warn(`[dsh-sidebar] file watcher error for ${root}:`, error)
     })
 
+    // The watcher may finish starting after the last subscriber disconnected;
+    // don't leave an orphan watcher behind in that race.
+    if (!this.hasSubscribers(root)) {
+      void watcher.close()
+      return
+    }
     this.watchers.set(root, watcher)
     void this.applyGitIgnored(root, watcher)
+  }
+
+  private async ensureGitWatcher(root: string): Promise<void> {
+    if (!this.config.watchEnabled) return
+    if (this.gitWatchers.has(root)) return
+    const pending = this.gitWatcherTasks.get(root)
+    if (pending) return pending
+
+    const task = this.createGitWatcher(root)
+    this.gitWatcherTasks.set(root, task)
+    try {
+      await task
+    } finally {
+      this.gitWatcherTasks.delete(root)
+    }
+  }
+
+  private async createGitWatcher(root: string): Promise<void> {
+    let gitWatchDir: string
+    try {
+      const options = {
+        encoding: 'utf8' as const,
+        maxBuffer: 4 * 1024 * 1024,
+        timeout: 5000,
+      }
+      const [gitDirResult, commonDirResult] = await Promise.all([
+        execFileAsync('git', ['-C', root, 'rev-parse', '--absolute-git-dir'], options),
+        execFileAsync('git', ['-C', root, 'rev-parse', '--git-common-dir'], options),
+      ])
+      const gitDir = gitDirResult.stdout.trim()
+      const rawCommon = commonDirResult.stdout.trim()
+      // Watch the common Git dir: it contains shared refs/logs and, for linked
+      // worktrees, the per-worktree HEAD/index/logs under worktrees/.
+      gitWatchDir = rawCommon ? resolve(root, rawCommon) : gitDir
+      if (!gitWatchDir) return
+    } catch {
+      // Not a Git repository; nothing to watch for Git state changes.
+      return
+    }
+
+    const watcher = watch(gitWatchDir, {
+      ignoreInitial: true,
+      persistent: true,
+      ignorePermissionErrors: true,
+      awaitWriteFinish: {
+        stabilityThreshold: this.config.watchDebounceMs,
+        pollInterval: 30,
+      },
+      ignored: (candidate: string) => isHeavyGitPath(gitWatchDir, candidate),
+    })
+
+    watcher.on('all', (event, path) => {
+      this.broadcastGit(root, { kind: 'git-change', path, event })
+    })
+    watcher.on('error', (error) => {
+      console.warn(`[dsh-sidebar] git watcher error for ${root}:`, error)
+    })
+
+    // Same race guard as the file watcher: don't keep a Git watcher alive
+    // when every subscriber went away while it was starting.
+    if (!this.hasSubscribers(root)) {
+      void watcher.close()
+      return
+    }
+    this.gitWatchers.set(root, watcher)
   }
 
   private async applyGitIgnored(root: string, watcher: FSWatcher): Promise<void> {
@@ -183,8 +280,15 @@ export class FileWatchHub {
     void watcher.close()
   }
 
-  private broadcast(root: string, payload: FileChangePayload): void {
-    const data = `event: change\ndata: ${JSON.stringify(payload)}\n\n`
+  private stopGitWatcher(root: string): void {
+    const watcher = this.gitWatchers.get(root)
+    if (!watcher) return
+    this.gitWatchers.delete(root)
+    void watcher.close()
+  }
+
+  private writeEvent(root: string, eventName: string, payload: FileChangePayload | GitChangePayload): void {
+    const data = `event: ${eventName}\ndata: ${JSON.stringify(payload)}\n\n`
     for (const client of this.clients) {
       if (client.root !== root || client.response.writableEnded) continue
       try {
@@ -193,6 +297,14 @@ export class FileWatchHub {
         // The close handler will remove the client on the next socket event.
       }
     }
+  }
+
+  private broadcast(root: string, payload: FileChangePayload): void {
+    this.writeEvent(root, 'change', payload)
+  }
+
+  private broadcastGit(root: string, payload: GitChangePayload): void {
+    this.writeEvent(root, 'git-change', payload)
   }
 
   dispose(): void {
@@ -209,6 +321,10 @@ export class FileWatchHub {
       void watcher.close()
     }
     this.watchers.clear()
+    for (const watcher of this.gitWatchers.values()) {
+      void watcher.close()
+    }
+    this.gitWatchers.clear()
   }
 }
 

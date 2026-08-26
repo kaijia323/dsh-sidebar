@@ -493,9 +493,11 @@ export function GitPanel({ api, root, active = true }: GitPanelProps) {
       }, 500)
     }
     source.addEventListener('change', handleChange as EventListener)
+    source.addEventListener('git-change', handleChange as EventListener)
     return () => {
       source.close()
       source.removeEventListener('change', handleChange as EventListener)
+      source.removeEventListener('git-change', handleChange as EventListener)
       if (timer !== undefined) window.clearTimeout(timer)
     }
   }, [root, active])
