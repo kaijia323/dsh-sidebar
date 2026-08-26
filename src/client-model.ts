@@ -46,17 +46,31 @@ export function basename(path: string): string {
 }
 
 export function dirname(path: string): string {
+  if (!path) return ''
   const normalized = path.replace(/[\\/]+$/, '')
+  if (!normalized) return path.slice(0, 1) || ''
+  // A Windows drive root should stay a root: 'C:\' / 'C:/', not 'C:'.
+  if (/^[A-Za-z]:$/.test(normalized) && /^[A-Za-z]:[\\/]/.test(path)) {
+    return path.slice(0, 3)
+  }
   const index = Math.max(normalized.lastIndexOf('/'), normalized.lastIndexOf('\\'))
-  if (index <= 0) return normalized.slice(0, 1) || normalized
+  if (index <= 0) {
+    if (index === 0) return normalized.slice(0, 1)
+    return normalized
+  }
+  // Same drive-root preservation for 'C:\file.txt'.
+  if (index === 2 && /^[A-Za-z]:[\\/]/.test(normalized)) {
+    return normalized.slice(0, 3)
+  }
   return normalized.slice(0, index)
 }
 
 export function isPathInside(path: string, ancestor: string): boolean {
-  if (path === ancestor) return true
-  const separator = ancestor.includes('\\') ? '\\' : '/'
-  const prefix = ancestor.endsWith(separator) ? ancestor : ancestor + separator
-  return path.startsWith(prefix)
+  const normalizedPath = path.replace(/\\/g, '/')
+  const normalizedAncestor = ancestor.replace(/\\/g, '/')
+  if (normalizedPath === normalizedAncestor) return true
+  const prefix = normalizedAncestor.endsWith('/') ? normalizedAncestor : normalizedAncestor + '/'
+  return normalizedPath.startsWith(prefix)
 }
 export function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`

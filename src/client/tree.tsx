@@ -14,10 +14,11 @@ import { COLLAPSE_MS, ENTER_MS, OVERSCAN, TREE_ROW_HEIGHT } from './constants'
 import { Chevron, FileIcon, FolderIcon } from './icons'
 
 function isPathInside(path: string, ancestor: string): boolean {
-  if (path === ancestor) return false
-  const separator = ancestor.includes('\\') ? '\\' : '/'
-  const prefix = ancestor.endsWith(separator) ? ancestor : ancestor + separator
-  return path.startsWith(prefix)
+  const normalizedPath = path.replace(/\\/g, '/')
+  const normalizedAncestor = ancestor.replace(/\\/g, '/')
+  if (normalizedPath === normalizedAncestor) return false
+  const prefix = normalizedAncestor.endsWith('/') ? normalizedAncestor : normalizedAncestor + '/'
+  return normalizedPath.startsWith(prefix)
 }
 
 interface TreeRowProps {

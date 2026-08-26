@@ -36,6 +36,8 @@
   "scripts": {
     "build": "node build.mjs",
     "check": "node build.mjs",
+    "prepare": "node build.mjs",
+    "prepack": "node build.mjs",
     "test": "node build.mjs && node --test --test-isolation=none test/client-model.test.ts test/host-rpc.test.ts test/client-contract.test.ts"
   },
   "dependencies": {

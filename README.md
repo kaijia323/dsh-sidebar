@@ -46,9 +46,10 @@ DSH Web Client 的 VSCode 风格文件树侧栏。作为 `#root` 的兄弟节点
 git clone https://github.com/kaijia323/dsh-sidebar.git
 cd dsh-sidebar
 pnpm install
-pnpm build
 dsh plugin --profile web add .
 ```
+
+`pnpm install` 会通过 `prepare` 脚本自动构建 `lib/`（在 Windows / Linux / macOS 上行为一致）；之后如果修改了源码，再执行一次 `pnpm build` 即可。
 
 重启 `dsh web` 后，右侧文件树会自动作为 body 兄弟节点打开并展示；即使当前会话是 blank 也能打开。侧栏最右侧的 Activity Bar 常驻：点击当前视图图标可收起/展开，点击另一个图标切换视图；展开状态下左侧边缘可拖拽调整宽度。
 

@@ -28,12 +28,25 @@ test('dirname handles windows and posix paths', () => {
   assert.equal(dirname('/root'), '/')
 })
 
+test('dirname keeps filesystem roots intact', () => {
+  assert.equal(dirname('/'), '/')
+  assert.equal(dirname('C:\\'), 'C:\\')
+  assert.equal(dirname('C:/'), 'C:/')
+  assert.equal(dirname('C:\\file.txt'), 'C:\\')
+})
+
 test('isPathInside handles equal and descendant paths', () => {
   assert.equal(isPathInside('/repo', '/repo'), true)
   assert.equal(isPathInside('/repo/sub/a.txt', '/repo'), true)
   assert.equal(isPathInside('/repo-other/a.txt', '/repo'), false)
   assert.equal(isPathInside('C:\\repo\\sub', 'C:\\repo'), true)
   assert.equal(isPathInside('C:\\repo-file', 'C:\\repo'), false)
+})
+
+test('isPathInside compares mixed windows/posix separators', () => {
+  assert.equal(isPathInside('C:\\repo\\sub\\a.txt', 'C:/repo'), true)
+  assert.equal(isPathInside('C:/repo/sub/a.txt', 'C:\\repo'), true)
+  assert.equal(isPathInside('C:\\repo-file', 'C:/repo'), false)
 })
 
 test('formatBytes and clamp', () => {
