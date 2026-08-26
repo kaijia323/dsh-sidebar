@@ -8,6 +8,11 @@ lib/
 dist/
 *.tsbuildinfo
 
+# Packed release artifacts
+*.tgz
+*.tar.gz
+*.zip
+
 # Logs
 *.log
 npm-debug.log*
