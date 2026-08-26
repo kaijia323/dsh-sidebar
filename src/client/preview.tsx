@@ -57,37 +57,37 @@ export function PreviewPane({ api, tabs, activePath, limits, onCloseTab, onSelec
 
   let content: ReactNode
   if (!file) {
-    content = <div className="ymc-preview-empty flex h-full flex-col items-center justify-center text-[var(--dsw-alias-label-tertiary)]">点击文件查看内容</div>
+    content = <div className="kaijia-preview-empty flex h-full flex-col items-center justify-center text-[var(--dsw-alias-label-tertiary)]">点击文件查看内容</div>
   } else if (phase === 'loading') {
-    content = <div className="ymc-preview-empty flex h-full flex-col items-center justify-center text-[var(--dsw-alias-label-tertiary)]"><span className="ymc-spinner" />正在读取…</div>
+    content = <div className="kaijia-preview-empty flex h-full flex-col items-center justify-center text-[var(--dsw-alias-label-tertiary)]"><span className="kaijia-spinner" />正在读取…</div>
   } else if (error || (value && isDomainError(value))) {
     const message = error ?? (isDomainError(value!) ? value.message : '')
-    content = <div className="ymc-preview-error overflow-auto text-[var(--dsw-alias-state-error-primary)]">{message}</div>
+    content = <div className="kaijia-preview-error overflow-auto text-[var(--dsw-alias-state-error-primary)]">{message}</div>
   } else {
     const read = value as ReadOk | null
     if (!read) {
-      content = <div className="ymc-preview-empty">无内容</div>
+      content = <div className="kaijia-preview-empty">无内容</div>
     } else {
       const result = read.result
       if (result.kind === 'binary') {
         content = (
-          <div className="ymc-preview-message">
+          <div className="kaijia-preview-message">
             <strong>{file.name}</strong>
             <p>二进制文件，无法预览。</p>
-            <p className="ymc-preview-meta">{formatBytes(read.size)}</p>
+            <p className="kaijia-preview-meta">{formatBytes(read.size)}</p>
           </div>
         )
       } else if (result.kind === 'too-large') {
         content = (
-          <div className="ymc-preview-message">
+          <div className="kaijia-preview-message">
             <strong>{file.name}</strong>
             <p>文件超过预览大小限制（{formatBytes(result.limit)}）。</p>
-            <p className="ymc-preview-meta">{formatBytes(read.size)}</p>
+            <p className="kaijia-preview-meta">{formatBytes(read.size)}</p>
           </div>
         )
       } else if (result.kind === 'error') {
         content = (
-          <div className="ymc-preview-message">
+          <div className="kaijia-preview-message">
             <strong>{file.name}</strong>
             <p>{result.message}</p>
           </div>
@@ -95,35 +95,35 @@ export function PreviewPane({ api, tabs, activePath, limits, onCloseTab, onSelec
       } else if (result.kind === 'image') {
         const source = `data:${result.mime};base64,${result.base64}`
         content = (
-          <div className="ymc-image-preview">
-            <img className="ymc-image" src={source} alt={file.name} />
+          <div className="kaijia-image-preview">
+            <img className="kaijia-image" src={source} alt={file.name} />
           </div>
         )
       } else {
         const markdownFile = isMarkdownPath(file.path)
         content = (
-          <div className="ymc-text-preview flex min-h-0 flex-1 flex-col">
+          <div className="kaijia-text-preview flex min-h-0 flex-1 flex-col">
             {markdownFile && (
-              <div className="ymc-preview-toolbar flex h-[26px] flex-none items-center gap-0.5 border-b border-[var(--dsw-alias-border-l2)] px-1.5">
+              <div className="kaijia-preview-toolbar flex h-[26px] flex-none items-center gap-0.5 border-b border-[var(--dsw-alias-border-l2)] px-1.5">
                 <button
                   type="button"
-                  className={`ymc-toolbar-button inline-flex cursor-pointer items-center rounded-md px-1.5 py-1${markdown ? ' ymc-toolbar-active' : ''}`}
+                  className={`kaijia-toolbar-button inline-flex cursor-pointer items-center rounded-md px-1.5 py-1${markdown ? ' kaijia-toolbar-active' : ''}`}
                   onClick={() => setMarkdown(true)}
                 >
                   预览
                 </button>
                 <button
                   type="button"
-                  className={`ymc-toolbar-button inline-flex cursor-pointer items-center rounded-md px-1.5 py-1${markdown ? '' : ' ymc-toolbar-active'}`}
+                  className={`kaijia-toolbar-button inline-flex cursor-pointer items-center rounded-md px-1.5 py-1${markdown ? '' : ' kaijia-toolbar-active'}`}
                   onClick={() => setMarkdown(false)}
                 >
                   源码
                 </button>
-                <span className="ymc-preview-meta ml-auto text-[11px] text-[var(--dsw-alias-label-tertiary)]">{formatBytes(read.size)}</span>
+                <span className="kaijia-preview-meta ml-auto text-[11px] text-[var(--dsw-alias-label-tertiary)]">{formatBytes(read.size)}</span>
               </div>
             )}
             {markdownFile && markdown
-              ? <div className="ymc-markdown-scroll relative min-h-0 flex-1 overflow-auto"><MarkdownView text={result.content} /></div>
+              ? <div className="kaijia-markdown-scroll relative min-h-0 flex-1 overflow-auto"><MarkdownView text={result.content} /></div>
               : <CodeView text={result.content} />}
           </div>
         )
@@ -132,7 +132,7 @@ export function PreviewPane({ api, tabs, activePath, limits, onCloseTab, onSelec
   }
 
   return (
-    <div className="ymc-preview-root flex min-h-0 flex-1 flex-col">
+    <div className="kaijia-preview-root flex min-h-0 flex-1 flex-col">
       {tabs.length > 0 && (
         <TabsBar
           tabs={tabs}
@@ -141,7 +141,7 @@ export function PreviewPane({ api, tabs, activePath, limits, onCloseTab, onSelec
           onSelectTab={onSelectTab}
         />
       )}
-      <div className="ymc-preview-content relative flex min-h-0 flex-1 flex-col">
+      <div className="kaijia-preview-content relative flex min-h-0 flex-1 flex-col">
         {content}
       </div>
     </div>

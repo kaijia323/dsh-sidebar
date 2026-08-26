@@ -47,9 +47,9 @@ const clientBundle = await rolldown({
 })
 const clientOutput = await clientBundle.generate({ format: 'cjs' })
 const clientCode = clientOutput.output[0].code
-  .replace('__DSH_YMC_CLIENT_CSS__', JSON.stringify(clientCss))
+  .replace('__DSH_KAIJIA_CLIENT_CSS__', JSON.stringify(clientCss))
 const clientFactory = `window.__ModuleLoader__.load({
-  id: "dsh-ymc-sidebar",
+  id: "dsh-sidebar",
   factory: (require) => {
     var module = { exports: {} };
     var exports = module.exports;
@@ -67,7 +67,7 @@ await writeFile('lib/client.js', clientFactory, 'utf8')
 const hostDts = `import type { Context } from '@deepseek-ai/cordis'
 import type Schema from '@deepseek-ai/schemastery'
 
-export declare const name: 'dsh-ymc-sidebar'
+export declare const name: 'dsh-sidebar'
 export declare const inject: string[]
 
 export interface Config {
@@ -88,7 +88,7 @@ await writeFile('lib/index.d.ts', hostDts, 'utf8')
 
 const clientDts = `import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
 
-export declare const name: 'dsh-ymc-sidebar'
+export declare const name: 'dsh-sidebar'
 export declare const inject: string[]
 
 export declare function apply(ctx: ClientContext): void

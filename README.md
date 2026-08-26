@@ -1,4 +1,4 @@
-# dsh-ymc-sidebar
+# dsh-sidebar
 
 DSH Web Client 的 VSCode 风格文件树侧栏。作为 `#root` 的兄弟节点挂载在 `document.body` 上，通过 CSS layout push 让 DSH 原生界面让出右侧空间；不占用 DSH 原生 `details` slot，因此 blank 会话也能打开。特性：
 
@@ -16,9 +16,9 @@ DSH Web Client 的 VSCode 风格文件树侧栏。作为 `#root` 的兄弟节点
 
 插件分两半：
 
-- **Host half（`src/index.ts`）**：注入 `fs`、`connection` 与 `webServer`，在 `/dsh-ymc-sidebar` 注册一个仅 loopback 可访问的 Connection RPC channel，提供 `meta` / `list` / `read` / `git-status` / `git-diff` / `git-log` / `git-show` / `git-branches` / `git-switch` / `git-pull` / `git-push` 等端点；同时在 `/dsh-ymc-sidebar/events` 注册同源 SSE 通道，用 `chokidar` 监听当前工作区并把文件变化推送给浏览器。
+- **Host half（`src/index.ts`）**：注入 `fs`、`connection` 与 `webServer`，在 `/dsh-sidebar` 注册一个仅 loopback 可访问的 Connection RPC channel，提供 `meta` / `list` / `read` / `git-status` / `git-diff` / `git-log` / `git-show` / `git-branches` / `git-switch` / `git-pull` / `git-push` 等端点；同时在 `/dsh-sidebar/events` 注册同源 SSE 通道，用 `chokidar` 监听当前工作区并把文件变化推送给浏览器。
 - **Browser half（`src/client.tsx`）**：注入 `sessions`、`workspaces`、`connection`，在 `document.body` 上创建自己的 React root 并挂载右侧栏；通过 `EventSource` 订阅文件变化事件，自动失效并重载受影响的目录，同时重读当前激活的预览。右侧栏是 `#root` 的兄弟节点，不注册任何 DSH slot：
-  - 打开时通过 `--dsh-ymc-sidebar-width` 让 `#root` 让出宽度，形成“真占位”的 VSCode 式侧栏，而不是 overlay；收起时至少让出 40px 给常驻 Activity Bar；
+  - 打开时通过 `--dsh-sidebar-width` 让 `#root` 让出宽度，形成“真占位”的 VSCode 式侧栏，而不是 overlay；收起时至少让出 40px 给常驻 Activity Bar；
   - 面板本身可拖拽调整宽度（280–640px），宽度与开关状态按 localStorage 持久化；
   - 最右侧是 40px 的 Activity Bar，可在“文件资源管理器”和“Git 追踪”间切换；点击当前视图图标收起侧栏，再次点击展开或切换视图；
   - 两个视图保持挂载以保留文件树/预览状态，当前视图也会持久化；面板头部不显示刷新和关闭按钮；
@@ -43,8 +43,8 @@ DSH Web Client 的 VSCode 风格文件树侧栏。作为 `#root` 的兄弟节点
 从仓库或本地源码安装：
 
 ```bash
-git clone https://github.com/kaijia323/dsh-ymc-sidebar.git
-cd dsh-ymc-sidebar
+git clone https://github.com/kaijia323/dsh-sidebar.git
+cd dsh-sidebar
 pnpm install
 pnpm build
 dsh plugin --profile web add .
@@ -57,7 +57,7 @@ dsh plugin --profile web add .
 正式版已发布到 npm，直接安装：
 
 ```bash
-dsh plugin --profile web add @kaijia/dsh-ymc-sidebar
+dsh plugin --profile web add @kaijia/dsh-sidebar
 ```
 
 `dsh plugin` 会将该包安装到 `$DSH_HOME/profiles/web`，识别 `dsh.bundle` 配置并自动激活插件层。如果不想依赖 npm registry，也可以先用 `pnpm pack` 生成 tarball 来做正式分发（文件名中的版本号以当前 `package.json` 的 `version` 为准）：
@@ -65,7 +65,7 @@ dsh plugin --profile web add @kaijia/dsh-ymc-sidebar
 ```bash
 pnpm build
 pnpm pack
-dsh plugin --profile web add ./kaijia-dsh-ymc-sidebar-0.1.0.tgz
+dsh plugin --profile web add ./kaijia-dsh-sidebar-0.1.0.tgz
 ```
 
 两种方式安装后，都可以用以下命令确认配置层已生效：
@@ -74,13 +74,13 @@ dsh plugin --profile web add ./kaijia-dsh-ymc-sidebar-0.1.0.tgz
 dsh --profile web --dump-config
 ```
 
-输出中应能看到 `# == @kaijia/dsh-ymc-sidebar` 层；随后重启 `dsh web` 即可使用。卸载时执行：
+输出中应能看到 `# == @kaijia/dsh-sidebar` 层；随后重启 `dsh web` 即可使用。卸载时执行：
 
 ```bash
-dsh plugin --profile web remove @kaijia/dsh-ymc-sidebar
+dsh plugin --profile web remove @kaijia/dsh-sidebar
 ```
 
-> npm 发布包名为 `@kaijia/dsh-ymc-sidebar`。
+> npm 发布包名为 `@kaijia/dsh-sidebar`。
 
 ## 开发
 
@@ -95,14 +95,14 @@ dsh plugin --profile web remove @kaijia/dsh-ymc-sidebar
 ### 热插拔 / HMR
 
 - Host 半的 RPC channel 注册和 Browser 半的 slot 注册都挂在 Cordis fiber 上，插件卸载/HMR 时自动撤销。
-- 每个插件 fiber 都会创建**自己的** `<style data-dsh-ymc-sidebar-style>` 节点，disposer 只移除自己创建的那个，因此热替换重叠期间不会互相删除样式，也不会残留旧样式。
+- 每个插件 fiber 都会创建**自己的** `<style data-dsh-sidebar-style>` 节点，disposer 只移除自己创建的那个，因此热替换重叠期间不会互相删除样式，也不会残留旧样式。
 
 ## 配置
 
 ```yaml
 - insert:
-    - id: dsh-ymc-sidebar
-      name: '@kaijia/dsh-ymc-sidebar'
+    - id: dsh-sidebar
+      name: '@kaijia/dsh-sidebar'
       config:
         maxTextBytes: 2097152
         maxImageBytes: 8388608
@@ -144,7 +144,7 @@ pnpm test
 - **点了文件显示“二进制文件”？** 非 UTF-8 文本会回退为二进制提示，这是 `dsh-fs` 的文本语义。
 - **图片看不到？** 仅支持 png / jpg / jpeg / gif / webp / bmp / ico / avif，且大小不能超过 `maxImageBytes`。
 - **Git 追踪显示错误？** “Git 追踪”视图依赖本机 `git` 命令；当前工作区目录需要处于 Git 仓库内，才能显示分支、改动和 diff。
-- **升级 DSH 后布局异常？** 本插件依赖 `#root` 作为 DSH 原生根节点和 `--dsh-ymc-sidebar-width` 做 layout push；升级后若 DSH 调整根节点结构，先检查 `#root` 的 margin-right 是否仍生效。
+- **升级 DSH 后布局异常？** 本插件依赖 `#root` 作为 DSH 原生根节点和 `--dsh-sidebar-width` 做 layout push；升级后若 DSH 调整根节点结构，先检查 `#root` 的 margin-right 是否仍生效。
 
 ## License
 

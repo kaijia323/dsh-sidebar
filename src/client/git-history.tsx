@@ -35,8 +35,8 @@ function CommitRow({ commit, selected, onSelect, styleTop }: {
   return (
     <button
       type="button"
-      className={`ymc-git-row ymc-git-commit-row absolute left-0 right-0 flex-col items-stretch gap-0.5 border-0 border-l-2 bg-transparent px-2.5 text-left text-xs ${
-        selected ? 'ymc-git-row-selected' : 'border-l-transparent'
+      className={`kaijia-git-row kaijia-git-commit-row absolute left-0 right-0 flex-col items-stretch gap-0.5 border-0 border-l-2 bg-transparent px-2.5 text-left text-xs ${
+        selected ? 'kaijia-git-row-selected' : 'border-l-transparent'
       }`}
       style={{ top: styleTop, height: GIT_COMMIT_ROW_HEIGHT } as CSSProperties}
       title={`${commit.subject}\n${commit.authorName} <${commit.authorEmail}>\n${commit.hash}`}
@@ -108,9 +108,9 @@ export function GitHistoryList({
 
   if (loading && commits.length === 0) {
     return (
-      <div className="ymc-git-empty min-h-0 flex-1 overflow-hidden">
-        <div className="ymc-panel-message flex h-full flex-col items-center justify-center gap-2 text-[var(--dsw-alias-label-tertiary)]">
-          <span className="ymc-spinner" />
+      <div className="kaijia-git-empty min-h-0 flex-1 overflow-hidden">
+        <div className="kaijia-panel-message flex h-full flex-col items-center justify-center gap-2 text-[var(--dsw-alias-label-tertiary)]">
+          <span className="kaijia-spinner" />
           <p className="text-[11px]">正在加载提交历史…</p>
         </div>
       </div>
@@ -119,7 +119,7 @@ export function GitHistoryList({
 
   if (error) {
     return (
-      <div className="ymc-preview-error overflow-auto text-[var(--dsw-alias-state-error-primary)]">
+      <div className="kaijia-preview-error overflow-auto text-[var(--dsw-alias-state-error-primary)]">
         <div className="flex items-center gap-1.5">
           <AlertCircle size={14} strokeWidth={1.75} aria-hidden="true" />
           <span>{error}</span>
@@ -130,8 +130,8 @@ export function GitHistoryList({
 
   if (commits.length === 0) {
     return (
-      <div className="ymc-git-empty min-h-0 flex-1 overflow-hidden">
-        <div className="ymc-panel-message flex h-full flex-col items-center justify-center gap-2 text-[var(--dsw-alias-label-tertiary)]">
+      <div className="kaijia-git-empty min-h-0 flex-1 overflow-hidden">
+        <div className="kaijia-panel-message flex h-full flex-col items-center justify-center gap-2 text-[var(--dsw-alias-label-tertiary)]">
           <GitCommitHorizontal size={28} strokeWidth={1.5} aria-hidden="true" />
           <p className="font-medium text-[var(--dsw-alias-label-secondary)]">暂无提交记录</p>
         </div>
@@ -140,9 +140,9 @@ export function GitHistoryList({
   }
 
   return (
-    <div className="ymc-git-history flex min-h-0 flex-1 flex-col">
-      <div className="ymc-git-list relative min-h-0 flex-1 overflow-auto" ref={scrollRef} onScroll={onScroll}>
-        <div className="ymc-git-spacer relative min-w-full" style={{ height: commits.length * GIT_COMMIT_ROW_HEIGHT }}>
+    <div className="kaijia-git-history flex min-h-0 flex-1 flex-col">
+      <div className="kaijia-git-list relative min-h-0 flex-1 overflow-auto" ref={scrollRef} onScroll={onScroll}>
+        <div className="kaijia-git-spacer relative min-w-full" style={{ height: commits.length * GIT_COMMIT_ROW_HEIGHT }}>
           {commits.slice(start, end).map((commit, index) => {
             const top = (start + index) * GIT_COMMIT_ROW_HEIGHT
             return (
@@ -160,11 +160,11 @@ export function GitHistoryList({
       {canLoadMore && (
         <button
           type="button"
-          className="ymc-load-more-button flex h-[30px] flex-none items-center justify-center gap-1.5 border-t border-[var(--dsw-alias-border-l2)] text-[11px] text-[var(--dsw-alias-label-secondary)]"
+          className="kaijia-load-more-button flex h-[30px] flex-none items-center justify-center gap-1.5 border-t border-[var(--dsw-alias-border-l2)] text-[11px] text-[var(--dsw-alias-label-secondary)]"
           disabled={loadingMore}
           onClick={onLoadMore}
         >
-          {loadingMore ? <span className="ymc-spinner" /> : <span>加载更多提交</span>}
+          {loadingMore ? <span className="kaijia-spinner" /> : <span>加载更多提交</span>}
         </button>
       )}
     </div>
@@ -175,7 +175,7 @@ export function CommitDetail({ detail, loading }: { detail: GitShowValue | null;
   if (loading) {
     return (
       <div className="flex h-full items-center justify-center gap-2 text-[var(--dsw-alias-label-tertiary)]">
-        <span className="ymc-spinner" />
+        <span className="kaijia-spinner" />
         <span>正在读取提交详情…</span>
       </div>
     )
@@ -188,7 +188,7 @@ export function CommitDetail({ detail, loading }: { detail: GitShowValue | null;
   const commit = detail.commit
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <div className="ymc-commit-meta border-b border-[var(--dsw-alias-border-l2)] px-2.5 py-1.5">
+      <div className="kaijia-commit-meta border-b border-[var(--dsw-alias-border-l2)] px-2.5 py-1.5">
         <div className="flex items-center gap-1.5">
           <span className="font-mono text-[10px] text-[var(--dsw-alias-label-tertiary)]">{commit.shortHash}</span>
           <span className="min-w-0 truncate text-xs font-medium text-[var(--dsw-alias-label-primary)]">{commit.subject}</span>
@@ -204,7 +204,7 @@ export function CommitDetail({ detail, loading }: { detail: GitShowValue | null;
           </pre>
         )}
       </div>
-      <div className="ymc-git-diff-content flex min-h-0 flex-1 flex-col overflow-hidden">
+      <div className="kaijia-git-diff-content flex min-h-0 flex-1 flex-col overflow-hidden">
         {detail.diff ? <DiffView diff={detail.diff} /> : <div className="p-3 text-[var(--dsw-alias-label-tertiary)]">该提交没有可展示的文件差异。</div>}
       </div>
     </div>

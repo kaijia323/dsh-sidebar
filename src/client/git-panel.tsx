@@ -158,15 +158,15 @@ function GitVirtualList({ rows, selected, onSelect }: GitVirtualListProps) {
   }
 
   return (
-    <div className="ymc-git-list relative min-h-0 flex-1 overflow-auto" ref={scrollRef} onScroll={onScroll}>
-      <div className="ymc-git-spacer relative min-w-full" style={{ height: rows.length * GIT_ROW_HEIGHT }}>
+    <div className="kaijia-git-list relative min-h-0 flex-1 overflow-auto" ref={scrollRef} onScroll={onScroll}>
+      <div className="kaijia-git-spacer relative min-w-full" style={{ height: rows.length * GIT_ROW_HEIGHT }}>
         {rows.slice(start, end).map((row, index) => {
           const top = (start + index) * GIT_ROW_HEIGHT
           if (row.kind === 'header') {
             return (
               <div
                 key={row.id}
-                className="ymc-git-section-header absolute left-0 right-0 flex items-center gap-1.5 border-b border-[var(--dsw-alias-border-l2)] px-2.5 text-[11px] font-medium text-[var(--dsw-alias-label-tertiary)]"
+                className="kaijia-git-section-header absolute left-0 right-0 flex items-center gap-1.5 border-b border-[var(--dsw-alias-border-l2)] px-2.5 text-[11px] font-medium text-[var(--dsw-alias-label-tertiary)]"
                 style={{ top, height: GIT_ROW_HEIGHT } as CSSProperties}
               >
                 <span>{row.title}</span>
@@ -179,14 +179,14 @@ function GitVirtualList({ rows, selected, onSelect }: GitVirtualListProps) {
             <button
               key={row.id}
               type="button"
-              className={`ymc-git-row absolute left-0 right-0 flex items-center gap-2 border-0 border-l-2 bg-transparent px-2.5 text-left text-xs ${
-                selectedRow ? 'ymc-git-row-selected' : 'border-l-transparent'
+              className={`kaijia-git-row absolute left-0 right-0 flex items-center gap-2 border-0 border-l-2 bg-transparent px-2.5 text-left text-xs ${
+                selectedRow ? 'kaijia-git-row-selected' : 'border-l-transparent'
               }`}
               style={{ top, height: GIT_ROW_HEIGHT } as CSSProperties}
               title={`${statusLabel(row.entry)} ${row.entry.path}${row.entry.originalPath ? ` (来源: ${row.entry.originalPath})` : ''}`}
               onClick={() => onSelect(row.entry, row.group)}
             >
-              <span className={`ymc-git-status flex-none text-[10px] font-medium ${statusClass(row.entry)}`}>
+              <span className={`kaijia-git-status flex-none text-[10px] font-medium ${statusClass(row.entry)}`}>
                 {statusLabel(row.entry)}
               </span>
               <span className="min-w-0 flex-1 truncate font-mono text-[var(--dsw-alias-label-primary)]">
@@ -206,7 +206,7 @@ function GitVirtualList({ rows, selected, onSelect }: GitVirtualListProps) {
 function UntrackedFilePreview({ value }: { value: ReadValue }) {
   if (isDomainError(value)) {
     return (
-      <div className="ymc-preview-error overflow-auto text-[var(--dsw-alias-state-error-primary)]">
+      <div className="kaijia-preview-error overflow-auto text-[var(--dsw-alias-state-error-primary)]">
         <div className="flex items-center gap-1.5">
           <AlertCircle size={14} strokeWidth={1.75} aria-hidden="true" />
           <span>{value.message}</span>
@@ -219,21 +219,21 @@ function UntrackedFilePreview({ value }: { value: ReadValue }) {
   const result = read.result
   if (result.kind === 'binary') {
     return (
-      <div className="ymc-preview-message">
+      <div className="kaijia-preview-message">
         <p>二进制文件，无法预览。</p>
       </div>
     )
   }
   if (result.kind === 'too-large') {
     return (
-      <div className="ymc-preview-message">
+      <div className="kaijia-preview-message">
         <p>文件超过预览大小限制（{result.limit} 字节）。</p>
       </div>
     )
   }
   if (result.kind === 'error') {
     return (
-      <div className="ymc-preview-message">
+      <div className="kaijia-preview-message">
         <p>{result.message}</p>
       </div>
     )
@@ -241,20 +241,20 @@ function UntrackedFilePreview({ value }: { value: ReadValue }) {
   if (result.kind === 'image') {
     const source = `data:${result.mime};base64,${result.base64}`
     return (
-      <div className="ymc-image-preview">
-        <img className="ymc-image" src={source} alt={read.path} />
+      <div className="kaijia-image-preview">
+        <img className="kaijia-image" src={source} alt={read.path} />
       </div>
     )
   }
   if (isMarkdownPath(read.path)) {
     return (
-      <div className="ymc-markdown-scroll relative min-h-0 flex-1 overflow-auto">
+      <div className="kaijia-markdown-scroll relative min-h-0 flex-1 overflow-auto">
         <MarkdownView text={result.content} />
       </div>
     )
   }
   return (
-    <div className="ymc-text-preview flex min-h-0 flex-1 flex-col">
+    <div className="kaijia-text-preview flex min-h-0 flex-1 flex-col">
       <CodeView text={result.content} />
     </div>
   )
@@ -268,11 +268,11 @@ function ChangeDetail({ selection, loading, diff, preview }: {
 }) {
   return (
     <>
-      <div className="ymc-divider relative flex h-[7px] flex-none touch-none items-center justify-center">
-        <span className="ymc-divider-grip h-[3px] w-[26px] rounded-sm bg-[var(--dsw-alias-border-l2)]" />
+      <div className="kaijia-divider relative flex h-[7px] flex-none touch-none items-center justify-center">
+        <span className="kaijia-divider-grip h-[3px] w-[26px] rounded-sm bg-[var(--dsw-alias-border-l2)]" />
       </div>
-      <div className="ymc-git-diff flex min-h-[60px] flex-1 flex-col">
-        <div className="ymc-git-diff-header flex h-[30px] flex-none items-center gap-1.5 border-b border-[var(--dsw-alias-border-l2)] px-2.5">
+      <div className="kaijia-git-diff flex min-h-[60px] flex-1 flex-col">
+        <div className="kaijia-git-diff-header flex h-[30px] flex-none items-center gap-1.5 border-b border-[var(--dsw-alias-border-l2)] px-2.5">
           <FileDiff size={13} strokeWidth={1.75} className="flex-none text-[var(--dsw-alias-label-tertiary)]" aria-hidden="true" />
           <span className="min-w-0 flex-1 truncate font-mono text-[var(--dsw-alias-label-primary)]">
             {selection.entry.path}
@@ -281,10 +281,10 @@ function ChangeDetail({ selection, loading, diff, preview }: {
             {selection.group === 'staged' ? '已暂存' : selection.group === 'unstaged' ? '工作区' : '未跟踪'}
           </span>
         </div>
-        <div className="ymc-git-diff-content flex min-h-0 flex-1 flex-col overflow-hidden">
+        <div className="kaijia-git-diff-content flex min-h-0 flex-1 flex-col overflow-hidden">
           {loading ? (
             <div className="flex h-full items-center justify-center gap-2 text-[var(--dsw-alias-label-tertiary)]">
-              <span className="ymc-spinner" />
+              <span className="kaijia-spinner" />
               {selection.group === 'untracked' ? '正在读取文件…' : '正在读取 diff…'}
             </div>
           ) : selection.group === 'untracked' ? (
@@ -302,8 +302,8 @@ function ChangeDetail({ selection, loading, diff, preview }: {
 
 function NoRootMessage() {
   return (
-    <div className="ymc-git-empty min-h-0 flex-1 overflow-hidden">
-      <div className="ymc-panel-message flex h-full flex-col items-center justify-center gap-2 text-center text-[var(--dsw-alias-label-tertiary)]">
+    <div className="kaijia-git-empty min-h-0 flex-1 overflow-hidden">
+      <div className="kaijia-panel-message flex h-full flex-col items-center justify-center gap-2 text-center text-[var(--dsw-alias-label-tertiary)]">
         <GitBranchIcon size={28} strokeWidth={1.5} aria-hidden="true" />
         <p className="font-medium text-[var(--dsw-alias-label-secondary)]">当前会话没有工作区目录</p>
         <p className="max-w-[220px] text-[11px]">打开带 cwd 的工作区会话后，这里会展示 Git 改动、提交历史、分支和同步操作。</p>
@@ -484,7 +484,7 @@ export function GitPanel({ api, root, active = true }: GitPanelProps) {
 
   useEffect(() => {
     if (!root || !active) return
-    const source = new EventSource(`/dsh-ymc-sidebar/events?root=${encodeURIComponent(root)}`)
+    const source = new EventSource(`/dsh-sidebar/events?root=${encodeURIComponent(root)}`)
     let timer: number | undefined
     const handleChange = () => {
       if (timer !== undefined) window.clearTimeout(timer)
@@ -741,19 +741,19 @@ export function GitPanel({ api, root, active = true }: GitPanelProps) {
   } : null
 
   return (
-    <div className="ymc-panel flex h-full min-h-0 flex-col bg-transparent text-[var(--dsw-alias-label-primary)]">
-      <div className="ymc-panel-header flex flex-none items-center gap-1.5 border-b border-[var(--dsw-alias-border-l2)] px-2.5">
-        <GitBranchIcon className="ymc-panel-title-icon" size={14} strokeWidth={1.75} aria-hidden="true" />
-        <span className="ymc-panel-title font-semibold whitespace-nowrap">Git</span>
+    <div className="kaijia-panel flex h-full min-h-0 flex-col bg-transparent text-[var(--dsw-alias-label-primary)]">
+      <div className="kaijia-panel-header flex flex-none items-center gap-1.5 border-b border-[var(--dsw-alias-border-l2)] px-2.5">
+        <GitBranchIcon className="kaijia-panel-title-icon" size={14} strokeWidth={1.75} aria-hidden="true" />
+        <span className="kaijia-panel-title font-semibold whitespace-nowrap">Git</span>
         {statusOk?.branch && (
-          <span className="ymc-panel-root min-w-0 flex-1 truncate text-[var(--dsw-alias-label-tertiary)]" title={statusOk.branch}>
+          <span className="kaijia-panel-root min-w-0 flex-1 truncate text-[var(--dsw-alias-label-tertiary)]" title={statusOk.branch}>
             {statusOk.branch}
           </span>
         )}
-        <div className="ymc-panel-actions ml-auto flex items-center gap-0.5">
+        <div className="kaijia-panel-actions ml-auto flex items-center gap-0.5">
           <button
             type="button"
-            className="ymc-icon-button"
+            className="kaijia-icon-button"
             title="拉取（pull）"
             aria-label="拉取"
             disabled={!root || Boolean(runningKey) || !statusOk}
@@ -763,7 +763,7 @@ export function GitPanel({ api, root, active = true }: GitPanelProps) {
           </button>
           <button
             type="button"
-            className="ymc-icon-button"
+            className="kaijia-icon-button"
             title="推送（push）"
             aria-label="推送"
             disabled={!root || Boolean(runningKey) || !statusOk}
@@ -774,11 +774,11 @@ export function GitPanel({ api, root, active = true }: GitPanelProps) {
         </div>
       </div>
 
-      <div className="ymc-git-tabs flex flex-none items-stretch border-b border-[var(--dsw-alias-border-l2)]">
+      <div className="kaijia-git-tabs flex flex-none items-stretch border-b border-[var(--dsw-alias-border-l2)]">
         <button
           type="button"
-          className={`ymc-git-tab flex h-[30px] flex-1 cursor-pointer items-center justify-center gap-1 border-b-2 border-transparent text-[11px] ${
-            subView === 'changes' ? 'ymc-git-tab-active' : 'text-[var(--dsw-alias-label-secondary)]'
+          className={`kaijia-git-tab flex h-[30px] flex-1 cursor-pointer items-center justify-center gap-1 border-b-2 border-transparent text-[11px] ${
+            subView === 'changes' ? 'kaijia-git-tab-active' : 'text-[var(--dsw-alias-label-secondary)]'
           }`}
           onClick={() => setSubView('changes')}
         >
@@ -788,8 +788,8 @@ export function GitPanel({ api, root, active = true }: GitPanelProps) {
         </button>
         <button
           type="button"
-          className={`ymc-git-tab flex h-[30px] flex-1 cursor-pointer items-center justify-center gap-1 border-b-2 border-transparent text-[11px] ${
-            subView === 'history' ? 'ymc-git-tab-active' : 'text-[var(--dsw-alias-label-secondary)]'
+          className={`kaijia-git-tab flex h-[30px] flex-1 cursor-pointer items-center justify-center gap-1 border-b-2 border-transparent text-[11px] ${
+            subView === 'history' ? 'kaijia-git-tab-active' : 'text-[var(--dsw-alias-label-secondary)]'
           }`}
           onClick={() => setSubView('history')}
         >
@@ -798,8 +798,8 @@ export function GitPanel({ api, root, active = true }: GitPanelProps) {
         </button>
         <button
           type="button"
-          className={`ymc-git-tab flex h-[30px] flex-1 cursor-pointer items-center justify-center gap-1 border-b-2 border-transparent text-[11px] ${
-            subView === 'branches' ? 'ymc-git-tab-active' : 'text-[var(--dsw-alias-label-secondary)]'
+          className={`kaijia-git-tab flex h-[30px] flex-1 cursor-pointer items-center justify-center gap-1 border-b-2 border-transparent text-[11px] ${
+            subView === 'branches' ? 'kaijia-git-tab-active' : 'text-[var(--dsw-alias-label-secondary)]'
           }`}
           onClick={() => setSubView('branches')}
         >
@@ -809,9 +809,9 @@ export function GitPanel({ api, root, active = true }: GitPanelProps) {
         </button>
       </div>
 
-      <div className="ymc-git-body relative flex min-h-0 flex-1 flex-col">
+      <div className="kaijia-git-body relative flex min-h-0 flex-1 flex-col">
         {operationMessage && (
-          <div className={`ymc-git-notice flex-none border-b border-[var(--dsw-alias-border-l2)] px-2.5 py-1.5 text-[11px] ${
+          <div className={`kaijia-git-notice flex-none border-b border-[var(--dsw-alias-border-l2)] px-2.5 py-1.5 text-[11px] ${
             operationMessage.tone === 'error'
               ? 'text-[var(--dsw-alias-state-error-primary)]'
               : 'text-[var(--dsw-alias-label-secondary)]'
@@ -820,26 +820,26 @@ export function GitPanel({ api, root, active = true }: GitPanelProps) {
           </div>
         )}
 
-        <div className="ymc-git-main flex min-h-0 flex-1 flex-col">
+        <div className="kaijia-git-main flex min-h-0 flex-1 flex-col">
           {subView === 'changes' && (
             !root ? <NoRootMessage /> : (
               loading && !value ? (
-              <div className="ymc-git-empty min-h-0 flex-1 overflow-hidden">
-                <div className="ymc-panel-message flex h-full flex-col items-center justify-center gap-2 text-[var(--dsw-alias-label-tertiary)]">
-                  <span className="ymc-spinner" />
+              <div className="kaijia-git-empty min-h-0 flex-1 overflow-hidden">
+                <div className="kaijia-panel-message flex h-full flex-col items-center justify-center gap-2 text-[var(--dsw-alias-label-tertiary)]">
+                  <span className="kaijia-spinner" />
                   <p className="text-[11px]">正在读取 Git 状态…</p>
                 </div>
               </div>
             ) : statusError ? (
-              <div className="ymc-preview-error overflow-auto text-[var(--dsw-alias-state-error-primary)]">
+              <div className="kaijia-preview-error overflow-auto text-[var(--dsw-alias-state-error-primary)]">
                 <div className="flex items-center gap-1.5">
                   <AlertCircle size={14} strokeWidth={1.75} aria-hidden="true" />
                   <span>{statusError}</span>
                 </div>
               </div>
             ) : statusOk && total === 0 ? (
-              <div className="ymc-git-empty min-h-0 flex-1 overflow-hidden">
-                <div className="ymc-panel-message flex h-full flex-col items-center justify-center gap-2 text-[var(--dsw-alias-label-tertiary)]">
+              <div className="kaijia-git-empty min-h-0 flex-1 overflow-hidden">
+                <div className="kaijia-panel-message flex h-full flex-col items-center justify-center gap-2 text-[var(--dsw-alias-label-tertiary)]">
                   <FolderGit2 size={28} strokeWidth={1.5} aria-hidden="true" />
                   <p className="font-medium text-[var(--dsw-alias-label-secondary)]">工作区干净</p>
                   <p className="text-[11px]">没有未提交的改动。</p>
@@ -887,17 +887,17 @@ export function GitPanel({ api, root, active = true }: GitPanelProps) {
 
         {subView === 'history' && selectedCommit && (
           <>
-            <div className="ymc-divider relative flex h-[7px] flex-none touch-none items-center justify-center">
-              <span className="ymc-divider-grip h-[3px] w-[26px] rounded-sm bg-[var(--dsw-alias-border-l2)]" />
+            <div className="kaijia-divider relative flex h-[7px] flex-none touch-none items-center justify-center">
+              <span className="kaijia-divider-grip h-[3px] w-[26px] rounded-sm bg-[var(--dsw-alias-border-l2)]" />
             </div>
-            <div className="ymc-git-diff flex min-h-[60px] flex-1 flex-col">
-              <div className="ymc-git-diff-header flex h-[30px] flex-none items-center gap-1.5 border-b border-[var(--dsw-alias-border-l2)] px-2.5">
+            <div className="kaijia-git-diff flex min-h-[60px] flex-1 flex-col">
+              <div className="kaijia-git-diff-header flex h-[30px] flex-none items-center gap-1.5 border-b border-[var(--dsw-alias-border-l2)] px-2.5">
                 <History size={13} strokeWidth={1.75} className="flex-none text-[var(--dsw-alias-label-tertiary)]" aria-hidden="true" />
                 <span className="min-w-0 flex-1 truncate font-mono text-[var(--dsw-alias-label-primary)]">
                   {selectedCommit.shortHash} {selectedCommit.subject}
                 </span>
               </div>
-              <div className="ymc-git-diff-content flex min-h-0 flex-1 flex-col overflow-hidden">
+              <div className="kaijia-git-diff-content flex min-h-0 flex-1 flex-col overflow-hidden">
                 <CommitDetail detail={commitDetail} loading={commitDetailLoading} />
               </div>
             </div>

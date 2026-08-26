@@ -83,7 +83,7 @@ export function FileTreePanel({ api, sessionId, sessions, workspaces }: FileTree
   useEffect(() => {
     if (!root || !limits.watchEnabled) return
 
-    const source = new EventSource(`/dsh-ymc-sidebar/events?root=${encodeURIComponent(root)}`)
+    const source = new EventSource(`/dsh-sidebar/events?root=${encodeURIComponent(root)}`)
 
     const applyChanges = () => {
       watcherTimerRef.current = undefined
@@ -274,7 +274,7 @@ export function FileTreePanel({ api, sessionId, sessions, workspaces }: FileTree
     setSplit(next)
   }
 
-  const panelClassName = 'ymc-panel flex h-full min-h-0 flex-col bg-transparent text-[var(--dsw-alias-label-primary)]'
+  const panelClassName = 'kaijia-panel flex h-full min-h-0 flex-col bg-transparent text-[var(--dsw-alias-label-primary)]'
   const rootData = root ? dirs[root] : undefined
   const rowLoading = root ? loading.has(root) : false
   const hasRootError = !!(rootData?.error && rootData.entries.length === 0)
@@ -284,14 +284,14 @@ export function FileTreePanel({ api, sessionId, sessions, workspaces }: FileTree
       {!root ? (
         <>
           <PanelHeader root={undefined} loadingRoot={false} />
-          <div className="ymc-panel-message flex h-full flex-col items-center justify-center text-[var(--dsw-alias-label-tertiary)]">{rootError ?? '没有可显示的工作区目录。'}</div>
+          <div className="kaijia-panel-message flex h-full flex-col items-center justify-center text-[var(--dsw-alias-label-tertiary)]">{rootError ?? '没有可显示的工作区目录。'}</div>
         </>
       ) : (
         <>
           <PanelHeader root={root} loadingRoot={rowLoading} />
-          <div className="ymc-panel-body relative flex min-h-0 flex-1 flex-col" ref={bodyRef}>
+          <div className="kaijia-panel-body relative flex min-h-0 flex-1 flex-col" ref={bodyRef}>
             <div
-              className="ymc-tree-pane relative flex min-h-[120px] shrink-0 flex-col overflow-hidden"
+              className="kaijia-tree-pane relative flex min-h-[120px] shrink-0 flex-col overflow-hidden"
               style={
                 tabs.length > 0
                   ? { flexBasis: `${Math.round(split * 100)}%`, flexGrow: 0, flexShrink: 0, minHeight: 120 }
@@ -299,7 +299,7 @@ export function FileTreePanel({ api, sessionId, sessions, workspaces }: FileTree
               }
             >
               {hasRootError
-                ? <div className="ymc-preview-error overflow-auto text-[var(--dsw-alias-state-error-primary)]">{rootData!.error}</div>
+                ? <div className="kaijia-preview-error overflow-auto text-[var(--dsw-alias-state-error-primary)]">{rootData!.error}</div>
                 : (
                     <Tree
                       root={root}
@@ -319,10 +319,10 @@ export function FileTreePanel({ api, sessionId, sessions, workspaces }: FileTree
             </div>
             {tabs.length > 0 && (
               <>
-                <div className="ymc-divider relative flex h-[7px] flex-none touch-none items-center justify-center" onPointerDown={onDividerPointerDown}>
-                  <span className="ymc-divider-grip h-[3px] w-[26px] rounded-sm bg-[var(--dsw-alias-border-l2)]" />
+                <div className="kaijia-divider relative flex h-[7px] flex-none touch-none items-center justify-center" onPointerDown={onDividerPointerDown}>
+                  <span className="kaijia-divider-grip h-[3px] w-[26px] rounded-sm bg-[var(--dsw-alias-border-l2)]" />
                 </div>
-                <div className="ymc-preview-pane relative flex min-h-[60px] flex-1 flex-col">
+                <div className="kaijia-preview-pane relative flex min-h-[60px] flex-1 flex-col">
                   <PreviewPane
                     api={api}
                     tabs={tabs}

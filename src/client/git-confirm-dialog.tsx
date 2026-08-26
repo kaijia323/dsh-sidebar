@@ -18,8 +18,8 @@ export function GitConfirmDialog({
   onConfirm,
 }: GitConfirmDialogProps) {
   return (
-    <div className="ymc-confirm-backdrop absolute inset-0 z-20 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label={title}>
-      <div className="ymc-confirm-dialog w-full max-w-[280px] rounded-lg border border-[var(--dsw-alias-border-l2)] bg-[var(--dsw-specific-sidebar-fill)] p-3 shadow-lg">
+    <div className="kaijia-confirm-backdrop absolute inset-0 z-20 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label={title}>
+      <div className="kaijia-confirm-dialog w-full max-w-[280px] rounded-lg border border-[var(--dsw-alias-border-l2)] bg-[var(--dsw-specific-sidebar-fill)] p-3 shadow-lg">
         <div className="flex items-start gap-2">
           <AlertTriangle size={16} strokeWidth={1.75} className="mt-0.5 flex-none text-[var(--dsw-alias-state-warn-primary)]" aria-hidden="true" />
           <div className="min-w-0 flex-1">
@@ -32,14 +32,14 @@ export function GitConfirmDialog({
         </div>
         {busy && (
           <div className="mt-3 flex items-center gap-2 text-[11px] text-[var(--dsw-alias-label-tertiary)]">
-            <span className="ymc-spinner" />
+            <span className="kaijia-spinner" />
             <span>正在执行…</span>
           </div>
         )}
         <div className="mt-3 flex justify-end gap-1.5">
           <button
             type="button"
-            className="ymc-header-button rounded-md px-2.5 py-1 text-[11px] text-[var(--dsw-alias-label-secondary)]"
+            className="kaijia-header-button rounded-md px-2.5 py-1 text-[11px] text-[var(--dsw-alias-label-secondary)]"
             disabled={busy}
             onClick={onCancel}
           >
@@ -47,7 +47,7 @@ export function GitConfirmDialog({
           </button>
           <button
             type="button"
-            className="ymc-header-button rounded-md border border-[var(--dsw-alias-state-error-primary)] px-2.5 py-1 text-[11px] text-[var(--dsw-alias-state-error-primary)]"
+            className="kaijia-header-button rounded-md border border-[var(--dsw-alias-state-error-primary)] px-2.5 py-1 text-[11px] text-[var(--dsw-alias-state-error-primary)]"
             disabled={busy}
             onClick={onConfirm}
           >

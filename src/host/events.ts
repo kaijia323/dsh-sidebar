@@ -34,7 +34,7 @@ async function collectGitIgnored(root: string): Promise<string[]> {
   }
 }
 
-export const EVENTS_PATH = '/dsh-ymc-sidebar/events'
+export const EVENTS_PATH = '/dsh-sidebar/events'
 
 export interface FileChangePayload {
   kind: 'change'
@@ -163,7 +163,7 @@ export class FileWatchHub {
       this.broadcast(root, { kind: 'change', path, event })
     })
     watcher.on('error', (error) => {
-      console.warn(`[dsh-ymc-sidebar] file watcher error for ${root}:`, error)
+      console.warn(`[dsh-sidebar] file watcher error for ${root}:`, error)
     })
 
     this.watchers.set(root, watcher)
@@ -224,5 +224,5 @@ export function registerFileWatchRoute(ctx: Context, config: Config): void {
       disposeRoute()
       hub.dispose()
     }
-  }, 'dsh-ymc-sidebar: file watch SSE')
+  }, 'dsh-sidebar: file watch SSE')
 }

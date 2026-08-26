@@ -2,254 +2,254 @@
 @tailwind utilities;
 
 @layer components {
-  .ymc-panel {
+  .kaijia-panel {
     @apply isolate flex h-full min-h-0 max-w-none flex-col bg-transparent text-[var(--dsw-alias-label-primary)] text-xs;
     font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
   }
 
-  .ymc-panel-header {
+  .kaijia-panel-header {
     @apply flex flex-none items-center gap-1.5 border-b border-[var(--dsw-alias-border-l2)] px-2.5 py-0;
     height: 34px;
   }
 
-  .ymc-panel-title {
+  .kaijia-panel-title {
     @apply font-semibold tracking-wide whitespace-nowrap;
   }
 
-  .ymc-panel-title-icon {
+  .kaijia-panel-title-icon {
     @apply flex-none text-[var(--dsw-alias-label-secondary)];
   }
 
-  .ymc-panel-root {
+  .kaijia-panel-root {
     @apply min-w-0 flex-1 truncate text-[var(--dsw-alias-label-tertiary)];
   }
 
-  .ymc-panel-actions {
+  .kaijia-panel-actions {
     @apply ml-auto flex items-center gap-0.5;
   }
 
-  .ymc-icon-button,
-  .ymc-header-button,
-  .ymc-toolbar-button {
+  .kaijia-icon-button,
+  .kaijia-header-button,
+  .kaijia-toolbar-button {
     @apply inline-flex cursor-pointer items-center gap-1.5 rounded-md border-0 bg-transparent p-1.5;
     font: inherit;
     color: inherit;
     transition: background-color 120ms ease, color 120ms ease, transform 120ms ease;
   }
 
-  .ymc-icon-button:hover,
-  .ymc-header-button:hover,
-  .ymc-toolbar-button:hover {
+  .kaijia-icon-button:hover,
+  .kaijia-header-button:hover,
+  .kaijia-toolbar-button:hover {
     @apply bg-[var(--dsw-alias-interactive-bg-hover)];
   }
 
-  .ymc-icon-button:active,
-  .ymc-header-button:active,
-  .ymc-toolbar-button:active {
+  .kaijia-icon-button:active,
+  .kaijia-header-button:active,
+  .kaijia-toolbar-button:active {
     transform: scale(0.96);
   }
 
-  .ymc-header-button {
+  .kaijia-header-button {
     @apply whitespace-nowrap border border-transparent;
   }
 
-  .ymc-header-button:hover {
+  .kaijia-header-button:hover {
     @apply border-[var(--dsw-alias-border-l2)];
   }
 
-  .ymc-toolbar-active {
+  .kaijia-toolbar-active {
     @apply bg-[var(--dsw-alias-interactive-bg-hover)] text-[var(--dsw-alias-brand-primary)];
   }
 
-  .ymc-panel-body {
+  .kaijia-panel-body {
     @apply flex min-h-0 flex-1 flex-col;
   }
 
-  .ymc-git-body {
+  .kaijia-git-body {
     @apply relative flex min-h-0 flex-1 flex-col;
   }
 
-  .ymc-git-list {
+  .kaijia-git-list {
     @apply relative min-h-0 flex-1 overflow-auto;
   }
 
-  .ymc-git-empty {
+  .kaijia-git-empty {
     @apply relative min-h-0 flex-1 overflow-hidden;
   }
 
-  .ymc-git-spacer {
+  .kaijia-git-spacer {
     @apply relative min-w-full;
   }
 
-  .ymc-git-section-header {
+  .kaijia-git-section-header {
     @apply absolute left-0 right-0 flex items-center gap-1.5 border-b border-[var(--dsw-alias-border-l2)] px-2.5 text-[11px] font-medium text-[var(--dsw-alias-label-tertiary)];
   }
 
-  .ymc-git-row {
+  .kaijia-git-row {
     @apply absolute left-0 right-0 flex cursor-pointer items-center gap-2 border-0 border-l-2 border-l-transparent bg-transparent px-2.5 text-left text-xs;
     font: inherit;
     color: inherit;
     transition: background-color 120ms ease, border-color 120ms ease;
   }
 
-  .ymc-git-row:hover {
+  .kaijia-git-row:hover {
     @apply bg-[var(--dsw-alias-interactive-bg-hover)];
   }
 
-  .ymc-git-row-selected,
-  .ymc-git-row-selected:hover {
+  .kaijia-git-row-selected,
+  .kaijia-git-row-selected:hover {
     @apply border-l-[var(--dsw-alias-brand-primary)] bg-[var(--dsw-alias-interactive-bg-hover)];
   }
 
-  .ymc-git-status {
+  .kaijia-git-status {
     @apply flex-none text-[10px] font-medium;
   }
 
-  .ymc-git-diff {
+  .kaijia-git-diff {
     @apply flex min-h-[60px] flex-1 flex-col;
   }
 
-  .ymc-git-diff-header {
+  .kaijia-git-diff-header {
     @apply flex h-[30px] flex-none items-center gap-1.5 border-b border-[var(--dsw-alias-border-l2)] px-2.5;
   }
 
-  .ymc-git-diff-content {
+  .kaijia-git-diff-content {
     @apply relative flex min-h-0 flex-1 flex-col overflow-hidden;
   }
 
-  .ymc-git-tabs {
+  .kaijia-git-tabs {
     @apply flex flex-none items-stretch border-b border-[var(--dsw-alias-border-l2)];
   }
 
-  .ymc-git-tab {
+  .kaijia-git-tab {
     @apply inline-flex h-[30px] flex-1 cursor-pointer items-center justify-center gap-1 border-b-2 border-transparent bg-transparent text-[11px] text-[var(--dsw-alias-label-secondary)];
     font: inherit;
     transition: background-color 120ms ease, color 120ms ease, border-color 120ms ease;
   }
 
-  .ymc-git-tab:hover {
+  .kaijia-git-tab:hover {
     @apply bg-[var(--dsw-alias-interactive-bg-hover)] text-[var(--dsw-alias-label-primary)];
   }
 
-  .ymc-git-tab-active,
-  .ymc-git-tab-active:hover {
+  .kaijia-git-tab-active,
+  .kaijia-git-tab-active:hover {
     @apply border-b-[var(--dsw-alias-brand-primary)] bg-[var(--dsw-alias-bg-layer-2)] text-[var(--dsw-alias-label-primary)];
   }
 
-  .ymc-git-notice {
+  .kaijia-git-notice {
     @apply flex-none border-b border-[var(--dsw-alias-border-l2)] px-2.5 py-1.5 text-[11px];
   }
 
-  .ymc-git-history,
-  .ymc-git-branches {
+  .kaijia-git-history,
+  .kaijia-git-branches {
     @apply relative flex min-h-0 flex-1 flex-col;
   }
 
-  .ymc-git-branches {
+  .kaijia-git-branches {
     @apply overflow-auto;
   }
 
-  .ymc-branch-row:disabled {
+  .kaijia-branch-row:disabled {
     @apply cursor-default opacity-80;
   }
 
-  .ymc-git-commit-row {
+  .kaijia-git-commit-row {
     overflow: visible;
   }
 
-  .ymc-load-more-button {
+  .kaijia-load-more-button {
     @apply flex h-[30px] flex-none cursor-pointer items-center justify-center gap-1.5 border-0 border-t border-[var(--dsw-alias-border-l2)] bg-transparent text-[11px] text-[var(--dsw-alias-label-secondary)];
     font: inherit;
     transition: background-color 120ms ease, color 120ms ease;
   }
 
-  .ymc-load-more-button:hover:not(:disabled) {
+  .kaijia-load-more-button:hover:not(:disabled) {
     @apply bg-[var(--dsw-alias-interactive-bg-hover)] text-[var(--dsw-alias-label-primary)];
   }
 
-  .ymc-commit-meta {
+  .kaijia-commit-meta {
     @apply select-text;
   }
 
-  .ymc-confirm-backdrop {
+  .kaijia-confirm-backdrop {
     @apply flex items-center justify-center p-4;
     background: color-mix(in srgb, var(--dsw-alias-bg-layer-1) 55%, transparent);
   }
 
-  .ymc-confirm-dialog {
+  .kaijia-confirm-dialog {
     @apply rounded-lg border border-[var(--dsw-alias-border-l2)] bg-[var(--dsw-specific-sidebar-fill)] p-3;
     box-shadow: 0 8px 28px rgba(0, 0, 0, 0.28);
   }
 
-  .ymc-diff-scroll {
+  .kaijia-diff-scroll {
     @apply relative min-h-0 flex-1 overflow-auto;
   }
 
-  .ymc-diff-spacer {
+  .kaijia-diff-spacer {
     @apply relative min-w-full;
   }
 
-  .ymc-diff-line {
+  .kaijia-diff-line {
     @apply absolute left-0 right-0 flex items-center px-2.5 font-mono text-xs leading-5;
   }
 
-  .ymc-diff-text {
+  .kaijia-diff-text {
     @apply whitespace-pre pr-2;
   }
 
-  .ymc-diff-line-add,
-  .ymc-diff-add {
+  .kaijia-diff-line-add,
+  .kaijia-diff-add {
     background: color-mix(in srgb, var(--dsw-alias-state-success-primary) 14%, transparent);
     color: var(--dsw-alias-state-success-primary);
   }
 
-  .ymc-diff-line-del,
-  .ymc-diff-del {
+  .kaijia-diff-line-del,
+  .kaijia-diff-del {
     background: color-mix(in srgb, var(--dsw-alias-state-error-primary) 14%, transparent);
     color: var(--dsw-alias-state-error-primary);
   }
 
-  .ymc-diff-line-hunk,
-  .ymc-diff-hunk {
+  .kaijia-diff-line-hunk,
+  .kaijia-diff-hunk {
     background: color-mix(in srgb, var(--dsw-alias-state-business-primary) 12%, transparent);
     color: var(--dsw-alias-state-business-primary);
   }
 
-  .ymc-diff-line-meta,
-  .ymc-diff-meta {
+  .kaijia-diff-line-meta,
+  .kaijia-diff-meta {
     color: var(--dsw-alias-label-tertiary);
   }
 
-  .ymc-diff-line-context {
+  .kaijia-diff-line-context {
     color: var(--dsw-alias-label-primary);
   }
 
-  .ymc-activity-bar {
+  .kaijia-activity-bar {
     @apply flex w-10 flex-none flex-col items-center gap-0.5 border-l border-[var(--dsw-alias-border-l2)] py-1;
   }
 
-  .ymc-activity-item {
+  .kaijia-activity-item {
     @apply relative inline-flex h-8 w-8 flex-none cursor-pointer items-center justify-center rounded-md border-0 bg-transparent text-[var(--dsw-alias-label-secondary)];
     font: inherit;
     transition: background-color 120ms ease, color 120ms ease, transform 120ms ease;
   }
 
-  .ymc-activity-item:hover {
+  .kaijia-activity-item:hover {
     @apply bg-[var(--dsw-alias-interactive-bg-hover)] text-[var(--dsw-alias-label-primary)];
   }
 
-  .ymc-activity-item:active {
+  .kaijia-activity-item:active {
     transform: scale(0.96);
   }
 
-  .ymc-activity-item-active,
-  .ymc-activity-item-active:hover {
+  .kaijia-activity-item-active,
+  .kaijia-activity-item-active:hover {
     @apply bg-[var(--dsw-alias-interactive-bg-hover)] text-[var(--dsw-alias-label-primary)];
   }
 
-  .ymc-activity-item-active::before {
+  .kaijia-activity-item-active::before {
     content: '';
     position: absolute;
     left: -4px;
@@ -260,364 +260,364 @@
     background: var(--dsw-alias-brand-primary);
   }
 
-  .ymc-sidebar-view {
+  .kaijia-sidebar-view {
     @apply relative flex min-h-0 min-w-0 flex-1 flex-col;
   }
 
-  .ymc-sidebar-view-pane {
+  .kaijia-sidebar-view-pane {
     @apply absolute inset-0 flex min-h-0 min-w-0 flex-col;
   }
 
-  .ymc-sidebar-view-hidden {
+  .kaijia-sidebar-view-hidden {
     visibility: hidden;
     pointer-events: none;
   }
 
-  .ymc-sidebar-view-closed {
+  .kaijia-sidebar-view-closed {
     position: absolute;
     inset: 0;
     visibility: hidden;
     pointer-events: none;
   }
 
-  .ymc-tree-pane {
+  .kaijia-tree-pane {
     @apply relative flex min-h-[120px] shrink-0 flex-col overflow-hidden;
   }
 
-  .ymc-divider {
+  .kaijia-divider {
     @apply relative flex h-[7px] flex-none touch-none items-center justify-center;
     cursor: row-resize;
   }
 
-  .ymc-divider::before {
+  .kaijia-divider::before {
     content: '';
     @apply absolute left-0 right-0 top-1/2 h-[3px] -translate-y-1/2 bg-transparent transition-colors duration-100;
   }
 
-  .ymc-divider:hover::before {
+  .kaijia-divider:hover::before {
     @apply bg-[var(--dsw-alias-brand-primary)] opacity-40;
   }
 
-  .ymc-divider-grip {
+  .kaijia-divider-grip {
     @apply h-[3px] w-[26px] rounded-sm bg-[var(--dsw-alias-border-l2)];
   }
 
-  .ymc-preview-pane {
+  .kaijia-preview-pane {
     @apply flex min-h-[60px] flex-1 flex-col;
   }
 
-  .ymc-preview-root {
+  .kaijia-preview-root {
     @apply flex min-h-0 flex-1 flex-col;
   }
 
-  .ymc-preview-content {
+  .kaijia-preview-content {
     @apply relative flex min-h-0 flex-1 flex-col;
   }
 
-  .ymc-tabs-scroll {
+  .kaijia-tabs-scroll {
     @apply flex-none overflow-x-auto border-b border-[var(--dsw-alias-border-l2)];
     scrollbar-width: none;
     scrollbar-color: transparent transparent;
   }
 
-  .ymc-tabs-scroll::-webkit-scrollbar {
+  .kaijia-tabs-scroll::-webkit-scrollbar {
     height: 6px;
   }
 
-  .ymc-tabs-scroll::-webkit-scrollbar-thumb {
+  .kaijia-tabs-scroll::-webkit-scrollbar-thumb {
     background: transparent;
     border-radius: 9999px;
   }
 
-  .ymc-tabs-scroll.is-scrolling {
+  .kaijia-tabs-scroll.is-scrolling {
     scrollbar-width: thin;
     scrollbar-color: var(--dsw-alias-scrollbar-bg-l2, var(--dsw-alias-border-l2)) transparent;
   }
 
-  .ymc-tabs-scroll.is-scrolling::-webkit-scrollbar-thumb {
+  .kaijia-tabs-scroll.is-scrolling::-webkit-scrollbar-thumb {
     background: var(--dsw-alias-scrollbar-bg-l2, var(--dsw-alias-border-l2));
   }
 
-  .ymc-tabs {
+  .kaijia-tabs {
     @apply inline-flex min-w-full items-stretch;
   }
 
-  .ymc-tab {
+  .kaijia-tab {
     @apply flex h-[30px] max-w-[180px] flex-none cursor-pointer items-center gap-1.5 border-b-2 border-transparent px-2.5 text-xs whitespace-nowrap select-none text-[var(--dsw-alias-label-secondary)];
     transition: background-color 120ms ease, color 120ms ease, border-color 120ms ease;
   }
 
-  .ymc-tab:hover {
+  .kaijia-tab:hover {
     @apply bg-[var(--dsw-alias-interactive-bg-hover)] text-[var(--dsw-alias-label-primary)];
   }
 
-  .ymc-tab-active,
-  .ymc-tab-active:hover {
+  .kaijia-tab-active,
+  .kaijia-tab-active:hover {
     @apply border-b-[var(--dsw-alias-brand-primary)] bg-[var(--dsw-alias-bg-layer-2)] text-[var(--dsw-alias-label-primary)];
   }
 
-  .ymc-tab-label {
+  .kaijia-tab-label {
     @apply min-w-0 truncate;
   }
 
-  .ymc-tab-close {
+  .kaijia-tab-close {
     @apply inline-flex h-4 w-4 flex-none cursor-pointer items-center justify-center rounded border-0 bg-transparent p-0 text-[var(--dsw-alias-label-tertiary)];
     font: inherit;
     opacity: 0;
     transition: opacity 120ms ease, background-color 120ms ease, color 120ms ease;
   }
 
-  .ymc-tab:hover .ymc-tab-close,
-  .ymc-tab-active .ymc-tab-close {
+  .kaijia-tab:hover .kaijia-tab-close,
+  .kaijia-tab-active .kaijia-tab-close {
     opacity: 1;
   }
 
-  .ymc-tab-close:hover {
+  .kaijia-tab-close:hover {
     @apply bg-[var(--dsw-alias-interactive-bg-hover)] text-[var(--dsw-alias-label-primary)];
   }
 
-  .ymc-tree-scroll,
-  .ymc-code-scroll,
-  .ymc-markdown-scroll,
-  .ymc-image-preview,
-  .ymc-git-list,
-  .ymc-diff-scroll {
+  .kaijia-tree-scroll,
+  .kaijia-code-scroll,
+  .kaijia-markdown-scroll,
+  .kaijia-image-preview,
+  .kaijia-git-list,
+  .kaijia-diff-scroll {
     @apply relative min-h-0 flex-1 overflow-auto;
   }
 
-  .ymc-tree-scroll {
+  .kaijia-tree-scroll {
     @apply outline-none;
   }
 
-  .ymc-tree-spacer,
-  .ymc-code-spacer {
+  .kaijia-tree-spacer,
+  .kaijia-code-spacer {
     @apply relative min-w-full;
   }
 
-  .ymc-tree-row {
+  .kaijia-tree-row {
     @apply absolute left-0 right-0 flex h-6 cursor-pointer items-center gap-1 whitespace-nowrap select-none;
     background: var(--dsw-specific-sidebar-fill);
     transition: background-color 80ms ease;
   }
 
-  .ymc-tree-row:hover {
+  .kaijia-tree-row:hover {
     @apply bg-[var(--dsw-alias-interactive-bg-hover)];
   }
 
-  .ymc-tree-row-selected,
-  .ymc-tree-row-selected:hover {
+  .kaijia-tree-row-selected,
+  .kaijia-tree-row-selected:hover {
     @apply bg-[var(--dsw-alias-interactive-bg-hover)];
   }
 
-  .ymc-tree-row-selected::before {
+  .kaijia-tree-row-selected::before {
     content: '';
     @apply absolute top-0 bottom-0 left-0 w-0.5 bg-[var(--dsw-alias-brand-primary)];
   }
 
-  .ymc-tree-note {
+  .kaijia-tree-note {
     @apply cursor-default italic text-[var(--dsw-alias-label-tertiary)];
   }
 
-  .ymc-tree-chevron-slot {
+  .kaijia-tree-chevron-slot {
     @apply inline-flex h-6 w-3.5 flex-none items-center justify-center;
   }
 
-  .ymc-tree-chevron {
+  .kaijia-tree-chevron {
     @apply inline-flex items-center justify-center text-[var(--dsw-alias-label-tertiary)];
   }
 
-  .ymc-chevron {
+  .kaijia-chevron {
     @apply inline-flex h-3 w-3 flex-none items-center justify-center text-[var(--dsw-alias-label-tertiary)];
     transition: transform 200ms cubic-bezier(0.2, 0, 0, 1);
     will-change: transform;
   }
 
-  .ymc-icon {
+  .kaijia-icon {
     @apply flex-none text-[var(--dsw-alias-label-tertiary)];
   }
 
-  .ymc-icon-folder {
+  .kaijia-icon-folder {
     @apply text-[var(--dsw-alias-state-warn-primary)];
   }
 
-  .ymc-icon-file {
+  .kaijia-icon-file {
     @apply text-[var(--dsw-alias-label-tertiary)];
   }
 
-  .ymc-icon-image {
+  .kaijia-icon-image {
     @apply text-[var(--dsw-alias-brand-primary)];
   }
 
-  .ymc-icon-markdown {
+  .kaijia-icon-markdown {
     @apply text-[var(--dsw-alias-state-success-primary)];
   }
 
-  .ymc-tree-label {
+  .kaijia-tree-label {
     @apply truncate;
   }
 
-  .ymc-tree-empty,
-  .ymc-preview-empty,
-  .ymc-preview-error,
-  .ymc-preview-message,
-  .ymc-panel-message {
+  .kaijia-tree-empty,
+  .kaijia-preview-empty,
+  .kaijia-preview-error,
+  .kaijia-preview-message,
+  .kaijia-panel-message {
     @apply flex h-full flex-col items-center justify-center gap-2 p-4 text-center text-[var(--dsw-alias-label-tertiary)];
   }
 
-  .ymc-preview-error {
+  .kaijia-preview-error {
     @apply h-auto overflow-auto text-[var(--dsw-alias-state-error-primary)];
   }
 
-  .ymc-preview-message {
+  .kaijia-preview-message {
     @apply text-[var(--dsw-alias-label-tertiary)];
   }
 
-  .ymc-preview-message strong {
+  .kaijia-preview-message strong {
     @apply text-[var(--dsw-alias-label-primary)];
   }
 
-  .ymc-preview-meta {
+  .kaijia-preview-meta {
     @apply text-[11px] text-[var(--dsw-alias-label-tertiary)];
   }
 
-  .ymc-tree-truncated {
+  .kaijia-tree-truncated {
     @apply px-2 py-1 text-[11px] text-[var(--dsw-alias-label-tertiary)];
   }
 
-  .ymc-spinner {
+  .kaijia-spinner {
     @apply inline-block h-[11px] w-[11px] flex-none rounded-full border-2 border-[var(--dsw-alias-border-l2)] border-t-[var(--dsw-alias-brand-primary)];
-    animation: ymc-spin 0.8s linear infinite;
+    animation: kaijia-spin 0.8s linear infinite;
   }
 
-  .ymc-text-preview {
+  .kaijia-text-preview {
     @apply flex min-h-0 flex-1 flex-col;
   }
 
-  .ymc-preview-toolbar {
+  .kaijia-preview-toolbar {
     @apply flex h-[26px] flex-none items-center gap-0.5 border-b border-[var(--dsw-alias-border-l2)] px-1.5;
   }
 
-  .ymc-preview-toolbar .ymc-preview-meta {
+  .kaijia-preview-toolbar .kaijia-preview-meta {
     @apply ml-auto;
   }
 
-  .ymc-code-row {
+  .kaijia-code-row {
     @apply absolute left-0 right-0 flex h-5 items-start font-mono text-xs leading-5;
   }
 
-  .ymc-code-gutter {
+  .kaijia-code-gutter {
     @apply sticky left-0 z-10 min-w-[34px] flex-none select-none border-r border-[var(--dsw-alias-border-l2)] bg-[var(--dsw-alias-bg-layer-2)] px-2 text-right text-[var(--dsw-alias-label-tertiary)];
     padding-left: 4px;
     font-variant-numeric: tabular-nums;
   }
 
-  .ymc-code-line {
+  .kaijia-code-line {
     @apply whitespace-pre pr-4;
   }
 
-  .ymc-token-comment {
+  .kaijia-token-comment {
     @apply italic text-[var(--dsw-alias-label-tertiary)];
   }
 
-  .ymc-token-string {
+  .kaijia-token-string {
     @apply text-[var(--dsw-alias-state-success-primary)];
   }
 
-  .ymc-token-number {
+  .kaijia-token-number {
     @apply text-[var(--dsw-alias-state-warn-primary)];
   }
 
-  .ymc-token-keyword {
+  .kaijia-token-keyword {
     @apply text-[var(--dsw-alias-state-business-primary)];
   }
 
-  .ymc-markdown {
+  .kaijia-markdown {
     @apply mx-auto max-w-[760px] p-3 leading-relaxed text-[var(--dsw-alias-label-primary)];
     padding-bottom: 32px;
   }
 
-  .ymc-markdown a {
+  .kaijia-markdown a {
     @apply text-[var(--dsw-alias-brand-primary)] no-underline;
   }
 
-  .ymc-markdown a:hover {
+  .kaijia-markdown a:hover {
     @apply underline;
   }
 
-  .ymc-markdown h1,
-  .ymc-markdown h2,
-  .ymc-markdown h3,
-  .ymc-markdown h4,
-  .ymc-markdown h5,
-  .ymc-markdown h6 {
+  .kaijia-markdown h1,
+  .kaijia-markdown h2,
+  .kaijia-markdown h3,
+  .kaijia-markdown h4,
+  .kaijia-markdown h5,
+  .kaijia-markdown h6 {
     @apply my-2 font-semibold leading-snug;
   }
 
-  .ymc-markdown h1 {
+  .kaijia-markdown h1 {
     @apply text-xl;
   }
 
-  .ymc-markdown h2 {
+  .kaijia-markdown h2 {
     @apply text-lg;
   }
 
-  .ymc-markdown h3 {
+  .kaijia-markdown h3 {
     @apply text-base;
   }
 
-  .ymc-markdown p {
+  .kaijia-markdown p {
     @apply my-1;
   }
 
-  .ymc-markdown ul,
-  .ymc-markdown ol {
+  .kaijia-markdown ul,
+  .kaijia-markdown ol {
     @apply my-1 pl-6;
   }
 
-  .ymc-markdown blockquote {
+  .kaijia-markdown blockquote {
     @apply my-1 border-l-[3px] border-[var(--dsw-alias-border-l3)] px-3 text-[var(--dsw-alias-label-secondary)];
   }
 
-  .ymc-markdown hr {
+  .kaijia-markdown hr {
     @apply my-3 border-0 border-t border-[var(--dsw-alias-border-l2)];
   }
 
-  .ymc-markdown pre {
+  .kaijia-markdown pre {
     @apply overflow-auto rounded-md border border-[var(--dsw-alias-border-l2)] bg-[var(--dsw-alias-bg-layer-1)] p-2.5;
   }
 
-  .ymc-markdown code {
+  .kaijia-markdown code {
     @apply font-mono text-[0.92em];
   }
 
-  .ymc-md-code {
+  .kaijia-md-code {
     @apply rounded-sm bg-[var(--dsw-alias-bg-layer-1)] px-1 py-0.5;
   }
 
-  .ymc-image {
+  .kaijia-image {
     @apply mx-auto block max-h-full max-w-full object-contain;
     box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1);
   }
 
-  body[data-ds-dark-theme] .ymc-image {
+  body[data-ds-dark-theme] .kaijia-image {
     box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1);
   }
 }
 
-@keyframes ymc-spin {
+@keyframes kaijia-spin {
   to {
     transform: rotate(360deg);
   }
 }
 
 /* DSH-aware scrollbars for the virtualized panes. */
-.ymc-tree-scroll,
-.ymc-code-scroll,
-.ymc-markdown-scroll,
-.ymc-image-preview,
-.ymc-git-list,
-.ymc-git-diff-content,
-.ymc-diff-scroll {
+.kaijia-tree-scroll,
+.kaijia-code-scroll,
+.kaijia-markdown-scroll,
+.kaijia-image-preview,
+.kaijia-git-list,
+.kaijia-git-diff-content,
+.kaijia-diff-scroll {
   scrollbar-color: var(--dsw-alias-scrollbar-bg-l2, var(--dsw-alias-border-l2)) transparent;
   scrollbar-width: thin;
 }
@@ -630,22 +630,22 @@
  * itself stays position:fixed; the layout push is what keeps it from covering
  * the app. */
 #root {
-  margin-right: var(--dsh-ymc-sidebar-width, 0px);
+  margin-right: var(--dsh-sidebar-width, 0px);
   transition: margin-right var(--ds-transition-duration-slow) var(--ds-ease-in-out);
 }
 
-body[data-dsh-ymc-sidebar-dragging] #root {
+body[data-dsh-sidebar-dragging] #root {
   transition: none;
 }
 
 /* The host wrapper and every shell surface share the DSH sidebar fill so the
    whole sidebar DOM is one coherent background in both light and dark themes. */
-[data-dsh-ymc-sidebar-root],
-.ymc-sidebar-root {
+[data-dsh-sidebar-root],
+.kaijia-sidebar-root {
   background: var(--dsw-specific-sidebar-fill);
 }
 
-.ymc-sidebar-root {
+.kaijia-sidebar-root {
   position: fixed;
   top: 0;
   right: 0;
@@ -656,19 +656,19 @@ body[data-dsh-ymc-sidebar-dragging] #root {
   border-left: 1px solid var(--dsw-alias-border-l2);
 }
 
-.ymc-sidebar-root.ymc-sidebar-open {
+.kaijia-sidebar-root.kaijia-sidebar-open {
   min-width: 280px;
   max-width: 640px;
 }
 
-.ymc-sidebar-root.ymc-sidebar-collapsed {
+.kaijia-sidebar-root.kaijia-sidebar-collapsed {
   width: 40px;
   min-width: 40px;
   max-width: 40px;
   border-left: none;
 }
 
-.ymc-sidebar-drag-handle {
+.kaijia-sidebar-drag-handle {
   position: absolute;
   left: -4px;
   top: 0;
@@ -678,7 +678,7 @@ body[data-dsh-ymc-sidebar-dragging] #root {
   touch-action: none;
 }
 
-.ymc-sidebar-drag-handle::after {
+.kaijia-sidebar-drag-handle::after {
   content: '';
   position: absolute;
   left: 3px;
@@ -689,13 +689,13 @@ body[data-dsh-ymc-sidebar-dragging] #root {
   transition: background-color 120ms ease;
 }
 
-.ymc-sidebar-drag-handle:hover::after,
-.ymc-sidebar-root[data-dragging] .ymc-sidebar-drag-handle::after {
+.kaijia-sidebar-drag-handle:hover::after,
+.kaijia-sidebar-root[data-dragging] .kaijia-sidebar-drag-handle::after {
   background: var(--dsw-alias-brand-primary);
   opacity: 0.5;
 }
 
-.ymc-sidebar-body {
+.kaijia-sidebar-body {
   display: flex;
   flex: 1;
   min-height: 0;
@@ -708,7 +708,7 @@ body[data-dsh-ymc-sidebar-dragging] #root {
     transition: none;
   }
 
-  .ymc-chevron {
+  .kaijia-chevron {
     transition: none;
     will-change: auto;
   }

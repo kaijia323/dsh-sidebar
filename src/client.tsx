@@ -4,7 +4,7 @@ import { createFsApi } from './client/api'
 import { SidebarShell } from './client/sidebar-shell'
 import { installStyles } from './client/styles'
 
-export const name = 'dsh-ymc-sidebar'
+export const name = 'dsh-sidebar'
 export const inject = ['sessions', 'workspaces', 'connection']
 
 export function apply(ctx: ClientContext) {
@@ -14,7 +14,7 @@ export function apply(ctx: ClientContext) {
 
   ctx.effect(() => {
     const host = document.createElement('div')
-    host.setAttribute('data-dsh-ymc-sidebar-root', '')
+    host.setAttribute('data-dsh-sidebar-root', '')
     document.body.appendChild(host)
     const root = createRoot(host)
     root.render(<SidebarShell ctx={ctx} api={api} />)

@@ -47,18 +47,18 @@ export function SidebarShell({ ctx, api }: SidebarShellProps) {
     // HMR overlap safety: only the fiber that last wrote the CSS variable is
     // allowed to remove it. An old fiber's disposer must not delete the new
     // fiber's live layout push.
-    const owner = `dsh-ymc-sidebar-${Math.random().toString(36).slice(2)}`
-    document.documentElement.setAttribute('data-dsh-ymc-sidebar-owner', owner)
-    document.documentElement.style.setProperty('--dsh-ymc-sidebar-width', open ? `${width}px` : `${ACTIVITY_BAR_WIDTH}px`)
-    if (open) document.body.setAttribute('data-dsh-ymc-sidebar-open', '')
-    else document.body.removeAttribute('data-dsh-ymc-sidebar-open')
+    const owner = `dsh-sidebar-${Math.random().toString(36).slice(2)}`
+    document.documentElement.setAttribute('data-dsh-sidebar-owner', owner)
+    document.documentElement.style.setProperty('--dsh-sidebar-width', open ? `${width}px` : `${ACTIVITY_BAR_WIDTH}px`)
+    if (open) document.body.setAttribute('data-dsh-sidebar-open', '')
+    else document.body.removeAttribute('data-dsh-sidebar-open')
     return () => {
-      if (document.documentElement.getAttribute('data-dsh-ymc-sidebar-owner') === owner) {
-        document.documentElement.style.removeProperty('--dsh-ymc-sidebar-width')
-        document.documentElement.removeAttribute('data-dsh-ymc-sidebar-owner')
+      if (document.documentElement.getAttribute('data-dsh-sidebar-owner') === owner) {
+        document.documentElement.style.removeProperty('--dsh-sidebar-width')
+        document.documentElement.removeAttribute('data-dsh-sidebar-owner')
       }
-      document.body.removeAttribute('data-dsh-ymc-sidebar-open')
-      document.body.removeAttribute('data-dsh-ymc-sidebar-dragging')
+      document.body.removeAttribute('data-dsh-sidebar-open')
+      document.body.removeAttribute('data-dsh-sidebar-dragging')
     }
   }, [open, width])
 
@@ -67,7 +67,7 @@ export function SidebarShell({ ctx, api }: SidebarShellProps) {
     event.currentTarget.setPointerCapture(event.pointerId)
     dragRef.current = { startX: event.clientX, startWidth: widthRef.current }
     panelRef.current?.setAttribute('data-dragging', '')
-    document.body.setAttribute('data-dsh-ymc-sidebar-dragging', '')
+    document.body.setAttribute('data-dsh-sidebar-dragging', '')
   }
 
   function handleDragMove(event: ReactPointerEvent<HTMLDivElement>) {
@@ -75,7 +75,7 @@ export function SidebarShell({ ctx, api }: SidebarShellProps) {
     if (!drag || !event.currentTarget.hasPointerCapture(event.pointerId)) return
     const next = clamp(drag.startWidth - (event.clientX - drag.startX), SIDEBAR_MIN, SIDEBAR_MAX)
     if (panelRef.current) panelRef.current.style.width = `${next}px`
-    document.documentElement.style.setProperty('--dsh-ymc-sidebar-width', `${next}px`)
+    document.documentElement.style.setProperty('--dsh-sidebar-width', `${next}px`)
   }
 
   function handleDragEnd(event: ReactPointerEvent<HTMLDivElement>) {
@@ -85,7 +85,7 @@ export function SidebarShell({ ctx, api }: SidebarShellProps) {
     const next = clamp(drag.startWidth - (event.clientX - drag.startX), SIDEBAR_MIN, SIDEBAR_MAX)
     dragRef.current = null
     panelRef.current?.removeAttribute('data-dragging')
-    document.body.removeAttribute('data-dsh-ymc-sidebar-dragging')
+    document.body.removeAttribute('data-dsh-sidebar-dragging')
     setWidth(next)
   }
 
@@ -107,20 +107,20 @@ export function SidebarShell({ ctx, api }: SidebarShellProps) {
   return (
     <div
       ref={panelRef}
-      className={`ymc-sidebar-root${open ? ' ymc-sidebar-open' : ' ymc-sidebar-collapsed'}`}
+      className={`kaijia-sidebar-root${open ? ' kaijia-sidebar-open' : ' kaijia-sidebar-collapsed'}`}
       style={open ? { width } : undefined}
     >
       {open && (
         <div
-          className="ymc-sidebar-drag-handle"
+          className="kaijia-sidebar-drag-handle"
           onPointerDown={handleDragStart}
           onPointerMove={handleDragMove}
           onPointerUp={handleDragEnd}
         />
       )}
-      <div className="ymc-sidebar-body">
-        <div className={`ymc-sidebar-view${open ? '' : ' ymc-sidebar-view-closed'}`}>
-          <div className={`ymc-sidebar-view-pane${view === 'explorer' ? '' : ' ymc-sidebar-view-hidden'}`}>
+      <div className="kaijia-sidebar-body">
+        <div className={`kaijia-sidebar-view${open ? '' : ' kaijia-sidebar-view-closed'}`}>
+          <div className={`kaijia-sidebar-view-pane${view === 'explorer' ? '' : ' kaijia-sidebar-view-hidden'}`}>
             <FileTreePanel
               api={api}
               sessionId={sessionId}
@@ -128,7 +128,7 @@ export function SidebarShell({ ctx, api }: SidebarShellProps) {
               workspaces={workspaces}
             />
           </div>
-          <div className={`ymc-sidebar-view-pane${view === 'git' ? '' : ' ymc-sidebar-view-hidden'}`}>
+          <div className={`kaijia-sidebar-view-pane${view === 'git' ? '' : ' kaijia-sidebar-view-hidden'}`}>
             <GitPanel api={api} root={root} active={view === 'git'} />
           </div>
         </div>

@@ -21,13 +21,13 @@ function highlightLine(line: string, key: string): ReactNode[] {
     if (match.index > cursor) nodes.push(line.slice(cursor, match.index))
     const [token, comment, string, number, word] = match
     if (comment !== undefined) {
-      nodes.push(<span key={`${key}-c${match.index}`} className="ymc-token-comment">{token}</span>)
+      nodes.push(<span key={`${key}-c${match.index}`} className="kaijia-token-comment">{token}</span>)
     } else if (string !== undefined) {
-      nodes.push(<span key={`${key}-s${match.index}`} className="ymc-token-string">{token}</span>)
+      nodes.push(<span key={`${key}-s${match.index}`} className="kaijia-token-string">{token}</span>)
     } else if (number !== undefined) {
-      nodes.push(<span key={`${key}-n${match.index}`} className="ymc-token-number">{token}</span>)
+      nodes.push(<span key={`${key}-n${match.index}`} className="kaijia-token-number">{token}</span>)
     } else if (word !== undefined && KEYWORDS.has(word)) {
-      nodes.push(<span key={`${key}-k${match.index}`} className="ymc-token-keyword">{token}</span>)
+      nodes.push(<span key={`${key}-k${match.index}`} className="kaijia-token-keyword">{token}</span>)
     } else {
       nodes.push(token)
     }
@@ -67,17 +67,17 @@ export function CodeView({ text }: { text: string }) {
   const visible: ReactNode[] = []
   for (let index = start; index < end; index += 1) {
     visible.push(
-      <div className="ymc-code-row flex items-start font-mono text-xs leading-5" key={index} style={{ top: index * CODE_ROW_HEIGHT }}>
-        <span className="ymc-code-gutter sticky left-0 z-10 select-none">{index + 1}</span>
-        <code className="ymc-code-line whitespace-pre pr-4">{highlightLine(lines[index], String(index))}</code>
+      <div className="kaijia-code-row flex items-start font-mono text-xs leading-5" key={index} style={{ top: index * CODE_ROW_HEIGHT }}>
+        <span className="kaijia-code-gutter sticky left-0 z-10 select-none">{index + 1}</span>
+        <code className="kaijia-code-line whitespace-pre pr-4">{highlightLine(lines[index], String(index))}</code>
       </div>,
     )
   }
 
   return (
-    <div className="ymc-code-scroll relative min-h-0 flex-1 overflow-auto" ref={scrollRef} onScroll={onScroll}>
+    <div className="kaijia-code-scroll relative min-h-0 flex-1 overflow-auto" ref={scrollRef} onScroll={onScroll}>
       <div
-        className="ymc-code-spacer relative min-w-full"
+        className="kaijia-code-spacer relative min-w-full"
         style={{ height: lines.length * CODE_ROW_HEIGHT, minWidth: `max(100%, ${Math.max(maxLineLength, 1)}ch)` }}
       >
         {visible}

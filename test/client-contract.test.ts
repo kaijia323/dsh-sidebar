@@ -25,7 +25,7 @@ test('client source always passes a selector to standard snapshot hooks', async 
 test('sidebar mounts as a body sibling instead of taking the native details slot', async () => {
   const source = await readClientSources()
   assert.match(source, /document\.body\.appendChild/, 'sidebar host must be appended to document.body')
-  assert.match(source, /data-dsh-ymc-sidebar-root/, 'sidebar host must carry a stable marker')
+  assert.match(source, /data-dsh-sidebar-root/, 'sidebar host must carry a stable marker')
   assert.match(source, /createRoot\(host\)/, 'sidebar must render through its own React root')
   assert.doesNotMatch(source, /name: 'details'/, 'must not register into the native details slot')
   assert.doesNotMatch(source, /shell\.overlay/, 'must not register into shell overlay')
@@ -38,11 +38,11 @@ test('sidebar keeps its own open state and pushes #root instead of overlaying', 
     readFile(new URL('../src/client.css', import.meta.url), 'utf8'),
     readFile(new URL('../src/client.fallback.css', import.meta.url), 'utf8'),
   ])
-  assert.match(source, /--dsh-ymc-sidebar-width/, 'sidebar must drive a layout-push CSS variable')
+  assert.match(source, /--dsh-sidebar-width/, 'sidebar must drive a layout-push CSS variable')
   assert.match(source, /setOpen/, 'sidebar must own its open/close state')
-  assert.match(css + fallback, /#root\s*\{[^}]*margin-right:\s*var\(--dsh-ymc-sidebar-width/, 'root must give up width while the sidebar is open')
-  assert.match(css + fallback, /\.ymc-sidebar-root\s*\{[^}]*position:\s*fixed/, 'panel may be fixed as long as root is pushed')
-  assert.doesNotMatch(css + fallback, /ymc-overlay-panel|ymc-panel-overlay|ymc-details-toggle/, 'must not keep old overlay/floating panel styles')
+  assert.match(css + fallback, /#root\s*\{[^}]*margin-right:\s*var\(--dsh-sidebar-width/, 'root must give up width while the sidebar is open')
+  assert.match(css + fallback, /\.kaijia-sidebar-root\s*\{[^}]*position:\s*fixed/, 'panel may be fixed as long as root is pushed')
+  assert.doesNotMatch(css + fallback, /kaijia-overlay-panel|kaijia-panel-overlay|kaijia-details-toggle/, 'must not keep old overlay/floating panel styles')
 })
 
 test('client styles follow DSH alias tokens and use Tailwind entry', async () => {
@@ -54,7 +54,7 @@ test('client styles follow DSH alias tokens and use Tailwind entry', async () =>
   assert.match(css, /@tailwind (components|utilities)/, 'client.css must be a Tailwind entry')
   assert.doesNotMatch(css, /@tailwind base/, 'must not inject Tailwind preflight into the DSH host')
   assert.match(css + fallback + source, /--dsw-alias-/, 'styles must consume DSH theme alias tokens')
-  assert.doesNotMatch(css + fallback, /--ymc-/, 'custom ymc color palette must not be used')
+  assert.doesNotMatch(css + fallback, /--kaijia-/, 'custom color palette must not be used')
 })
 
 test('chevron flips in the same render that starts collapse and keeps 200ms rotation', async () => {
@@ -80,17 +80,17 @@ test('tree rows use opaque sidebar background so overlapping rows occlude withou
     readFile(new URL('../src/client.css', import.meta.url), 'utf8'),
     readFile(new URL('../src/client.fallback.css', import.meta.url), 'utf8'),
   ])
-  assert.doesNotMatch(source, /ymc-tree-row-animating/)
+  assert.doesNotMatch(source, /kaijia-tree-row-animating/)
   assert.doesNotMatch(source, /animating=\{enteringKeys\.has\(row\.key\)/)
-  assert.match(css + fallback, /\.ymc-tree-row\s*\{[^}]*background:\s*var\(--dsw-specific-sidebar-fill\)/)
-  assert.doesNotMatch(css + fallback, /\.ymc-tree-row\s*\{[^}]*z-index/)
-  assert.doesNotMatch(css + fallback, /\.ymc-tree-row-animating/)
+  assert.match(css + fallback, /\.kaijia-tree-row\s*\{[^}]*background:\s*var\(--dsw-specific-sidebar-fill\)/)
+  assert.doesNotMatch(css + fallback, /\.kaijia-tree-row\s*\{[^}]*z-index/)
+  assert.doesNotMatch(css + fallback, /\.kaijia-tree-row-animating/)
 })
 
 test('sidebar subscribes to file-change SSE and auto-invalidates loaded directories', async () => {
   const source = await readClientSources()
   assert.match(source, /new EventSource\(/, 'sidebar must open an EventSource for file changes')
-  assert.match(source, /\/dsh-ymc-sidebar\/events/, 'sidebar must subscribe to the plugin SSE channel')
+  assert.match(source, /\/dsh-sidebar\/events/, 'sidebar must subscribe to the plugin SSE channel')
   assert.match(source, /source\.addEventListener\('change'/, 'sidebar must listen to change SSE frames')
   assert.match(source, /setDirs\(/, 'sidebar must invalidate loaded directory snapshots on changes')
   assert.match(source, /setTabs\(/, 'sidebar must refresh the active preview after file changes')
@@ -99,7 +99,7 @@ test('sidebar subscribes to file-change SSE and auto-invalidates loaded director
 test('client style installer is hot-swap safe (one style element per fiber)', async () => {
   const source = await readClientSources()
   assert.match(source, /const element = document\.createElement\('style'\)/, 'installStyles must create a fresh style element')
-  assert.doesNotMatch(source, /querySelector\('style\[data-dsh-ymc-sidebar-style\]'\)/, 'installStyles must not steal another fiber\'s style element')
+  assert.doesNotMatch(source, /querySelector\('style\[data-dsh-sidebar-style\]'\)/, 'installStyles must not steal another fiber\'s style element')
   assert.match(source, /return \(\) => element\.remove\(\)/, 'installStyles must remove only its own element')
 })
 
@@ -110,7 +110,7 @@ test('client bundle materializes as a lazy-CJS plugin factory', async () => {
     window: {
       __ModuleLoader__: {
         load(handoff: { id: string; factory: typeof factory }) {
-          assert.equal(handoff.id, 'dsh-ymc-sidebar')
+          assert.equal(handoff.id, 'dsh-sidebar')
           factory = handoff.factory
         },
       },
@@ -148,7 +148,7 @@ test('client bundle materializes as a lazy-CJS plugin factory', async () => {
     throw new Error('unexpected require: ' + specifier)
   }) as { name: string; inject: string[]; apply: (ctx: unknown) => void }
 
-  assert.equal(plugin.name, 'dsh-ymc-sidebar')
+  assert.equal(plugin.name, 'dsh-sidebar')
   assert.deepEqual(Array.from(plugin.inject), ['sessions', 'workspaces', 'connection'])
   assert.equal(typeof plugin.apply, 'function')
 })

@@ -59,21 +59,21 @@ export function DiffView({ diff }: { diff: string }) {
   }
 
   return (
-    <div className="ymc-diff-scroll relative min-h-0 flex-1 overflow-auto" ref={scrollRef} onScroll={onScroll}>
+    <div className="kaijia-diff-scroll relative min-h-0 flex-1 overflow-auto" ref={scrollRef} onScroll={onScroll}>
       <div
-        className="ymc-diff-spacer relative min-w-full"
+        className="kaijia-diff-spacer relative min-w-full"
         style={{ height: lines.length * CODE_ROW_HEIGHT, minWidth: `max(100%, ${Math.max(maxLineLength, 1)}ch)` }}
       >
         {lines.slice(start, end).map((line, index) => {
           const top = (start + index) * CODE_ROW_HEIGHT
-          const aliasClass = line.kind === 'add' ? 'ymc-diff-add' : line.kind === 'del' ? 'ymc-diff-del' : line.kind === 'hunk' ? 'ymc-diff-hunk' : line.kind === 'meta' ? 'ymc-diff-meta' : ''
+          const aliasClass = line.kind === 'add' ? 'kaijia-diff-add' : line.kind === 'del' ? 'kaijia-diff-del' : line.kind === 'hunk' ? 'kaijia-diff-hunk' : line.kind === 'meta' ? 'kaijia-diff-meta' : ''
           return (
             <div
               key={start + index}
-              className={`ymc-diff-line ymc-diff-line-${line.kind}${aliasClass ? ` ${aliasClass}` : ''}`}
+              className={`kaijia-diff-line kaijia-diff-line-${line.kind}${aliasClass ? ` ${aliasClass}` : ''}`}
               style={{ top, height: CODE_ROW_HEIGHT } as CSSProperties}
             >
-              <code className="ymc-diff-text whitespace-pre">{line.text || ' '}</code>
+              <code className="kaijia-diff-text whitespace-pre">{line.text || ' '}</code>
             </div>
           )
         })}

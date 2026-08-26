@@ -66,7 +66,7 @@ async function createMockFs(root: string, options: MockFsOptions = {}) {
 }
 
 async function createHandler(config: Partial<plugin.Config> = {}) {
-  const dir = await mkdtemp(path.join(tmpdir(), 'dsh-ymc-sidebar-test-'))
+  const dir = await mkdtemp(path.join(tmpdir(), 'dsh-sidebar-test-'))
   const fs = await createMockFs(dir)
   let captured: { channel: string; handler: (endpoint: string, payload: unknown, signal: AbortSignal) => Promise<any> }
   plugin.apply({
@@ -151,7 +151,7 @@ test('read returns base64 image for image extensions', async () => {
 })
 
 test('read reports binary files and too-large files as domain values', async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), 'dsh-ymc-sidebar-test-'))
+  const dir = await mkdtemp(path.join(tmpdir(), 'dsh-sidebar-test-'))
   const fs = await createMockFs(dir, { readTextError: { code: 'FS_NOT_TEXT', message: 'not text' } })
   let captured: any
   plugin.apply({

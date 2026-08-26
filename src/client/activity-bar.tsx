@@ -9,10 +9,10 @@ interface ActivityBarProps {
 
 export function ActivityBar({ view, onSelect }: ActivityBarProps) {
   return (
-    <nav className="ymc-activity-bar" aria-label="侧栏视图切换">
+    <nav className="kaijia-activity-bar" aria-label="侧栏视图切换">
       <button
         type="button"
-        className={`ymc-activity-item${view === 'explorer' ? ' ymc-activity-item-active' : ''}`}
+        className={`kaijia-activity-item${view === 'explorer' ? ' kaijia-activity-item-active' : ''}`}
         aria-label="文件资源管理器"
         title="文件资源管理器"
         aria-current={view === 'explorer' ? 'page' : undefined}
@@ -22,7 +22,7 @@ export function ActivityBar({ view, onSelect }: ActivityBarProps) {
       </button>
       <button
         type="button"
-        className={`ymc-activity-item${view === 'git' ? ' ymc-activity-item-active' : ''}`}
+        className={`kaijia-activity-item${view === 'git' ? ' kaijia-activity-item-active' : ''}`}
         aria-label="Git 追踪"
         title="Git 追踪"
         aria-current={view === 'git' ? 'page' : undefined}

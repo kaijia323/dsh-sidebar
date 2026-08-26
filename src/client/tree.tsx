@@ -33,15 +33,15 @@ interface TreeRowProps {
 const TreeRow = React.memo(function TreeRow({ row, expanded, loading, selected, style, onToggle, onSelect }: TreeRowProps) {
   const padding = 8 + row.depth * 14
   const className = [
-    'ymc-tree-row',
+    'kaijia-tree-row',
     'flex',
     'items-center',
     'gap-1',
     'select-none',
     'whitespace-nowrap',
     'cursor-pointer',
-    row.type === 'directory' ? 'ymc-tree-dir' : row.type === 'file' ? 'ymc-tree-file' : 'ymc-tree-note',
-    selected ? 'ymc-tree-row-selected' : '',
+    row.type === 'directory' ? 'kaijia-tree-dir' : row.type === 'file' ? 'kaijia-tree-file' : 'kaijia-tree-note',
+    selected ? 'kaijia-tree-row-selected' : '',
   ].filter(Boolean).join(' ')
 
   function handleChevron(event: React.MouseEvent) {
@@ -54,7 +54,7 @@ const TreeRow = React.memo(function TreeRow({ row, expanded, loading, selected, 
       className={className}
       style={{ ...style, paddingLeft: padding }}
       title={row.path}
-      data-dsh-ymc-sidebar-row=""
+      data-dsh-sidebar-row=""
       data-row-key={row.key}
       aria-expanded={row.type === 'directory' ? expanded : undefined}
       onClick={() => {
@@ -62,12 +62,12 @@ const TreeRow = React.memo(function TreeRow({ row, expanded, loading, selected, 
         else if (row.type === 'file') onSelect(row)
       }}
     >
-      <span className="ymc-tree-chevron-slot">
-        {row.type === 'directory' && !loading && <span className="ymc-tree-chevron" onClick={handleChevron}><Chevron open={expanded} /></span>}
-        {row.type === 'directory' && loading && <span className="ymc-tree-spinner" />}
+      <span className="kaijia-tree-chevron-slot">
+        {row.type === 'directory' && !loading && <span className="kaijia-tree-chevron" onClick={handleChevron}><Chevron open={expanded} /></span>}
+        {row.type === 'directory' && loading && <span className="kaijia-tree-spinner" />}
       </span>
       {row.type === 'directory' ? <FolderIcon open={expanded} /> : <FileIcon name={row.name} />}
-      <span className="ymc-tree-label">{row.name}</span>
+      <span className="kaijia-tree-label">{row.name}</span>
     </div>
   )
 })
@@ -132,7 +132,7 @@ export function Tree({ root, dirs, expanded, loading, entering, collapsing, sele
 
   useEffect(() => {
     if (collapsing.size === 0) return
-    const rowElements = Array.from(document.querySelectorAll<HTMLElement>('[data-dsh-ymc-sidebar-row]'))
+    const rowElements = Array.from(document.querySelectorAll<HTMLElement>('[data-dsh-sidebar-row]'))
     const rowByKey = new Map<string, { index: number }>()
     rows.forEach((row, index) => rowByKey.set(row.key, { index }))
     const spacer = spacerRef.current
@@ -236,7 +236,7 @@ export function Tree({ root, dirs, expanded, loading, entering, collapsing, sele
 
   useEffect(() => {
     if (entering.size === 0) return
-    const rowElements = Array.from(document.querySelectorAll<HTMLElement>('[data-dsh-ymc-sidebar-row]'))
+    const rowElements = Array.from(document.querySelectorAll<HTMLElement>('[data-dsh-sidebar-row]'))
     const rowByKey = new Map<string, { index: number }>()
     rows.forEach((row, index) => rowByKey.set(row.key, { index }))
     const spacer = spacerRef.current
@@ -402,15 +402,15 @@ export function Tree({ root, dirs, expanded, loading, entering, collapsing, sele
   }
 
   return (
-    <div className="ymc-tree-scroll relative min-h-0 flex-1 overflow-auto" ref={scrollRef} onScroll={onScroll}>
+    <div className="kaijia-tree-scroll relative min-h-0 flex-1 overflow-auto" ref={scrollRef} onScroll={onScroll}>
       {rows.length === 0
-        ? <div className="ymc-tree-empty flex h-full flex-col items-center justify-center">空目录</div>
+        ? <div className="kaijia-tree-empty flex h-full flex-col items-center justify-center">空目录</div>
         : (
-            <div ref={spacerRef} className="ymc-tree-spacer relative min-w-full" style={{ height: rows.length * TREE_ROW_HEIGHT }}>
+            <div ref={spacerRef} className="kaijia-tree-spacer relative min-w-full" style={{ height: rows.length * TREE_ROW_HEIGHT }}>
               {visible}
             </div>
           )}
-      {flattened.truncated && <div className="ymc-tree-truncated">树已截断（超过 {maxRows} 行）</div>}
+      {flattened.truncated && <div className="kaijia-tree-truncated">树已截断（超过 {maxRows} 行）</div>}
     </div>
   )
 }

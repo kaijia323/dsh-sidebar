@@ -11,7 +11,7 @@ function renderInline(text: string, keyPrefix: string): ReactNode[] {
     const [token, code, bold, italic, link] = match
     const key = `${keyPrefix}-i${index++}`
     if (code !== undefined) {
-      nodes.push(<code key={key} className="ymc-md-code">{code.slice(1, -1)}</code>)
+      nodes.push(<code key={key} className="kaijia-md-code">{code.slice(1, -1)}</code>)
     } else if (bold !== undefined) {
       nodes.push(<strong key={key}>{bold.slice(2, -2)}</strong>)
     } else if (italic !== undefined) {
@@ -57,7 +57,7 @@ export function MarkdownView({ text }: { text: string }) {
         index += 1
       }
       blocks.push(
-        <pre key={`code-${index}`} className="ymc-md-pre"><code>{fence.join('\n')}</code></pre>,
+        <pre key={`code-${index}`} className="kaijia-md-pre"><code>{fence.join('\n')}</code></pre>,
       )
       continue
     }
@@ -70,12 +70,12 @@ export function MarkdownView({ text }: { text: string }) {
       flushList(index)
       const level = heading[1].length
       const content = renderInline(heading[2], `h${index}`)
-      blocks.push(createElement(`h${level}`, { key: `h-${index}`, className: 'ymc-md-heading' }, content))
+      blocks.push(createElement(`h${level}`, { key: `h-${index}`, className: 'kaijia-md-heading' }, content))
       continue
     }
     if (/^\s*(---+|\*\*\*+)\s*$/.test(line)) {
       flushList(index)
-      blocks.push(<hr key={`hr-${index}`} className="ymc-md-hr" />)
+      blocks.push(<hr key={`hr-${index}`} className="kaijia-md-hr" />)
       continue
     }
     const unordered = /^\s*[-*+]\s+(.*)$/.exec(line)
@@ -100,13 +100,13 @@ export function MarkdownView({ text }: { text: string }) {
     if (quote) {
       flushList(index)
       blocks.push(
-        <blockquote key={`q-${index}`} className="ymc-md-quote">{renderInline(quote[1], `q${index}`)}</blockquote>,
+        <blockquote key={`q-${index}`} className="kaijia-md-quote">{renderInline(quote[1], `q${index}`)}</blockquote>,
       )
       continue
     }
     flushList(index)
-    blocks.push(<p key={`p-${index}`} className="ymc-md-paragraph">{renderInline(line, `p${index}`)}</p>)
+    blocks.push(<p key={`p-${index}`} className="kaijia-md-paragraph">{renderInline(line, `p${index}`)}</p>)
   }
   flushList(lines.length)
-  return <div className="ymc-markdown mx-auto max-w-[760px] p-3 leading-relaxed">{blocks}</div>
+  return <div className="kaijia-markdown mx-auto max-w-[760px] p-3 leading-relaxed">{blocks}</div>
 }

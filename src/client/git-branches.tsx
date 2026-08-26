@@ -23,8 +23,8 @@ function BranchRow({ branch, busy, onSwitch }: {
   return (
     <button
       type="button"
-      className={`ymc-git-row ymc-branch-row relative flex h-[30px] items-center gap-2 border-0 border-l-2 bg-transparent px-2.5 text-left text-xs ${
-        branch.isCurrent ? 'ymc-git-row-selected' : 'border-l-transparent'
+      className={`kaijia-git-row kaijia-branch-row relative flex h-[30px] items-center gap-2 border-0 border-l-2 bg-transparent px-2.5 text-left text-xs ${
+        branch.isCurrent ? 'kaijia-git-row-selected' : 'border-l-transparent'
       }`}
       title={title}
       disabled={branch.isCurrent || busy}
@@ -42,7 +42,7 @@ function BranchRow({ branch, busy, onSwitch }: {
           {badge}
         </span>
       ))}
-      {busy && <span className="ymc-spinner" />}
+      {busy && <span className="kaijia-spinner" />}
     </button>
   )
 }
@@ -54,9 +54,9 @@ export function GitBranchesList({ value, busyTarget, onSwitch }: {
 }) {
   if (!value) {
     return (
-      <div className="ymc-git-empty min-h-0 flex-1 overflow-hidden">
-        <div className="ymc-panel-message flex h-full flex-col items-center justify-center gap-2 text-[var(--dsw-alias-label-tertiary)]">
-          <span className="ymc-spinner" />
+      <div className="kaijia-git-empty min-h-0 flex-1 overflow-hidden">
+        <div className="kaijia-panel-message flex h-full flex-col items-center justify-center gap-2 text-[var(--dsw-alias-label-tertiary)]">
+          <span className="kaijia-spinner" />
           <p className="text-[11px]">正在加载分支…</p>
         </div>
       </div>
@@ -65,7 +65,7 @@ export function GitBranchesList({ value, busyTarget, onSwitch }: {
 
   if (isDomainError(value)) {
     return (
-      <div className="ymc-preview-error overflow-auto text-[var(--dsw-alias-state-error-primary)]">
+      <div className="kaijia-preview-error overflow-auto text-[var(--dsw-alias-state-error-primary)]">
         <div className="flex items-center gap-1.5">
           <AlertCircle size={14} strokeWidth={1.75} aria-hidden="true" />
           <span>{value.message}</span>
@@ -79,8 +79,8 @@ export function GitBranchesList({ value, busyTarget, onSwitch }: {
 
   if (local.length === 0 && remote.length === 0) {
     return (
-      <div className="ymc-git-empty min-h-0 flex-1 overflow-hidden">
-        <div className="ymc-panel-message flex h-full flex-col items-center justify-center gap-2 text-[var(--dsw-alias-label-tertiary)]">
+      <div className="kaijia-git-empty min-h-0 flex-1 overflow-hidden">
+        <div className="kaijia-panel-message flex h-full flex-col items-center justify-center gap-2 text-[var(--dsw-alias-label-tertiary)]">
           <GitFork size={28} strokeWidth={1.5} aria-hidden="true" />
           <p className="font-medium text-[var(--dsw-alias-label-secondary)]">暂无分支</p>
         </div>
@@ -89,9 +89,9 @@ export function GitBranchesList({ value, busyTarget, onSwitch }: {
   }
 
   return (
-    <div className="ymc-git-branches min-h-0 flex-1 overflow-auto">
+    <div className="kaijia-git-branches min-h-0 flex-1 overflow-auto">
       {local.length > 0 && (
-        <div className="ymc-git-section-header sticky top-0 z-10 flex items-center gap-1.5 border-b border-[var(--dsw-alias-border-l2)] bg-[var(--dsw-specific-sidebar-fill)] px-2.5 text-[11px] font-medium text-[var(--dsw-alias-label-tertiary)]">
+        <div className="kaijia-git-section-header sticky top-0 z-10 flex items-center gap-1.5 border-b border-[var(--dsw-alias-border-l2)] bg-[var(--dsw-specific-sidebar-fill)] px-2.5 text-[11px] font-medium text-[var(--dsw-alias-label-tertiary)]">
           <span>本地分支</span>
           <span className="ml-auto tabular-nums">{local.length}</span>
         </div>
@@ -105,7 +105,7 @@ export function GitBranchesList({ value, busyTarget, onSwitch }: {
         />
       ))}
       {remote.length > 0 && (
-        <div className="ymc-git-section-header sticky top-0 z-10 mt-1 flex items-center gap-1.5 border-b border-[var(--dsw-alias-border-l2)] bg-[var(--dsw-specific-sidebar-fill)] px-2.5 text-[11px] font-medium text-[var(--dsw-alias-label-tertiary)]">
+        <div className="kaijia-git-section-header sticky top-0 z-10 mt-1 flex items-center gap-1.5 border-b border-[var(--dsw-alias-border-l2)] bg-[var(--dsw-specific-sidebar-fill)] px-2.5 text-[11px] font-medium text-[var(--dsw-alias-label-tertiary)]">
           <span>远端分支</span>
           <span className="ml-auto tabular-nums">{remote.length}</span>
         </div>

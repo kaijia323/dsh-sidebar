@@ -1,4 +1,4 @@
-export const CHANNEL = '/dsh-ymc-sidebar'
+export const CHANNEL = '/dsh-sidebar'
 
 export const TREE_ROW_HEIGHT = 24
 export const CODE_ROW_HEIGHT = 20
@@ -8,7 +8,7 @@ export const ACTIVITY_BAR_WIDTH = 40
 export const SIDEBAR_MIN = 280
 export const SIDEBAR_MAX = 640
 export const SIDEBAR_DEFAULT = 360
-export const SIDEBAR_STORAGE_KEY = 'dsh-ymc-sidebar:v1'
+export const SIDEBAR_STORAGE_KEY = 'dsh-sidebar:v1'
 
 export const COLLAPSE_MS = 240
 export const ENTER_MS = 200
