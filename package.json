@@ -1,6 +1,6 @@
 {
   "name": "@kaijia/dsh-sidebar",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "VSCode-style file explorer for the DeepSeek Harness web client: a body-mounted, draggable right sidebar with virtualized lazy file tree and text / Markdown / image preview. Does not depend on the native details slot, so it works on blank sessions.",
   "type": "module",
   "main": "lib/index.js",
