@@ -34,17 +34,55 @@ DSH Web Client 的 VSCode 风格文件树侧栏。作为 `#root` 的兄弟节点
 
 前端样式直接消费 DSH 的主题 alias token（`--dsw-alias-*`），不维护独立色板；组件使用 Tailwind CSS 编写，构建时由 `tailwindcss` 从 `src/client.css` 生成 utility CSS 并内联进客户端 bundle。
 
-## 安装 / 开发
+## 安装
 
-要求 DSH `0.1.0-rc.7`、pnpm 10+ 与 Node.js 20+。
+要求 DSH `0.1.0-rc.8` 或更新版本、pnpm 10+ 与 Node.js 20+。
+
+### 本地安装（源码 / 开发）
+
+从仓库或本地源码安装：
 
 ```bash
+git clone https://github.com/kaijia323/dsh-ymc-sidebar.git
+cd dsh-ymc-sidebar
 pnpm install
 pnpm build
 dsh plugin --profile web add .
 ```
 
 重启 `dsh web` 后，右侧文件树会自动作为 body 兄弟节点打开并展示；即使当前会话是 blank 也能打开。侧栏最右侧的 Activity Bar 常驻：点击当前视图图标可收起/展开，点击另一个图标切换视图；展开状态下左侧边缘可拖拽调整宽度。
+
+### 正式安装（npm 发布版 / 分发制品）
+
+正式版已发布到 npm，直接安装：
+
+```bash
+dsh plugin --profile web add @kaijia/dsh-ymc-sidebar
+```
+
+`dsh plugin` 会将该包安装到 `$DSH_HOME/profiles/web`，识别 `dsh.bundle` 配置并自动激活插件层。如果不想依赖 npm registry，也可以先用 `pnpm pack` 生成 tarball 来做正式分发（文件名中的版本号以当前 `package.json` 的 `version` 为准）：
+
+```bash
+pnpm build
+pnpm pack
+dsh plugin --profile web add ./kaijia-dsh-ymc-sidebar-0.1.0.tgz
+```
+
+两种方式安装后，都可以用以下命令确认配置层已生效：
+
+```bash
+dsh --profile web --dump-config
+```
+
+输出中应能看到 `# == @kaijia/dsh-ymc-sidebar` 层；随后重启 `dsh web` 即可使用。卸载时执行：
+
+```bash
+dsh plugin --profile web remove @kaijia/dsh-ymc-sidebar
+```
+
+> npm 发布包名为 `@kaijia/dsh-ymc-sidebar`。
+
+## 开发
 
 本地开发时修改源码后重跑 `pnpm build`，然后重启 `dsh web`。只改 `cordis.yml` 里的 `config` 时 DSH 会热替换插件实例。
 
@@ -64,7 +102,7 @@ dsh plugin --profile web add .
 ```yaml
 - insert:
     - id: dsh-ymc-sidebar
-      name: dsh-ymc-sidebar
+      name: '@kaijia/dsh-ymc-sidebar'
       config:
         maxTextBytes: 2097152
         maxImageBytes: 8388608
