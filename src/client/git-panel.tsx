@@ -328,6 +328,7 @@ export function GitPanel({ api, root, active = true }: GitPanelProps) {
   const [logLoading, setLogLoading] = useState(false)
   const [logLoadingMore, setLogLoadingMore] = useState(false)
   const [reloadToken, setReloadToken] = useState(0)
+  const [metaReloadToken, setMetaReloadToken] = useState(0)
   const [changeSelection, setChangeSelection] = useState<ChangeSelection | null>(null)
   const [diff, setDiff] = useState<GitDiffValue | null>(null)
   const [preview, setPreview] = useState<ReadValue | null>(null)
@@ -481,7 +482,7 @@ export function GitPanel({ api, root, active = true }: GitPanelProps) {
         if (!controller.signal.aborted) setBranchesLoading(false)
       })
     return () => controller.abort()
-  }, [api, root, active, reloadToken])
+  }, [api, root, active, metaReloadToken])
 
   useEffect(() => {
     if (!root || !active) return
@@ -514,16 +515,22 @@ export function GitPanel({ api, root, active = true }: GitPanelProps) {
         if (!controller.signal.aborted) setLogLoading(false)
       })
     return () => controller.abort()
-  }, [api, root, active, reloadToken])
+  }, [api, root, active, metaReloadToken])
 
   useEffect(() => {
     if (!root || !active) return
-    const source = new EventSource(`/dsh-sidebar/events?root=${encodeURIComponent(root)}`)
+    const source = new EventSource(`/dsh-sidebar/events?root=${encodeURIComponent(root)}&git=1`)
     let timer: number | undefined
-    const handleChange = () => {
+    let refreshMeta = false
+    const handleChange = (event: Event) => {
+      if (event.type === 'git-change') refreshMeta = true
       if (timer !== undefined) window.clearTimeout(timer)
       timer = window.setTimeout(() => {
         setReloadToken((token) => token + 1)
+        if (refreshMeta) {
+          setMetaReloadToken((token) => token + 1)
+          refreshMeta = false
+        }
       }, 500)
     }
     source.addEventListener('change', handleChange as EventListener)
@@ -622,7 +629,7 @@ export function GitPanel({ api, root, active = true }: GitPanelProps) {
         if (!controller.signal.aborted) setCommitDetailLoading(false)
       })
     return () => controller.abort()
-  }, [api, root, active, selectedCommit, reloadToken])
+  }, [api, root, active, selectedCommit, metaReloadToken])
 
   useEffect(() => {
     if (!operationMessage) return
@@ -731,6 +738,7 @@ export function GitPanel({ api, root, active = true }: GitPanelProps) {
         setOperationMessage({ tone: 'info', text: result.output })
       }
       setReloadToken((token) => token + 1)
+      setMetaReloadToken((token) => token + 1)
       if (action.action === 'switch') {
         setSelectedCommit(null)
         setChangeSelection(null)

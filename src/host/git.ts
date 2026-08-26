@@ -45,6 +45,11 @@ async function runGitFull(root: string, args: string[], signal: AbortSignal): Pr
     maxBuffer: GIT_MAX_BUFFER,
     signal,
     encoding: 'utf8',
+    // Do not let read-only Git commands opportunistically refresh/rewrite
+    // `.git/index`. The sidebar's own `.git` watcher would see that write and
+    // trigger another Git refresh, creating a feedback loop / continuous CPU
+    // churn while the Git panel is open.
+    env: { ...process.env, GIT_OPTIONAL_LOCKS: '0' },
   })
   return { stdout, stderr }
 }

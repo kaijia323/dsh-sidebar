@@ -22,6 +22,7 @@ async function collectGitIgnored(root: string): Promise<string[]> {
       encoding: 'utf8',
       maxBuffer: 4 * 1024 * 1024,
       timeout: 5000,
+      env: { ...process.env, GIT_OPTIONAL_LOCKS: '0' },
     })
     const ignored = stdout.split('\0')
       .filter(Boolean)
@@ -65,6 +66,7 @@ function isHeavyGitPath(gitDir: string, candidate: string): boolean {
 interface SseClient {
   id: number
   root: string
+  watchGit: boolean
   response: ServerResponse
   heartbeat: ReturnType<typeof setInterval> | undefined
 }
@@ -119,6 +121,7 @@ export class FileWatchHub {
     const client: SseClient = {
       id: this.nextClientId,
       root,
+      watchGit: url.searchParams.get('git') === '1',
       response: res,
       heartbeat: undefined,
     }
@@ -139,7 +142,7 @@ export class FileWatchHub {
 
     res.on('close', () => this.removeClient(client))
     void this.ensureWatcher(root)
-    void this.ensureGitWatcher(root)
+    if (client.watchGit) void this.ensureGitWatcher(root)
   }
 
   private removeClient(client: SseClient): void {
@@ -147,6 +150,8 @@ export class FileWatchHub {
     if (client.heartbeat) clearInterval(client.heartbeat)
     if (!this.hasSubscribers(client.root)) {
       this.stopWatcher(client.root)
+    }
+    if (!this.hasGitSubscribers(client.root)) {
       this.stopGitWatcher(client.root)
     }
   }
@@ -154,6 +159,13 @@ export class FileWatchHub {
   private hasSubscribers(root: string): boolean {
     for (const client of this.clients) {
       if (client.root === root) return true
+    }
+    return false
+  }
+
+  private hasGitSubscribers(root: string): boolean {
+    for (const client of this.clients) {
+      if (client.root === root && client.watchGit) return true
     }
     return false
   }
@@ -174,6 +186,17 @@ export class FileWatchHub {
   }
 
   private async createWatcher(root: string): Promise<void> {
+    // Collect ignored paths BEFORE chokidar starts walking the tree. Once a
+    // recursive watcher is running, `unwatch()` does not reliably stop it from
+    // watching already-discovered gitignored directories, so passing absolute
+    // ignored paths into the initial `ignored` option is the only safe way to
+    // keep huge generated/ignored directories out of the watch set.
+    const ignored = new Set<string>(this.config.watchIgnored)
+    for (const entry of await collectGitIgnored(root)) {
+      ignored.add(isAbsolute(entry) ? entry : resolve(root, entry))
+    }
+    if (!this.hasSubscribers(root)) return
+
     const watcher = watch(root, {
       ignoreInitial: true,
       persistent: true,
@@ -182,7 +205,7 @@ export class FileWatchHub {
         stabilityThreshold: this.config.watchDebounceMs,
         pollInterval: 30,
       },
-      ignored: this.config.watchIgnored.length > 0 ? this.config.watchIgnored : undefined,
+      ignored: ignored.size > 0 ? Array.from(ignored) : undefined,
     })
 
     watcher.on('all', (event, path) => {
@@ -199,7 +222,6 @@ export class FileWatchHub {
       return
     }
     this.watchers.set(root, watcher)
-    void this.applyGitIgnored(root, watcher)
   }
 
   private async ensureGitWatcher(root: string): Promise<void> {
@@ -224,6 +246,7 @@ export class FileWatchHub {
         encoding: 'utf8' as const,
         maxBuffer: 4 * 1024 * 1024,
         timeout: 5000,
+        env: { ...process.env, GIT_OPTIONAL_LOCKS: '0' },
       }
       const [gitDirResult, commonDirResult] = await Promise.all([
         execFileAsync('git', ['-C', root, 'rev-parse', '--absolute-git-dir'], options),
@@ -259,18 +282,12 @@ export class FileWatchHub {
     })
 
     // Same race guard as the file watcher: don't keep a Git watcher alive
-    // when every subscriber went away while it was starting.
-    if (!this.hasSubscribers(root)) {
+    // when every Git subscriber went away while it was starting.
+    if (!this.hasGitSubscribers(root)) {
       void watcher.close()
       return
     }
     this.gitWatchers.set(root, watcher)
-  }
-
-  private async applyGitIgnored(root: string, watcher: FSWatcher): Promise<void> {
-    const ignored = await collectGitIgnored(root)
-    if (this.watchers.get(root) !== watcher || ignored.length === 0) return
-    watcher.unwatch(ignored)
   }
 
   private stopWatcher(root: string): void {
