@@ -7,7 +7,7 @@ DSH Web Client 的 VSCode 风格文件树侧栏。作为 `#root` 的兄弟节点
 - 目录按需懒加载，树与代码视图都做了虚拟滚动
 - 默认不显示内容预览区；点击文件后，在右栏下方预览内容（上方为文件树）
 - 支持多文件 tabs：可同时打开多个文件、横向滚动、点击 `×` 关闭
-- “Git 追踪”视图展示当前 Git 仓库状态：当前分支、暂存区改动、工作区未暂存改动与未跟踪文件；点击改动可在下方预览带行级高亮的 diff，点击未跟踪文件可直接查看文件内容预览；状态、diff 与未跟踪内容都会随文件监听自动刷新，无需手动刷新
+- “Git 追踪”视图提供 VSCode 风格的三个子页：**改动**（当前分支、暂存区改动、工作区未暂存改动与未跟踪文件，点击可预览带行级高亮的 diff 或未跟踪文件内容）、**历史**（提交记录、提交信息与单次提交 diff，支持加载更多）、**分支**（本地/远端分支列表，可切换分支或把远端分支检出为本地追踪分支）；面板头部提供拉取（pull）与推送（push）操作，执行前会弹出确认框；状态、diff、历史与分支都会随文件监听和 Git 操作自动刷新，无需手动刷新
 - 支持文本/代码（带行号与基础语法高亮）、Markdown 渲染 / 源码切换、常见图片预览
 - 使用 `chokidar` 监听当前工作区文件变化，文件/目录的新增、修改、删除会自动刷新文件树，并自动重读当前激活的文件预览；未激活的 tab 在切换时读取最新内容，因此面板内不再保留手动刷新按钮
 - 不预置目录忽略规则，文件系统里有什么就展示什么（`node_modules` 等大目录靠懒加载 + 虚拟化抗压；文件监听默认忽略 `node_modules` 和 `.git`，并自动遵循工作区 `.gitignore` 声明的忽略路径，避免监听构建产物等大目录；可通过 `watchIgnored` 追加忽略规则）
@@ -16,7 +16,7 @@ DSH Web Client 的 VSCode 风格文件树侧栏。作为 `#root` 的兄弟节点
 
 插件分两半：
 
-- **Host half（`src/index.ts`）**：注入 `fs`、`connection` 与 `webServer`，在 `/dsh-ymc-sidebar` 注册一个仅 loopback 可访问的 Connection RPC channel，提供 `meta` / `list` / `read` / `git-status` / `git-diff` 等端点；同时在 `/dsh-ymc-sidebar/events` 注册同源 SSE 通道，用 `chokidar` 监听当前工作区并把文件变化推送给浏览器。
+- **Host half（`src/index.ts`）**：注入 `fs`、`connection` 与 `webServer`，在 `/dsh-ymc-sidebar` 注册一个仅 loopback 可访问的 Connection RPC channel，提供 `meta` / `list` / `read` / `git-status` / `git-diff` / `git-log` / `git-show` / `git-branches` / `git-switch` / `git-pull` / `git-push` 等端点；同时在 `/dsh-ymc-sidebar/events` 注册同源 SSE 通道，用 `chokidar` 监听当前工作区并把文件变化推送给浏览器。
 - **Browser half（`src/client.tsx`）**：注入 `sessions`、`workspaces`、`connection`，在 `document.body` 上创建自己的 React root 并挂载右侧栏；通过 `EventSource` 订阅文件变化事件，自动失效并重载受影响的目录，同时重读当前激活的预览。右侧栏是 `#root` 的兄弟节点，不注册任何 DSH slot：
   - 打开时通过 `--dsh-ymc-sidebar-width` 让 `#root` 让出宽度，形成“真占位”的 VSCode 式侧栏，而不是 overlay；收起时至少让出 40px 给常驻 Activity Bar；
   - 面板本身可拖拽调整宽度（280–640px），宽度与开关状态按 localStorage 持久化；
@@ -96,7 +96,7 @@ pnpm test
 覆盖：
 
 - 客户端纯模型：路径处理、根目录解析、懒加载扁平化、行数上限、循环引用保护
-- Host RPC：`meta` / `list` / `read` 成功路径、截断、二进制回退、超大文件、非法路径
+- Host RPC：`meta` / `list` / `read` 成功路径、截断、二进制回退、超大文件、非法路径；Git 的 `status` / `diff` / `log` / `show` / `branches` / `switch` 与远端分支检出
 - 客户端契约回归：标准 hooks 必须传 selector、侧栏必须作为 body 兄弟节点挂载且不注册 `details` / `shell.overlay`、必须通过 `#root` margin-right 做 layout push、lazy-CJS bundle 可物化
 - 前端契约：样式必须使用 DSH alias token + Tailwind 入口（且不注入 preflight）、style installer 必须按 fiber 独立创建/移除（热插拔安全）
 

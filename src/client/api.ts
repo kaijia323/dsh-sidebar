@@ -1,7 +1,19 @@
 import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
 import type { RpcResult } from '@deepseek-ai/dsh-client-connection/client'
 import { CHANNEL } from './constants'
-import type { DomainError, FsApi, GitDiffValue, GitStatusValue, Limits, ListValue, ReadValue } from './types'
+import type {
+  DomainError,
+  FsApi,
+  GitBranchesValue,
+  GitDiffValue,
+  GitLogValue,
+  GitOperationValue,
+  GitShowValue,
+  GitStatusValue,
+  Limits,
+  ListValue,
+  ReadValue,
+} from './types'
 
 export function isDomainError(value: unknown): value is DomainError {
   return typeof value === 'object' && value !== null && (value as { kind?: unknown }).kind === 'domain-error'
@@ -26,6 +38,24 @@ export function createFsApi(ctx: ClientContext): FsApi {
     },
     gitDiff(root, path, staged, signal) {
       return callValue<GitDiffValue>('git-diff', { root, path, staged }, signal)
+    },
+    gitLog(root, limit, skip, signal) {
+      return callValue<GitLogValue>('git-log', { root, limit, skip }, signal)
+    },
+    gitShow(root, commit, signal) {
+      return callValue<GitShowValue>('git-show', { root, commit }, signal)
+    },
+    gitBranches(root, signal) {
+      return callValue<GitBranchesValue>('git-branches', { root }, signal)
+    },
+    gitSwitch(root, target, signal) {
+      return callValue<GitOperationValue>('git-switch', { root, target }, signal)
+    },
+    gitPull(root, signal) {
+      return callValue<GitOperationValue>('git-pull', { root }, signal)
+    },
+    gitPush(root, signal) {
+      return callValue<GitOperationValue>('git-push', { root }, signal)
     },
     async meta(signal) {
       const value = await callValue<{ kind: 'meta' } & Limits>('meta', {}, signal)

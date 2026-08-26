@@ -224,6 +224,142 @@ test('git-diff returns staged diff text', async () => {
   }
 })
 
+test('git-log returns commit history with parsed metadata', async () => {
+  if (!gitAvailable) return
+  const { dir, handler } = await createHandler()
+  try {
+    await execFileAsync('git', ['init', '-q', '-b', 'main'], { cwd: dir })
+    await execFileAsync('git', ['config', 'user.email', 'test@example.com'], { cwd: dir })
+    await execFileAsync('git', ['config', 'user.name', 'Test'], { cwd: dir })
+    await writeFile(path.join(dir, 'a.txt'), 'base', 'utf8')
+    await execFileAsync('git', ['add', '.'], { cwd: dir })
+    await execFileAsync('git', ['commit', '-q', '-m', 'first commit'], { cwd: dir })
+    await writeFile(path.join(dir, 'b.txt'), 'second', 'utf8')
+    await execFileAsync('git', ['add', '.'], { cwd: dir })
+    await execFileAsync('git', ['commit', '-q', '-m', 'second commit'], { cwd: dir })
+
+    const result = await handler('git-log', { root: dir, limit: 10 }, new AbortController().signal)
+    assert.equal(result.ok, true)
+    assert.equal(result.value.kind, 'git-log')
+    assert.equal(result.value.commits.length, 2)
+    assert.equal(result.value.commits[0].subject, 'second commit')
+    assert.equal(result.value.commits[1].subject, 'first commit')
+    for (const commit of result.value.commits) {
+      assert.match(commit.hash, /^[0-9a-f]{40}$/, 'hash must not contain leading whitespace')
+    }
+    assert.equal(result.value.commits[0].authorName, 'Test')
+    assert.ok(result.value.commits[0].authorDate.includes('T'))
+  } finally {
+    await rm(dir, { recursive: true, force: true })
+  }
+})
+
+test('git-show returns commit metadata and a patch diff', async () => {
+  if (!gitAvailable) return
+  const { dir, handler } = await createHandler()
+  try {
+    await execFileAsync('git', ['init', '-q', '-b', 'main'], { cwd: dir })
+    await execFileAsync('git', ['config', 'user.email', 'test@example.com'], { cwd: dir })
+    await execFileAsync('git', ['config', 'user.name', 'Test'], { cwd: dir })
+    await writeFile(path.join(dir, 'a.txt'), 'base', 'utf8')
+    await execFileAsync('git', ['add', '.'], { cwd: dir })
+    await execFileAsync('git', ['commit', '-q', '-m', 'init'], { cwd: dir })
+    await writeFile(path.join(dir, 'a.txt'), 'changed', 'utf8')
+    await execFileAsync('git', ['add', '.'], { cwd: dir })
+    await execFileAsync('git', ['commit', '-q', '-m', 'change'], { cwd: dir })
+
+    const log = await handler('git-log', { root: dir, limit: 2 }, new AbortController().signal)
+    assert.equal(log.ok, true)
+    const commit = log.value.commits[1].hash
+    const result = await handler('git-show', { root: dir, commit }, new AbortController().signal)
+    assert.equal(result.ok, true)
+    assert.equal(result.value.kind, 'git-show')
+    assert.equal(result.value.commit.subject, 'init')
+    assert.match(result.value.diff, /^diff --git /)
+    assert.match(result.value.diff, /\+base/)
+  } finally {
+    await rm(dir, { recursive: true, force: true })
+  }
+})
+
+test('git-branches lists local branches and marks the current one', async () => {
+  if (!gitAvailable) return
+  const { dir, handler } = await createHandler()
+  try {
+    await execFileAsync('git', ['init', '-q', '-b', 'main'], { cwd: dir })
+    await execFileAsync('git', ['config', 'user.email', 'test@example.com'], { cwd: dir })
+    await execFileAsync('git', ['config', 'user.name', 'Test'], { cwd: dir })
+    await writeFile(path.join(dir, 'a.txt'), 'base', 'utf8')
+    await execFileAsync('git', ['add', '.'], { cwd: dir })
+    await execFileAsync('git', ['commit', '-q', '-m', 'init'], { cwd: dir })
+    await execFileAsync('git', ['branch', 'feature'], { cwd: dir })
+
+    const result = await handler('git-branches', { root: dir }, new AbortController().signal)
+    assert.equal(result.ok, true)
+    assert.equal(result.value.kind, 'git-branches')
+    assert.equal(result.value.current, 'main')
+    const names = result.value.branches.map((branch: { name: string }) => branch.name)
+    assert.ok(names.includes('main'))
+    assert.ok(names.includes('feature'))
+    assert.equal(result.value.branches.find((branch: { name: string }) => branch.name === 'main')?.isCurrent, true)
+  } finally {
+    await rm(dir, { recursive: true, force: true })
+  }
+})
+
+test('git-switch switches to another local branch', async () => {
+  if (!gitAvailable) return
+  const { dir, handler } = await createHandler()
+  try {
+    await execFileAsync('git', ['init', '-q', '-b', 'main'], { cwd: dir })
+    await execFileAsync('git', ['config', 'user.email', 'test@example.com'], { cwd: dir })
+    await execFileAsync('git', ['config', 'user.name', 'Test'], { cwd: dir })
+    await writeFile(path.join(dir, 'a.txt'), 'base', 'utf8')
+    await execFileAsync('git', ['add', '.'], { cwd: dir })
+    await execFileAsync('git', ['commit', '-q', '-m', 'init'], { cwd: dir })
+    await execFileAsync('git', ['branch', 'feature'], { cwd: dir })
+
+    const result = await handler('git-switch', { root: dir, target: 'feature' }, new AbortController().signal)
+    assert.equal(result.ok, true)
+    assert.equal(result.value.kind, 'git-operation')
+    assert.equal(result.value.action, 'switch')
+
+    const status = await handler('git-status', { root: dir }, new AbortController().signal)
+    assert.equal(status.ok, true)
+    assert.equal(status.value.branch, 'feature')
+  } finally {
+    await rm(dir, { recursive: true, force: true })
+  }
+})
+
+test('git-switch creates a local tracking branch from a remote branch', async () => {
+  if (!gitAvailable) return
+  const { dir, handler } = await createHandler()
+  try {
+    await execFileAsync('git', ['init', '-q', '-b', 'main'], { cwd: dir })
+    await execFileAsync('git', ['config', 'user.email', 'test@example.com'], { cwd: dir })
+    await execFileAsync('git', ['config', 'user.name', 'Test'], { cwd: dir })
+    await writeFile(path.join(dir, 'a.txt'), 'base', 'utf8')
+    await execFileAsync('git', ['add', '.'], { cwd: dir })
+    await execFileAsync('git', ['commit', '-q', '-m', 'init'], { cwd: dir })
+    await execFileAsync('git', ['remote', 'add', 'origin', 'https://example.com/repo.git'], { cwd: dir })
+    await execFileAsync('git', ['update-ref', 'refs/remotes/origin/feature', 'HEAD'], { cwd: dir })
+
+    const result = await handler('git-switch', { root: dir, target: 'origin/feature' }, new AbortController().signal)
+    assert.equal(result.ok, true)
+    assert.equal(result.value.kind, 'git-operation')
+    assert.equal(result.value.action, 'switch')
+
+    const status = await handler('git-status', { root: dir }, new AbortController().signal)
+    assert.equal(status.ok, true)
+    assert.equal(status.value.branch, 'feature')
+    const upstream = await execFileAsync('git', ['config', '--get', 'branch.feature.remote'], { cwd: dir })
+    assert.equal(upstream.stdout.trim(), 'origin')
+  } finally {
+    await rm(dir, { recursive: true, force: true })
+  }
+})
+
 test('git status scopes to a subdirectory workspace and diff resolves the repo root', async () => {
   if (!gitAvailable) return
   const { dir, handler } = await createHandler()

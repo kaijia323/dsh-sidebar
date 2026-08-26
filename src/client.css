@@ -119,6 +119,70 @@
     @apply relative flex min-h-0 flex-1 flex-col overflow-hidden;
   }
 
+  .ymc-git-tabs {
+    @apply flex flex-none items-stretch border-b border-[var(--dsw-alias-border-l2)];
+  }
+
+  .ymc-git-tab {
+    @apply inline-flex h-[30px] flex-1 cursor-pointer items-center justify-center gap-1 border-b-2 border-transparent bg-transparent text-[11px] text-[var(--dsw-alias-label-secondary)];
+    font: inherit;
+    transition: background-color 120ms ease, color 120ms ease, border-color 120ms ease;
+  }
+
+  .ymc-git-tab:hover {
+    @apply bg-[var(--dsw-alias-interactive-bg-hover)] text-[var(--dsw-alias-label-primary)];
+  }
+
+  .ymc-git-tab-active,
+  .ymc-git-tab-active:hover {
+    @apply border-b-[var(--dsw-alias-brand-primary)] bg-[var(--dsw-alias-bg-layer-2)] text-[var(--dsw-alias-label-primary)];
+  }
+
+  .ymc-git-notice {
+    @apply flex-none border-b border-[var(--dsw-alias-border-l2)] px-2.5 py-1.5 text-[11px];
+  }
+
+  .ymc-git-history,
+  .ymc-git-branches {
+    @apply relative flex min-h-0 flex-1 flex-col;
+  }
+
+  .ymc-git-branches {
+    @apply overflow-auto;
+  }
+
+  .ymc-branch-row:disabled {
+    @apply cursor-default opacity-80;
+  }
+
+  .ymc-git-commit-row {
+    overflow: visible;
+  }
+
+  .ymc-load-more-button {
+    @apply flex h-[30px] flex-none cursor-pointer items-center justify-center gap-1.5 border-0 border-t border-[var(--dsw-alias-border-l2)] bg-transparent text-[11px] text-[var(--dsw-alias-label-secondary)];
+    font: inherit;
+    transition: background-color 120ms ease, color 120ms ease;
+  }
+
+  .ymc-load-more-button:hover:not(:disabled) {
+    @apply bg-[var(--dsw-alias-interactive-bg-hover)] text-[var(--dsw-alias-label-primary)];
+  }
+
+  .ymc-commit-meta {
+    @apply select-text;
+  }
+
+  .ymc-confirm-backdrop {
+    @apply flex items-center justify-center p-4;
+    background: color-mix(in srgb, var(--dsw-alias-bg-layer-1) 55%, transparent);
+  }
+
+  .ymc-confirm-dialog {
+    @apply rounded-lg border border-[var(--dsw-alias-border-l2)] bg-[var(--dsw-specific-sidebar-fill)] p-3;
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.28);
+  }
+
   .ymc-diff-scroll {
     @apply relative min-h-0 flex-1 overflow-auto;
   }
