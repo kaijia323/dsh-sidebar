@@ -36,7 +36,7 @@ DSH Web Client 的 VSCode 风格文件树侧栏。作为 `#root` 的兄弟节点
 
 ## 安装
 
-要求 DSH `0.1.0-rc.8` 或更新版本、pnpm 10+ 与 Node.js 20+。
+要求 DSH `0.1.1-rc.2` 或更新版本、pnpm 10+ 与 Node.js 20+。
 
 ### 本地安装（源码 / 开发）
 
