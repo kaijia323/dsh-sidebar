@@ -2,12 +2,13 @@
 
 DSH Web Client 的 VSCode 风格文件树侧栏。作为 `#root` 的兄弟节点挂载在 `document.body` 上，通过 CSS layout push 让 DSH 原生界面让出右侧空间；不占用 DSH 原生 `details` slot，因此 blank 会话也能打开。特性：
 
-- 侧栏最右侧提供常驻的 VSCode 风格 Activity Bar 图标栏，可切换“文件资源管理器”和“Git 追踪”两个视图；点击当前视图图标可收起/展开侧栏
+- 侧栏最右侧提供常驻的 VSCode 风格 Activity Bar 图标栏，可切换“文件资源管理器”“Git 追踪”和“浏览器”三个视图；点击当前视图图标可收起/展开侧栏
 - 以当前会话工作区目录（session cwd）为根展示文件树
 - 目录按需懒加载，树与代码视图都做了虚拟滚动
 - 默认不显示内容预览区；点击文件后，在右栏下方预览内容（上方为文件树）
 - 支持多文件 tabs：可同时打开多个文件、横向滚动、点击 `×` 关闭
 - “Git 追踪”视图提供 VSCode 风格的三个子页：**改动**（当前分支、暂存区改动、工作区未暂存改动与未跟踪文件，点击可预览带行级高亮的 diff 或未跟踪文件内容）、**历史**（提交记录、提交信息与单次提交 diff，支持加载更多）、**分支**（本地/远端分支列表，可切换分支或把远端分支检出为本地追踪分支）；面板头部提供拉取（pull）与推送（push）操作，执行前会弹出确认框；状态、diff、历史与分支都会随文件变化、Git 元数据变化和 Git 操作自动刷新，无需手动刷新
+- “浏览器”视图提供自绘的搜索首页，默认展示一个简洁的必应搜索框，搜索后在面板 iframe 中打开必应结果页；也支持地址栏直接输入网址、后退 / 前进、刷新、主页与在新标签页打开（部分站点会通过 `X-Frame-Options` / `frame-ancestors` 拒绝被 iframe 嵌入）
 - 支持文本/代码（带行号与基础语法高亮）、Markdown 渲染 / 源码切换、常见图片预览
 - 使用 `chokidar` 监听当前工作区文件变化，文件/目录的新增、修改、删除会自动刷新文件树，并自动重读当前激活的文件预览；未激活的 tab 在切换时读取最新内容，因此面板内不再保留手动刷新按钮
 - 不预置目录忽略规则，文件系统里有什么就展示什么（`node_modules` 等大目录靠懒加载 + 虚拟化抗压；文件监听默认忽略 `node_modules` 和 `.git`，并自动遵循工作区 `.gitignore` 声明的忽略路径，避免监听构建产物等大目录；可通过 `watchIgnored` 追加忽略规则）
@@ -20,8 +21,8 @@ DSH Web Client 的 VSCode 风格文件树侧栏。作为 `#root` 的兄弟节点
 - **Browser half（`src/client.tsx`）**：注入 `sessions`、`workspaces`、`connection`，在 `document.body` 上创建自己的 React root 并挂载右侧栏；通过 `EventSource` 订阅文件变化事件，自动失效并重载受影响的目录，同时重读当前激活的预览。右侧栏是 `#root` 的兄弟节点，不注册任何 DSH slot：
   - 打开时通过 `--dsh-sidebar-width` 让 `#root` 让出宽度，形成“真占位”的 VSCode 式侧栏，而不是 overlay；收起时至少让出 40px 给常驻 Activity Bar；
   - 面板本身可拖拽调整宽度（280–640px），宽度与开关状态按 localStorage 持久化；
-  - 最右侧是 40px 的 Activity Bar，可在“文件资源管理器”和“Git 追踪”间切换；点击当前视图图标收起侧栏，再次点击展开或切换视图；
-  - 两个视图保持挂载以保留文件树/预览状态，当前视图也会持久化；面板头部不显示刷新和关闭按钮；
+  - 最右侧是 40px 的 Activity Bar，可在“文件资源管理器”“Git 追踪”和“浏览器”间切换；点击当前视图图标收起侧栏，再次点击展开或切换视图；
+  - 三个视图保持挂载以保留文件树、Git 与浏览器页面状态，当前视图也会持久化；面板头部不显示刷新和关闭按钮；
   - 不依赖 `ctx.layout.openDetails()`，所以 blank / 无消息会话也能打开。
 
 > 不修改 DSH 源码，也不替换 DSH 原生 `details` 面板；原生 `details` 是否打开与本插件互不影响。
@@ -29,7 +30,7 @@ DSH Web Client 的 VSCode 风格文件树侧栏。作为 `#root` 的兄弟节点
 源码按职责拆分，入口文件只保留插件注册逻辑：
 
 - `src/index.ts`：Host 插件入口；RPC、文件系统、Git、配置等逻辑在 `src/host/`（`config` / `fs` / `git` / `handlers` / `rpc` / `result` / `utils`）。
-- `src/client.tsx`：Browser 插件入口；React 组件、状态与 API 封装在 `src/client/`（`api` / `activity-bar` / `git-panel` / `diff-view` / `tree` / `preview` / `sidebar-shell` / `styles` 等）。
+- `src/client.tsx`：Browser 插件入口；React 组件、状态与 API 封装在 `src/client/`（`api` / `activity-bar` / `browser-panel` / `git-panel` / `diff-view` / `tree` / `preview` / `sidebar-shell` / `styles` 等）。
 - `src/client-model.ts`：与 React 无关的纯模型（路径、扁平化、树交互 reducer），可独立单测。
 
 前端样式直接消费 DSH 的主题 alias token（`--dsw-alias-*`），不维护独立色板；组件使用 Tailwind CSS 编写，构建时由 `tailwindcss` 从 `src/client.css` 生成 utility CSS 并内联进客户端 bundle。

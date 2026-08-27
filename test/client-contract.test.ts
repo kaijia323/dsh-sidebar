@@ -103,6 +103,22 @@ test('client style installer is hot-swap safe (one style element per fiber)', as
   assert.match(source, /return \(\) => element\.remove\(\)/, 'installStyles must remove only its own element')
 })
 
+test('sidebar exposes a browser view backed by an iframe', async () => {
+  const source = await readClientSources()
+  assert.match(source, /'explorer' \| 'git' \| 'browser'/, 'SidebarView must include the browser view')
+  assert.match(source, /aria-label="浏览器"/, 'activity bar must include a browser trigger')
+  assert.match(source, /<iframe/, 'browser view must render through an iframe')
+  assert.match(source, /BrowserPanel active=\{view === 'browser'\}/, 'browser view must know when it is active')
+})
+
+test('browser view provides a built-in search homepage that defaults to Bing', async () => {
+  const source = await readClientSources()
+  assert.match(source, /kaijia-browser-home/, 'browser view must have a built-in search homepage')
+  assert.match(source, /performSearch/, 'browser homepage must submit searches')
+  assert.match(source, /https:\/\/cn\.bing\.com\/search\?q=/, 'browser homepage must use Bing search')
+  assert.match(source, /必应搜索/, 'browser homepage must be labeled as Bing search')
+})
+
 test('client bundle materializes as a lazy-CJS plugin factory', async () => {
   const packageJson = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8'))
   const code = await readFile(new URL('../lib/client.js', import.meta.url), 'utf8')

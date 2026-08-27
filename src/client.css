@@ -67,6 +67,105 @@
     @apply flex min-h-0 flex-1 flex-col;
   }
 
+  .kaijia-browser-toolbar {
+    @apply flex flex-none items-center gap-0.5 border-b border-[var(--dsw-alias-border-l2)] px-1.5;
+    height: 32px;
+  }
+
+  .kaijia-browser-button {
+    @apply inline-flex h-6 w-6 flex-none cursor-pointer items-center justify-center rounded border-0 bg-transparent p-0 text-[var(--dsw-alias-label-secondary)];
+    font: inherit;
+    transition: background-color 120ms ease, color 120ms ease, transform 120ms ease;
+  }
+
+  .kaijia-browser-button:hover:not(:disabled) {
+    @apply bg-[var(--dsw-alias-interactive-bg-hover)] text-[var(--dsw-alias-label-primary)];
+  }
+
+  .kaijia-browser-button:active:not(:disabled) {
+    transform: scale(0.96);
+  }
+
+  .kaijia-browser-button:disabled {
+    @apply cursor-default opacity-40;
+  }
+
+  .kaijia-browser-address {
+    @apply h-6 min-w-0 flex-1 rounded border border-[var(--dsw-alias-border-l2)] bg-[var(--dsw-alias-bg-layer-2)] px-2 text-xs text-[var(--dsw-alias-label-primary)] outline-none;
+    font: inherit;
+  }
+
+  .kaijia-browser-address::placeholder {
+    @apply text-[var(--dsw-alias-label-tertiary)];
+  }
+
+  .kaijia-browser-address:focus {
+    @apply border-[var(--dsw-alias-brand-primary)];
+  }
+
+  .kaijia-browser-frame {
+    @apply relative min-h-0 flex-1 overflow-hidden bg-[var(--dsw-specific-sidebar-fill)];
+  }
+
+  .kaijia-browser-iframe {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border: 0;
+    background: var(--dsw-alias-bg-layer-1);
+  }
+
+  .kaijia-browser-home {
+    @apply flex h-full min-h-0 flex-col items-center justify-center gap-3 px-4 py-6;
+  }
+
+  .kaijia-browser-home-mark {
+    @apply flex h-10 w-10 items-center justify-center rounded-full border border-[var(--dsw-alias-border-l2)] bg-[var(--dsw-alias-bg-layer-2)] text-[var(--dsw-alias-brand-primary)];
+  }
+
+  .kaijia-browser-home-title {
+    @apply text-sm font-semibold text-[var(--dsw-alias-label-primary)];
+  }
+
+  .kaijia-browser-home-form {
+    @apply flex h-9 w-full max-w-[420px] items-center gap-1.5 rounded-full border border-[var(--dsw-alias-border-l2)] bg-[var(--dsw-alias-bg-layer-2)] px-2.5;
+  }
+
+  .kaijia-browser-home-form:focus-within {
+    @apply border-[var(--dsw-alias-brand-primary)];
+  }
+
+  .kaijia-browser-home-icon {
+    @apply flex-none text-[var(--dsw-alias-label-tertiary)];
+  }
+
+  .kaijia-browser-home-input {
+    @apply h-full min-w-0 flex-1 border-0 bg-transparent text-xs text-[var(--dsw-alias-label-primary)] outline-none;
+    font: inherit;
+  }
+
+  .kaijia-browser-home-input::placeholder {
+    @apply text-[var(--dsw-alias-label-tertiary)];
+  }
+
+  .kaijia-browser-home-button {
+    @apply h-7 flex-none cursor-pointer rounded-full border border-[var(--dsw-alias-brand-primary)] bg-transparent px-3 text-xs font-medium text-[var(--dsw-alias-brand-primary)];
+    font: inherit;
+    transition: background-color 120ms ease, transform 120ms ease;
+  }
+
+  .kaijia-browser-home-button:hover {
+    @apply bg-[var(--dsw-alias-interactive-bg-hover)];
+  }
+
+  .kaijia-browser-home-button:active {
+    transform: scale(0.97);
+  }
+
+  .kaijia-browser-home-hint {
+    @apply max-w-[360px] text-center text-[11px] text-[var(--dsw-alias-label-tertiary)];
+  }
+
   .kaijia-git-body {
     @apply relative flex min-h-0 flex-1 flex-col;
   }

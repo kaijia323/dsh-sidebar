@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointer
 import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
 import { clamp, resolveRoot } from '../client-model'
 import { ActivityBar, type SidebarView } from './activity-bar'
+import { BrowserPanel } from './browser-panel'
 import { ACTIVITY_BAR_WIDTH, SIDEBAR_MAX, SIDEBAR_MIN, SIDEBAR_STORAGE_KEY } from './constants'
 import { FileTreePanel } from './file-tree-panel'
 import { GitPanel } from './git-panel'
@@ -130,6 +131,9 @@ export function SidebarShell({ ctx, api }: SidebarShellProps) {
           </div>
           <div className={`kaijia-sidebar-view-pane${view === 'git' ? '' : ' kaijia-sidebar-view-hidden'}`}>
             <GitPanel api={api} root={root} active={view === 'git'} />
+          </div>
+          <div className={`kaijia-sidebar-view-pane${view === 'browser' ? '' : ' kaijia-sidebar-view-hidden'}`}>
+            <BrowserPanel active={view === 'browser'} />
           </div>
         </div>
         <ActivityBar view={view} onSelect={selectView} />

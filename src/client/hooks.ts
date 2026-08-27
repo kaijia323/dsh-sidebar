@@ -12,7 +12,8 @@ export function useSnapshotStore<T>(store: SnapshotStore<T>): T {
 
 export function loadSidebarView(): SidebarView {
   try {
-    return localStorage.getItem(`${SIDEBAR_STORAGE_KEY}:view`) === 'git' ? 'git' : 'explorer'
+    const saved = localStorage.getItem(`${SIDEBAR_STORAGE_KEY}:view`)
+    return saved === 'git' || saved === 'browser' ? saved : 'explorer'
   } catch {
     return 'explorer'
   }

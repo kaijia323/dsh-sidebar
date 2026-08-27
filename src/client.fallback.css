@@ -16,6 +16,28 @@
 .kaijia-header-button:hover { border-color: var(--dsw-alias-border-l2); }
 .kaijia-toolbar-active { background: var(--dsw-alias-interactive-bg-hover); color: var(--dsw-alias-brand-primary); }
 .kaijia-panel-body { display: flex; flex-direction: column; min-height: 0; flex: 1; }
+.kaijia-browser-toolbar { display: flex; flex: none; align-items: center; gap: 2px; height: 32px; padding: 0 6px; border-bottom: 1px solid var(--dsw-alias-border-l2); }
+.kaijia-browser-button { display: inline-flex; width: 24px; height: 24px; flex: none; align-items: center; justify-content: center; padding: 0; border: 0; border-radius: 4px; background: transparent; color: var(--dsw-alias-label-secondary); cursor: pointer; font: inherit; transition: background-color 120ms ease, color 120ms ease, transform 120ms ease; }
+.kaijia-browser-button:hover:not(:disabled) { background: var(--dsw-alias-interactive-bg-hover); color: var(--dsw-alias-label-primary); }
+.kaijia-browser-button:active:not(:disabled) { transform: scale(0.96); }
+.kaijia-browser-button:disabled { opacity: 0.4; cursor: default; }
+.kaijia-browser-address { height: 24px; min-width: 0; flex: 1; padding: 0 8px; border: 1px solid var(--dsw-alias-border-l2); border-radius: 4px; background: var(--dsw-alias-bg-layer-2); color: var(--dsw-alias-label-primary); font: inherit; font-size: 12px; outline: none; }
+.kaijia-browser-address::placeholder { color: var(--dsw-alias-label-tertiary); }
+.kaijia-browser-address:focus { border-color: var(--dsw-alias-brand-primary); }
+.kaijia-browser-frame { position: relative; min-height: 0; flex: 1; overflow: hidden; background: var(--dsw-specific-sidebar-fill); }
+.kaijia-browser-iframe { display: block; width: 100%; height: 100%; border: 0; background: var(--dsw-alias-bg-layer-1); }
+.kaijia-browser-home { display: flex; height: 100%; min-height: 0; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 24px 16px; }
+.kaijia-browser-home-mark { display: flex; width: 40px; height: 40px; align-items: center; justify-content: center; border: 1px solid var(--dsw-alias-border-l2); border-radius: 9999px; background: var(--dsw-alias-bg-layer-2); color: var(--dsw-alias-brand-primary); }
+.kaijia-browser-home-title { font-size: 14px; font-weight: 600; color: var(--dsw-alias-label-primary); }
+.kaijia-browser-home-form { display: flex; width: 100%; max-width: 420px; height: 36px; align-items: center; gap: 6px; border: 1px solid var(--dsw-alias-border-l2); border-radius: 9999px; padding: 0 10px; background: var(--dsw-alias-bg-layer-2); }
+.kaijia-browser-home-form:focus-within { border-color: var(--dsw-alias-brand-primary); }
+.kaijia-browser-home-icon { flex: none; color: var(--dsw-alias-label-tertiary); }
+.kaijia-browser-home-input { height: 100%; min-width: 0; flex: 1; padding: 0; border: 0; background: transparent; color: var(--dsw-alias-label-primary); font: inherit; font-size: 12px; outline: none; }
+.kaijia-browser-home-input::placeholder { color: var(--dsw-alias-label-tertiary); }
+.kaijia-browser-home-button { height: 28px; flex: none; padding: 0 12px; border: 1px solid var(--dsw-alias-brand-primary); border-radius: 9999px; background: transparent; color: var(--dsw-alias-brand-primary); cursor: pointer; font: inherit; font-size: 12px; font-weight: 500; transition: background-color 120ms ease, transform 120ms ease; }
+.kaijia-browser-home-button:hover { background: var(--dsw-alias-interactive-bg-hover); }
+.kaijia-browser-home-button:active { transform: scale(0.97); }
+.kaijia-browser-home-hint { max-width: 360px; text-align: center; font-size: 11px; color: var(--dsw-alias-label-tertiary); }
 .kaijia-git-body { position: relative; display: flex; flex-direction: column; min-height: 0; flex: 1; }
 .kaijia-git-list { position: relative; min-height: 0; flex: 1; overflow: auto; }
 .kaijia-git-empty { position: relative; min-height: 0; flex: 1; overflow: hidden; }

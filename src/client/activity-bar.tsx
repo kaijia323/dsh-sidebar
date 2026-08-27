@@ -1,6 +1,6 @@
-import { Files, GitBranch } from 'lucide-react'
+import { Files, GitBranch, Globe } from 'lucide-react'
 
-export type SidebarView = 'explorer' | 'git'
+export type SidebarView = 'explorer' | 'git' | 'browser'
 
 interface ActivityBarProps {
   view: SidebarView
@@ -29,6 +29,16 @@ export function ActivityBar({ view, onSelect }: ActivityBarProps) {
         onClick={() => onSelect('git')}
       >
         <GitBranch size={18} strokeWidth={1.5} aria-hidden="true" />
+      </button>
+      <button
+        type="button"
+        className={`kaijia-activity-item${view === 'browser' ? ' kaijia-activity-item-active' : ''}`}
+        aria-label="浏览器"
+        title="浏览器"
+        aria-current={view === 'browser' ? 'page' : undefined}
+        onClick={() => onSelect('browser')}
+      >
+        <Globe size={18} strokeWidth={1.5} aria-hidden="true" />
       </button>
     </nav>
   )
