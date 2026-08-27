@@ -103,6 +103,69 @@ test('client style installer is hot-swap safe (one style element per fiber)', as
   assert.match(source, /return \(\) => element\.remove\(\)/, 'installStyles must remove only its own element')
 })
 
+test('sidebar exposes a browser view backed by an iframe', async () => {
+  const source = await readClientSources()
+  assert.match(source, /'explorer' \| 'git' \| 'browser'/, 'SidebarView must include the browser view')
+  assert.match(source, /aria-label="浏览器"/, 'activity bar must include a browser trigger')
+  assert.match(source, /<iframe/, 'browser view must render through an iframe')
+  assert.match(source, /BrowserPanel active=\{view === 'browser'\}/, 'browser view must know when it is active')
+})
+
+test('browser view provides a built-in search homepage that defaults to Bing', async () => {
+  const source = await readClientSources()
+  assert.match(source, /kaijia-browser-home/, 'browser view must have a built-in search homepage')
+  assert.match(source, /performSearch/, 'browser homepage must submit searches')
+  assert.match(source, /https:\/\/cn\.bing\.com\/search\?q=/, 'browser homepage must use Bing search')
+  assert.match(source, /必应搜索/, 'browser homepage must be labeled as Bing search')
+})
+
+test('browser view supports Edge-style new tabs with per-tab history', async () => {
+  const source = await readClientSources()
+  assert.match(source, /interface BrowserTab/, 'browser panel must model multiple tabs')
+  assert.match(source, /function addTab\(\)/, 'browser panel must be able to create a new tab')
+  assert.match(source, /function closeTab\(id: number\)/, 'browser panel must be able to close a tab')
+  assert.match(source, /新建标签页/, 'browser panel must expose a new-tab action')
+  assert.match(source, /kaijia-browser-tab-active/, 'browser panel must mark the active tab')
+  assert.match(source, /kaijia-browser-tabs-bar/, 'browser panel must put tabs and new-tab action in a clearly separated bar')
+  assert.match(source, /kaijia-browser-new-tab-zone/, 'new-tab action must have its own visually isolated zone')
+})
+
+test('browser tab titles use the loaded page title when available', async () => {
+  const source = await readClientSources()
+  assert.match(source, /contentDocument\?\.title/, 'browser tabs must read document.title from loaded iframes')
+  assert.match(source, /onLoad=\{\(event\) => handleFrameLoad\(tab\.id, event\)\}/, 'loaded iframes must update their tab title')
+  assert.match(source, /tab\.title/, 'tab rendering must prefer the fetched page title')
+  assert.match(source, /title: string/, 'browser tab model must store a page title')
+})
+
+test('browser address bar follows the loaded iframe URL when same-origin', async () => {
+  const source = await readClientSources()
+  assert.match(source, /contentWindow\?\.location\?\.href/, 'browser tabs must read the actual iframe location on load')
+  assert.match(source, /address: url \|\| tab\.address/, 'loaded iframes must update the address bar with the actual URL')
+  assert.match(source, /popstate/, 'same-origin iframe back/forward navigation must refresh the address bar')
+  assert.match(source, /hashchange/, 'same-origin iframe hash navigation must refresh the address bar')
+  assert.match(source, /history\.pushState =/, 'same-origin SPA pushState navigation must refresh the address bar')
+})
+
+test('selecting an html file routes it to the browser view', async () => {
+  const source = await readClientSources()
+  assert.match(source, /isHtmlPath/, 'file tree must recognize html files')
+  assert.match(source, /onOpenInBrowser/, 'file tree must expose an html-open callback')
+  assert.match(source, /setView\('browser'\)/, 'opening an html file must switch to the browser view')
+  assert.match(source, /openRequest=\{browserRequest\}/, 'sidebar must forward browser open requests')
+  assert.match(source, /toFileBrowserUrl/, 'browser panel must translate file paths into local file URLs')
+  assert.match(source, /openHtmlInNewTab\(url\)/, 'browser panel must open local html files in a new tab')
+  assert.match(source, /createTab\(url\)/, 'local html tab must start with the file url as its initial history')
+})
+
+test('host registers a loopback local file route for html preview', async () => {
+  const source = await readFile(new URL('../src/host/local-files.ts', import.meta.url), 'utf8')
+  assert.match(source, /\/dsh-sidebar\/files/, 'local files must be served under the plugin file route')
+  assert.match(source, /kind: 'prefix'/, 'file serving must use a prefix route so relative assets resolve')
+  assert.match(source, /isLoopbackAuthority/, 'file serving must stay loopback-only')
+  assert.match(source, /text\/html/, 'html files must be served with an html content type')
+})
+
 test('client bundle materializes as a lazy-CJS plugin factory', async () => {
   const packageJson = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8'))
   const code = await readFile(new URL('../lib/client.js', import.meta.url), 'utf8')

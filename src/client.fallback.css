@@ -16,6 +16,47 @@
 .kaijia-header-button:hover { border-color: var(--dsw-alias-border-l2); }
 .kaijia-toolbar-active { background: var(--dsw-alias-interactive-bg-hover); color: var(--dsw-alias-brand-primary); }
 .kaijia-panel-body { display: flex; flex-direction: column; min-height: 0; flex: 1; }
+.kaijia-browser-tabs-bar { position: relative; display: flex; flex: none; align-items: stretch; height: 40px; padding: 6px 6px 0 4px; border-bottom: 1px solid var(--dsw-alias-border-l2); background: color-mix(in srgb, var(--dsw-alias-label-tertiary) 7%, var(--dsw-alias-bg-layer-1)); }
+.kaijia-browser-tabs-scroll { position: relative; display: flex; min-width: 0; flex: 1; overflow-x: auto; scrollbar-width: none; scrollbar-color: transparent transparent; }
+.kaijia-browser-tabs-scroll::-webkit-scrollbar { height: 6px; }
+.kaijia-browser-tabs-scroll::-webkit-scrollbar-thumb { background: transparent; border-radius: 9999px; }
+.kaijia-browser-tabs { display: inline-flex; min-width: 100%; align-items: flex-end; gap: 3px; }
+.kaijia-browser-tab { position: relative; display: inline-flex; height: 30px; max-width: 150px; flex: none; align-items: center; gap: 6px; padding: 0 10px; border: 1px solid color-mix(in srgb, var(--dsw-alias-label-tertiary) 20%, var(--dsw-alias-border-l2)); border-radius: 8px 8px 2px 2px; color: var(--dsw-alias-label-secondary); font-size: 11px; font-weight: 500; font-family: inherit; letter-spacing: 0.01em; white-space: nowrap; cursor: pointer; user-select: none; background: color-mix(in srgb, var(--dsw-alias-label-tertiary) 5%, var(--dsw-alias-bg-layer-2)); box-shadow: 0 1px 2px color-mix(in srgb, var(--dsw-alias-label-primary) 7%, transparent); transition: background-color 140ms ease, color 140ms ease, border-color 140ms ease, box-shadow 140ms ease, transform 140ms ease; }
+.kaijia-browser-tab:hover { border-color: color-mix(in srgb, var(--dsw-alias-label-tertiary) 38%, var(--dsw-alias-border-l2)); background: var(--dsw-alias-bg-layer-2); color: var(--dsw-alias-label-primary); box-shadow: 0 2px 5px color-mix(in srgb, var(--dsw-alias-label-primary) 10%, transparent); transform: translateY(-1px); }
+.kaijia-browser-tab-active, .kaijia-browser-tab-active:hover { border-color: var(--dsw-alias-brand-primary); background: color-mix(in srgb, var(--dsw-alias-brand-primary) 7%, var(--dsw-specific-sidebar-fill)); color: var(--dsw-alias-label-primary); font-weight: 600; box-shadow: 0 2px 6px color-mix(in srgb, var(--dsw-alias-label-primary) 12%, transparent); }
+.kaijia-browser-tab-active::before { content: ''; position: absolute; top: -1px; left: 0; right: 0; height: 2px; border-radius: 7px 7px 0 0; background: linear-gradient(90deg, var(--dsw-alias-brand-primary), color-mix(in srgb, var(--dsw-alias-brand-primary) 45%, transparent)); }
+.kaijia-browser-tab-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.kaijia-browser-tab-close { display: inline-flex; width: 16px; height: 16px; flex: none; align-items: center; justify-content: center; padding: 0; border: 0; background: transparent; border-radius: 9999px; color: var(--dsw-alias-label-tertiary); cursor: pointer; font: inherit; opacity: 0; transition: opacity 120ms ease, background-color 120ms ease, color 120ms ease, transform 120ms ease; }
+.kaijia-browser-tab:hover .kaijia-browser-tab-close, .kaijia-browser-tab-active .kaijia-browser-tab-close { opacity: 1; }
+.kaijia-browser-tab-close:hover { background: var(--dsw-alias-interactive-bg-hover); color: var(--dsw-alias-label-primary); transform: scale(1.08); }
+.kaijia-browser-new-tab-zone { display: flex; flex: none; align-items: center; justify-content: center; margin-left: 6px; padding-left: 7px; border-left: 1px solid color-mix(in srgb, var(--dsw-alias-label-tertiary) 24%, var(--dsw-alias-border-l2)); }
+.kaijia-browser-new-tab { display: inline-flex; width: 26px; height: 26px; flex: none; align-items: center; justify-content: center; padding: 0; border: 1px solid color-mix(in srgb, var(--dsw-alias-label-tertiary) 26%, var(--dsw-alias-border-l2)); border-radius: 9999px; background: color-mix(in srgb, var(--dsw-alias-label-tertiary) 6%, var(--dsw-alias-bg-layer-2)); color: var(--dsw-alias-label-secondary); cursor: pointer; font: inherit; box-shadow: 0 1px 2px color-mix(in srgb, var(--dsw-alias-label-primary) 6%, transparent); transition: background-color 140ms ease, color 140ms ease, border-color 140ms ease, box-shadow 140ms ease, transform 140ms ease; }
+.kaijia-browser-new-tab:hover { border-color: var(--dsw-alias-brand-primary); background: var(--dsw-alias-interactive-bg-hover); color: var(--dsw-alias-brand-primary); box-shadow: 0 2px 6px color-mix(in srgb, var(--dsw-alias-label-primary) 12%, transparent); transform: translateY(-1px); }
+.kaijia-browser-new-tab:active { transform: scale(0.94); }
+.kaijia-browser-new-tab:focus-visible { outline: 2px solid var(--dsw-alias-brand-primary); outline-offset: 2px; }
+.kaijia-browser-toolbar { display: flex; flex: none; align-items: center; gap: 2px; height: 32px; padding: 0 6px; border-bottom: 1px solid var(--dsw-alias-border-l2); }
+.kaijia-browser-button { display: inline-flex; width: 24px; height: 24px; flex: none; align-items: center; justify-content: center; padding: 0; border: 0; border-radius: 4px; background: transparent; color: var(--dsw-alias-label-secondary); cursor: pointer; font: inherit; transition: background-color 120ms ease, color 120ms ease, transform 120ms ease; }
+.kaijia-browser-button:hover:not(:disabled) { background: var(--dsw-alias-interactive-bg-hover); color: var(--dsw-alias-label-primary); }
+.kaijia-browser-button:active:not(:disabled) { transform: scale(0.96); }
+.kaijia-browser-button:disabled { opacity: 0.4; cursor: default; }
+.kaijia-browser-address { height: 24px; min-width: 0; flex: 1; padding: 0 8px; border: 1px solid var(--dsw-alias-border-l2); border-radius: 4px; background: var(--dsw-alias-bg-layer-2); color: var(--dsw-alias-label-primary); font: inherit; font-size: 12px; outline: none; }
+.kaijia-browser-address::placeholder { color: var(--dsw-alias-label-tertiary); }
+.kaijia-browser-address:focus { border-color: var(--dsw-alias-brand-primary); }
+.kaijia-browser-frame { position: relative; min-height: 0; flex: 1; overflow: hidden; background: var(--dsw-specific-sidebar-fill); }
+.kaijia-browser-iframe { display: block; width: 100%; height: 100%; border: 0; background: var(--dsw-alias-bg-layer-1); }
+.kaijia-browser-iframe-hidden { display: none; }
+.kaijia-browser-home { display: flex; height: 100%; min-height: 0; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 24px 16px; }
+.kaijia-browser-home-mark { display: flex; width: 40px; height: 40px; align-items: center; justify-content: center; border: 1px solid var(--dsw-alias-border-l2); border-radius: 9999px; background: var(--dsw-alias-bg-layer-2); color: var(--dsw-alias-brand-primary); }
+.kaijia-browser-home-title { font-size: 14px; font-weight: 600; color: var(--dsw-alias-label-primary); }
+.kaijia-browser-home-form { display: flex; width: 100%; max-width: 420px; height: 36px; align-items: center; gap: 6px; border: 1px solid var(--dsw-alias-border-l2); border-radius: 9999px; padding: 0 10px; background: var(--dsw-alias-bg-layer-2); }
+.kaijia-browser-home-form:focus-within { border-color: var(--dsw-alias-brand-primary); }
+.kaijia-browser-home-icon { flex: none; color: var(--dsw-alias-label-tertiary); }
+.kaijia-browser-home-input { height: 100%; min-width: 0; flex: 1; padding: 0; border: 0; background: transparent; color: var(--dsw-alias-label-primary); font: inherit; font-size: 12px; outline: none; }
+.kaijia-browser-home-input::placeholder { color: var(--dsw-alias-label-tertiary); }
+.kaijia-browser-home-button { height: 28px; flex: none; padding: 0 12px; border: 1px solid var(--dsw-alias-brand-primary); border-radius: 9999px; background: transparent; color: var(--dsw-alias-brand-primary); cursor: pointer; font: inherit; font-size: 12px; font-weight: 500; transition: background-color 120ms ease, transform 120ms ease; }
+.kaijia-browser-home-button:hover { background: var(--dsw-alias-interactive-bg-hover); }
+.kaijia-browser-home-button:active { transform: scale(0.97); }
+.kaijia-browser-home-hint { max-width: 360px; text-align: center; font-size: 11px; color: var(--dsw-alias-label-tertiary); }
 .kaijia-git-body { position: relative; display: flex; flex-direction: column; min-height: 0; flex: 1; }
 .kaijia-git-list { position: relative; min-height: 0; flex: 1; overflow: auto; }
 .kaijia-git-empty { position: relative; min-height: 0; flex: 1; overflow: hidden; }
@@ -139,7 +180,7 @@ body[data-ds-dark-theme] .kaijia-image { box-shadow: 0 0 0 1px rgba(255, 255, 25
 body[data-dsh-sidebar-dragging] #root { transition: none; }
 [data-dsh-sidebar-root], .kaijia-sidebar-root { background: var(--dsw-specific-sidebar-fill); }
 .kaijia-sidebar-root { position: fixed; top: 0; right: 0; bottom: 0; z-index: 10; display: flex; flex-direction: column; border-left: 1px solid var(--dsw-alias-border-l2); }
-.kaijia-sidebar-root.kaijia-sidebar-open { min-width: 280px; max-width: 640px; }
+.kaijia-sidebar-root.kaijia-sidebar-open { min-width: 280px; }
 .kaijia-sidebar-root.kaijia-sidebar-collapsed { width: 40px; min-width: 40px; max-width: 40px; border-left: none; }
 .kaijia-sidebar-drag-handle { position: absolute; left: -4px; top: 0; bottom: 0; width: 8px; cursor: col-resize; touch-action: none; }
 .kaijia-sidebar-drag-handle::after { content: ''; position: absolute; left: 3px; top: 0; bottom: 0; width: 2px; background: transparent; transition: background-color 120ms ease; }

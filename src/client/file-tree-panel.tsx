@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useReducer, useRef, useState, type Poi
 import {
   clamp,
   dirname,
+  isHtmlPath,
   isPathInside,
   resolveRoot,
   treeInteractionReducer,
@@ -22,9 +23,12 @@ interface FileTreePanelProps {
   sessionId: string | undefined
   sessions: SessionListLike
   workspaces: WorkspaceListLike
+  onOpenInBrowser?: (path: string) => void
+  onOpenHtml?: (path: string) => void
+  onOpenHtmlFile?: (path: string) => void
 }
 
-export function FileTreePanel({ api, sessionId, sessions, workspaces }: FileTreePanelProps) {
+export function FileTreePanel({ api, sessionId, sessions, workspaces, onOpenInBrowser, onOpenHtml, onOpenHtmlFile }: FileTreePanelProps) {
   const root = useMemo(() => sessionId ? resolveRoot(sessionId, sessions, workspaces) : undefined, [sessionId, sessions, workspaces])
 
   const [limits, setLimits] = useState<Limits>(DEFAULT_LIMITS)
@@ -260,6 +264,13 @@ export function FileTreePanel({ api, sessionId, sessions, workspaces }: FileTree
   }
 
   function openFile(entry: SidebarEntry) {
+    const openHtml = onOpenInBrowser ?? onOpenHtml ?? onOpenHtmlFile
+    if (isHtmlPath(entry.path) && openHtml) {
+      // HTML files are handed to the browser view instead of the text preview;
+      // do not create a file tab because the preview pane cannot render them.
+      openHtml(entry.path)
+      return
+    }
     setTabs((prev) => prev.some((tab) => tab.path === entry.path) ? prev : [...prev, { path: entry.path, name: entry.name }])
     setActivePath(entry.path)
   }

@@ -146,3 +146,9 @@ export interface SelectedFile {
   path: string
   name: string
 }
+
+export interface BrowserOpenRequest {
+  path: string
+  id: number
+  nonce?: number
+}
