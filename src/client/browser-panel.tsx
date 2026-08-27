@@ -42,6 +42,7 @@ interface BrowserTab {
   history: string[]
   index: number
   address: string
+  frameUrl: string
   homeQuery: string
   reloadKey: number
   title: string
@@ -83,6 +84,7 @@ export function BrowserPanel({ active = true, openRequest = null }: BrowserPanel
       history: [initialUrl],
       index: 0,
       address: initialUrl === HOME ? '' : initialUrl,
+      frameUrl: initialUrl === HOME ? '' : initialUrl,
       homeQuery: '',
       reloadKey: 0,
       title: '',
@@ -93,15 +95,78 @@ export function BrowserPanel({ active = true, openRequest = null }: BrowserPanel
     setTabs((prev) => prev.map((tab) => (tab.id === id ? updater(tab) : tab)))
   }
 
-  function handleFrameLoad(tabId: number, event: SyntheticEvent<HTMLIFrameElement>) {
+  function syncTabFromFrame(tabId: number, frame: HTMLIFrameElement) {
+    let url = ''
+    let title = ''
     try {
-      const title = event.currentTarget.contentDocument?.title?.trim() ?? ''
-      if (title) {
-        updateTab(tabId, (tab) => ({ ...tab, title }))
-      }
+      url = frame.contentWindow?.location?.href ?? ''
+    } catch {
+      // Cross-origin iframes do not expose their location; keep the address bar as-is.
+    }
+    try {
+      title = frame.contentDocument?.title?.trim() ?? ''
     } catch {
       // Cross-origin iframes do not expose their document; keep the URL fallback.
     }
+
+    updateTab(tabId, (tab) => {
+      const current = tab.history[tab.index] ?? HOME
+      if (url && url !== current) {
+        const history = tab.history.slice(0, tab.index + 1)
+        history.push(url)
+        return {
+          ...tab,
+          history,
+          index: history.length - 1,
+          address: url,
+          title: title || tab.title,
+        }
+      }
+      return {
+        ...tab,
+        address: url || tab.address,
+        title: title || tab.title,
+      }
+    })
+  }
+
+  function watchFrameNavigation(tabId: number, frame: HTMLIFrameElement) {
+    let win: Window
+    try {
+      win = frame.contentWindow!
+      // Accessing href both confirms same-origin access and primes the sync.
+      void win.location.href
+    } catch {
+      return
+    }
+
+    const marker = '__dshSidebarLocationSync'
+    const tagged = win as Window & { [marker]?: boolean }
+    if (tagged[marker]) return
+    tagged[marker] = true
+
+    const sync = () => syncTabFromFrame(tabId, frame)
+    win.addEventListener('popstate', sync)
+    win.addEventListener('hashchange', sync)
+
+    const history = win.history
+    const originalPushState = history.pushState
+    const originalReplaceState = history.replaceState
+    history.pushState = function (this: History, ...args: Parameters<History['pushState']>) {
+      const result = originalPushState.apply(this, args)
+      sync()
+      return result
+    }
+    history.replaceState = function (this: History, ...args: Parameters<History['replaceState']>) {
+      const result = originalReplaceState.apply(this, args)
+      sync()
+      return result
+    }
+  }
+
+  function handleFrameLoad(tabId: number, event: SyntheticEvent<HTMLIFrameElement>) {
+    syncTabFromFrame(tabId, event.currentTarget)
+    watchFrameNavigation(tabId, event.currentTarget)
   }
 
   const current = activeTab ? activeTab.history[activeTab.index] ?? HOME : HOME
@@ -117,6 +182,7 @@ export function BrowserPanel({ active = true, openRequest = null }: BrowserPanel
         history,
         index: history.length - 1,
         address: url,
+        frameUrl: url,
         reloadKey: tab.reloadKey + 1,
         title: '',
       }
@@ -144,6 +210,7 @@ export function BrowserPanel({ active = true, openRequest = null }: BrowserPanel
         history,
         index: history.length - 1,
         address: '',
+        frameUrl: HOME,
         reloadKey: tab.reloadKey + 1,
         title: '',
       }
@@ -157,6 +224,7 @@ export function BrowserPanel({ active = true, openRequest = null }: BrowserPanel
       ...tab,
       index: nextIndex,
       address: tab.history[nextIndex],
+      frameUrl: tab.history[nextIndex],
       reloadKey: tab.reloadKey + 1,
       title: '',
     }))
@@ -169,6 +237,7 @@ export function BrowserPanel({ active = true, openRequest = null }: BrowserPanel
       ...tab,
       index: nextIndex,
       address: tab.history[nextIndex],
+      frameUrl: tab.history[nextIndex],
       reloadKey: tab.reloadKey + 1,
       title: '',
     }))
@@ -176,7 +245,12 @@ export function BrowserPanel({ active = true, openRequest = null }: BrowserPanel
 
   function reload() {
     if (!activeTab || isHome) return
-    updateTab(activeTab.id, (tab) => ({ ...tab, reloadKey: tab.reloadKey + 1, title: '' }))
+    updateTab(activeTab.id, (tab) => ({
+      ...tab,
+      frameUrl: tab.history[tab.index] ?? HOME,
+      reloadKey: tab.reloadKey + 1,
+      title: '',
+    }))
   }
 
   function performSearch(query: string) {
@@ -349,14 +423,14 @@ export function BrowserPanel({ active = true, openRequest = null }: BrowserPanel
       </form>
       <div className="kaijia-browser-frame">
         {hasOpened && tabs.map((tab) => {
-          const current = tab.history[tab.index] ?? HOME
-          if (!current) return null
+          const frameUrl = tab.frameUrl
+          if (!frameUrl) return null
           const isActive = tab.id === activeId
           return (
             <iframe
               key={`${tab.id}:${tab.reloadKey}`}
               className={`kaijia-browser-iframe${isActive ? '' : ' kaijia-browser-iframe-hidden'}`}
-              src={current}
+              src={frameUrl}
               title="浏览器面板"
               onLoad={(event) => handleFrameLoad(tab.id, event)}
             />

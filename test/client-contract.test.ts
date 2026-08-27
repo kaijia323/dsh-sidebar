@@ -138,6 +138,15 @@ test('browser tab titles use the loaded page title when available', async () => 
   assert.match(source, /title: string/, 'browser tab model must store a page title')
 })
 
+test('browser address bar follows the loaded iframe URL when same-origin', async () => {
+  const source = await readClientSources()
+  assert.match(source, /contentWindow\?\.location\?\.href/, 'browser tabs must read the actual iframe location on load')
+  assert.match(source, /address: url \|\| tab\.address/, 'loaded iframes must update the address bar with the actual URL')
+  assert.match(source, /popstate/, 'same-origin iframe back/forward navigation must refresh the address bar')
+  assert.match(source, /hashchange/, 'same-origin iframe hash navigation must refresh the address bar')
+  assert.match(source, /history\.pushState =/, 'same-origin SPA pushState navigation must refresh the address bar')
+})
+
 test('selecting an html file routes it to the browser view', async () => {
   const source = await readClientSources()
   assert.match(source, /isHtmlPath/, 'file tree must recognize html files')
