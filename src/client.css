@@ -22,6 +22,83 @@
     @apply flex-none text-[var(--dsw-alias-label-secondary)];
   }
 
+  .kaijia-browser-html-picker {
+    @apply relative flex min-w-0 flex-none flex-col;
+  }
+
+  .kaijia-browser-html-button {
+    @apply ml-auto inline-flex h-[24px] flex-none cursor-pointer items-center gap-1 rounded border border-[var(--dsw-alias-border-l2)] bg-[var(--dsw-alias-bg-layer-2)] px-1.5 text-[11px] text-[var(--dsw-alias-label-secondary)];
+    font: inherit;
+    transition: border-color 120ms ease, background-color 120ms ease, color 120ms ease;
+  }
+
+  .kaijia-browser-html-button:hover:not(:disabled),
+  .kaijia-browser-html-button[aria-expanded='true'] {
+    @apply border-[var(--dsw-alias-brand-primary)] text-[var(--dsw-alias-brand-primary)];
+  }
+
+  .kaijia-browser-html-button:disabled {
+    cursor: default;
+    opacity: 0.5;
+  }
+
+  .kaijia-browser-html-menu {
+    @apply absolute left-1 right-1 top-full z-30 flex max-h-[300px] min-w-0 flex-col overflow-hidden rounded-md border border-[var(--dsw-alias-border-l2)] bg-[var(--dsw-alias-bg-layer-2)] shadow-lg;
+  }
+
+  .kaijia-browser-html-menu-header {
+    @apply flex h-[30px] flex-none items-center gap-1 border-b border-[var(--dsw-alias-border-l2)] px-2;
+  }
+
+  .kaijia-browser-html-menu-title {
+    @apply min-w-0 flex-1 truncate text-[11px] font-medium text-[var(--dsw-alias-label-tertiary)];
+  }
+
+  .kaijia-browser-html-menu-refresh {
+    @apply inline-flex h-6 w-6 flex-none cursor-pointer items-center justify-center rounded border-0 bg-transparent p-0 text-[var(--dsw-alias-label-secondary)];
+    transition: background-color 120ms ease, color 120ms ease;
+  }
+
+  .kaijia-browser-html-menu-refresh:hover:not(:disabled) {
+    background: var(--dsw-alias-interactive-bg-hover);
+    color: var(--dsw-alias-label-primary);
+  }
+
+  .kaijia-browser-html-menu-refresh:disabled {
+    cursor: default;
+    opacity: 0.4;
+  }
+
+  .kaijia-browser-html-tree {
+    @apply min-h-0 flex-1 overflow-y-auto py-0.5;
+  }
+
+  .kaijia-browser-html-tree-row {
+    @apply flex h-[24px] min-w-0 cursor-pointer items-center gap-1 whitespace-nowrap pr-2 text-[12px] text-[var(--dsw-alias-label-primary)];
+    user-select: none;
+  }
+
+  .kaijia-browser-html-tree-row:hover {
+    background: var(--dsw-alias-interactive-bg-hover);
+  }
+
+  .kaijia-browser-html-tree-row-dir {
+    color: var(--dsw-alias-label-secondary);
+  }
+
+  .kaijia-browser-html-tree-chevron,
+  .kaijia-browser-html-tree-spacer {
+    @apply inline-flex h-6 w-3.5 flex-none items-center justify-center;
+  }
+
+  .kaijia-browser-html-tree-label {
+    @apply truncate;
+  }
+
+  .kaijia-browser-html-tree-message {
+    @apply flex h-[60px] items-center justify-center px-3 text-[11px] text-[var(--dsw-alias-label-tertiary)];
+  }
+
   .kaijia-panel-root {
     @apply min-w-0 flex-1 truncate text-[var(--dsw-alias-label-tertiary)];
   }

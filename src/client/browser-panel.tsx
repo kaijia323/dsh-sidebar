@@ -1,7 +1,9 @@
-import { useEffect, useRef, useState, type FormEvent, type SyntheticEvent } from 'react'
+import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode, type SyntheticEvent } from 'react'
 import { ArrowLeft, ArrowRight, ExternalLink, Globe, Home, Plus, RefreshCw, Search, X } from 'lucide-react'
 import { toFileBrowserUrl } from '../client-model'
-import type { BrowserOpenRequest } from './types'
+import { isDomainError } from './api'
+import { Chevron, FileIcon, FolderIcon } from './icons'
+import type { BrowserOpenRequest, FsApi, HtmlFileEntry } from './types'
 
 const HOME = ''
 const BING_SEARCH = 'https://cn.bing.com/search?q='
@@ -48,21 +50,146 @@ interface BrowserTab {
   title: string
 }
 
+interface HtmlTreeNode {
+  key: string
+  name: string
+  relativePath: string
+  path: string
+  type: 'directory' | 'file'
+  children: HtmlTreeNode[]
+}
+
+const HTML_TREE_COLLATOR = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' })
+
+function buildHtmlTree(files: HtmlFileEntry[]): HtmlTreeNode[] {
+  const roots: HtmlTreeNode[] = []
+  const byPath = new Map<string, HtmlTreeNode>()
+
+  function ensureDirectory(relativePath: string, name: string): HtmlTreeNode {
+    const existing = byPath.get(relativePath)
+    if (existing) return existing
+    const node: HtmlTreeNode = {
+      key: relativePath,
+      name,
+      relativePath,
+      path: '',
+      type: 'directory',
+      children: [],
+    }
+    byPath.set(relativePath, node)
+    return node
+  }
+
+  for (const file of files) {
+    const parts = file.relativePath.split('/')
+    let parent: HtmlTreeNode[] = roots
+    let current = ''
+    for (let index = 0; index < parts.length - 1; index += 1) {
+      const part = parts[index]
+      current = current ? `${current}/${part}` : part
+      let directory = byPath.get(current)
+      if (!directory) {
+        directory = ensureDirectory(current, part)
+        parent.push(directory)
+      }
+      parent = directory.children
+    }
+    const name = parts[parts.length - 1] ?? file.name
+    parent.push({
+      key: file.relativePath,
+      name,
+      relativePath: file.relativePath,
+      path: file.path,
+      type: 'file',
+      children: [],
+    })
+  }
+
+  function sortNodes(nodes: HtmlTreeNode[]) {
+    nodes.sort((a, b) => {
+      if (a.type !== b.type) return a.type === 'directory' ? -1 : 1
+      return HTML_TREE_COLLATOR.compare(a.name, b.name)
+    })
+    for (const node of nodes) sortNodes(node.children)
+  }
+  sortNodes(roots)
+
+  return roots
+}
+
 interface BrowserPanelProps {
   active?: boolean
   openRequest?: BrowserOpenRequest | null
+  root?: string
+  api?: FsApi
 }
 
-export function BrowserPanel({ active = true, openRequest = null }: BrowserPanelProps) {
+export function BrowserPanel({ active = true, openRequest = null, root, api }: BrowserPanelProps) {
   const nextIdRef = useRef(1)
   const lastOpenRequestRef = useRef<number | null>(null)
+  const htmlRootRef = useRef<string | undefined>(undefined)
+  const htmlPickerRef = useRef<HTMLDivElement>(null)
   const [tabs, setTabs] = useState<BrowserTab[]>(() => [createTab()])
   const [activeId, setActiveId] = useState<number>(() => tabs[0]?.id ?? 1)
   const [hasOpened, setHasOpened] = useState(active)
+  const [htmlFiles, setHtmlFiles] = useState<HtmlFileEntry[]>([])
+  const [htmlLoading, setHtmlLoading] = useState(false)
+  const [htmlError, setHtmlError] = useState<string | null>(null)
+  const [htmlTruncated, setHtmlTruncated] = useState(false)
+  const [htmlRefreshKey, setHtmlRefreshKey] = useState(0)
+  const [htmlPickerOpen, setHtmlPickerOpen] = useState(false)
+  const [htmlExpanded, setHtmlExpanded] = useState<ReadonlySet<string>>(() => new Set())
+  const htmlTree = useMemo(() => buildHtmlTree(htmlFiles), [htmlFiles])
 
   useEffect(() => {
     if (active) setHasOpened(true)
   }, [active])
+
+  useEffect(() => {
+    if (!root || !api || (!active && !hasOpened)) return
+    const controller = new AbortController()
+    if (htmlRootRef.current !== root) {
+      htmlRootRef.current = root
+      setHtmlFiles([])
+      setHtmlError(null)
+      setHtmlTruncated(false)
+      setHtmlExpanded(new Set())
+      setHtmlPickerOpen(false)
+    }
+    setHtmlError(null)
+    setHtmlTruncated(false)
+    setHtmlLoading(true)
+    api.htmlFiles(root, controller.signal)
+      .then((value) => {
+        if (controller.signal.aborted) return
+        if (isDomainError(value)) {
+          setHtmlError(value.message)
+          setHtmlTruncated(false)
+        } else {
+          setHtmlFiles(value.files)
+          setHtmlTruncated(value.truncated)
+        }
+      })
+      .catch((error: unknown) => {
+        if (controller.signal.aborted) return
+        setHtmlError(error instanceof Error ? error.message : String(error))
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setHtmlLoading(false)
+      })
+    return () => controller.abort()
+  }, [root, api, active, hasOpened, htmlRefreshKey])
+
+  useEffect(() => {
+    if (!htmlPickerOpen) return
+    const handlePointerDown = (event: PointerEvent) => {
+      if (htmlPickerRef.current && !htmlPickerRef.current.contains(event.target as Node)) {
+        setHtmlPickerOpen(false)
+      }
+    }
+    document.addEventListener('pointerdown', handlePointerDown)
+    return () => document.removeEventListener('pointerdown', handlePointerDown)
+  }, [htmlPickerOpen])
 
   useEffect(() => {
     if (!openRequest) return
@@ -308,11 +435,114 @@ export function BrowserPanel({ active = true, openRequest = null }: BrowserPanel
     else performSearch(value)
   }
 
+  function toggleHtmlPicker() {
+    setHtmlPickerOpen((open) => !open)
+  }
+
+  function toggleHtmlDirectory(key: string) {
+    setHtmlExpanded((prev) => {
+      const next = new Set(prev)
+      if (next.has(key)) next.delete(key)
+      else next.add(key)
+      return next
+    })
+  }
+
+  function openHtmlFile(path: string) {
+    if (!path) return
+    const url = toFileBrowserUrl(path)
+    openHtmlInNewTab(url)
+    setHtmlPickerOpen(false)
+  }
+
+  function renderHtmlNodes(nodes: HtmlTreeNode[], depth: number): ReactNode[] {
+    return nodes.flatMap((node) => {
+      const style = { paddingLeft: 8 + depth * 14 }
+      if (node.type === 'directory') {
+        const isOpen = htmlExpanded.has(node.relativePath)
+        const rows = [
+          <div
+            key={`dir:${node.relativePath}`}
+            className="kaijia-browser-html-tree-row kaijia-browser-html-tree-row-dir"
+            style={style}
+            onClick={() => toggleHtmlDirectory(node.relativePath)}
+            title={node.relativePath}
+            role="button"
+            aria-expanded={isOpen}
+          >
+            <span className="kaijia-browser-html-tree-chevron"><Chevron open={isOpen} /></span>
+            <FolderIcon open={isOpen} />
+            <span className="kaijia-browser-html-tree-label">{node.name}</span>
+          </div>,
+        ]
+        if (isOpen) rows.push(...renderHtmlNodes(node.children, depth + 1))
+        return rows
+      }
+      return [(
+        <div
+          key={`file:${node.relativePath}`}
+          className="kaijia-browser-html-tree-row kaijia-browser-html-tree-row-file"
+          style={style}
+          onClick={() => openHtmlFile(node.path)}
+          title={node.relativePath}
+          role="button"
+        >
+          <span className="kaijia-browser-html-tree-spacer" />
+          <FileIcon name={node.name} />
+          <span className="kaijia-browser-html-tree-label">{node.name}</span>
+        </div>
+      )]
+    })
+  }
+
   return (
     <div className="kaijia-panel">
-      <div className="kaijia-panel-header">
-        <Globe className="kaijia-panel-title-icon" size={14} strokeWidth={1.75} aria-hidden="true" />
-        <span className="kaijia-panel-title whitespace-nowrap">浏览器</span>
+      <div className="kaijia-browser-html-picker" ref={htmlPickerRef}>
+        <div className="kaijia-panel-header">
+          <Globe className="kaijia-panel-title-icon" size={14} strokeWidth={1.75} aria-hidden="true" />
+          <span className="kaijia-panel-title whitespace-nowrap">浏览器</span>
+          <button
+            type="button"
+            className="kaijia-browser-html-button ml-auto"
+            onClick={toggleHtmlPicker}
+            disabled={!root}
+            title={htmlError ? `扫描失败：${htmlError}` : '打开工作区中的 HTML 文件'}
+            aria-expanded={htmlPickerOpen}
+            aria-label="打开工作区中的 HTML 文件"
+          >
+            <FolderIcon open={htmlPickerOpen} />
+            <span>HTML</span>
+            <Chevron open={htmlPickerOpen} />
+          </button>
+        </div>
+        {htmlPickerOpen && (
+          <div className="kaijia-browser-html-menu">
+            <div className="kaijia-browser-html-menu-header">
+              <span className="kaijia-browser-html-menu-title">
+                {htmlLoading ? '正在扫描 HTML…' : htmlError ? `扫描失败：${htmlError}` : `工作区 HTML${htmlTruncated ? '（已截断）' : ''}`}
+              </span>
+              <button
+                type="button"
+                className="kaijia-browser-html-menu-refresh"
+                onClick={() => setHtmlRefreshKey((key) => key + 1)}
+                disabled={!root || htmlLoading}
+                title="重新扫描工作区 HTML"
+                aria-label="重新扫描工作区 HTML"
+              >
+                <RefreshCw size={12} strokeWidth={2} aria-hidden="true" />
+              </button>
+            </div>
+            <div className="kaijia-browser-html-tree">
+              {htmlLoading && htmlTree.length === 0 ? (
+                <div className="kaijia-browser-html-tree-message">正在扫描工作区 HTML…</div>
+              ) : htmlError && htmlTree.length === 0 ? (
+                <div className="kaijia-browser-html-tree-message">扫描失败，请点击刷新重试。</div>
+              ) : htmlTree.length === 0 ? (
+                <div className="kaijia-browser-html-tree-message">当前工作区未找到 HTML 文件。</div>
+              ) : renderHtmlNodes(htmlTree, 0)}
+            </div>
+          </div>
+        )}
       </div>
       <div className="kaijia-browser-tabs-bar">
         <div className="kaijia-browser-tabs-scroll">

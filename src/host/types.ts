@@ -86,10 +86,24 @@ export interface GitOperationOk {
   output: string
 }
 
+export interface HtmlFileEntry {
+  path: string
+  name: string
+  relativePath: string
+}
+
+export interface HtmlFilesOk {
+  kind: 'html-files'
+  root: string
+  files: HtmlFileEntry[]
+  truncated: boolean
+}
+
 export type SidebarValue =
   | { kind: 'meta'; maxTextBytes: number; maxImageBytes: number; maxEntriesPerDirectory: number; maxTreeRows: number; watchEnabled: boolean }
   | { kind: 'list'; path: string; entries: SidebarEntry[]; truncated: boolean }
   | { kind: 'read'; path: string; size: number; result: ReadResult }
+  | HtmlFilesOk
   | { kind: 'git-status'; root: string; branch: string | null; entries: GitStatusEntry[] }
   | { kind: 'git-diff'; root: string; path: string; staged: boolean; diff: string }
   | { kind: 'git-log'; root: string; commits: GitLogCommit[] }

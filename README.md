@@ -9,6 +9,7 @@ DSH Web Client 的 VSCode 风格文件树侧栏。作为 `#root` 的兄弟节点
 - 支持多文件 tabs：可同时打开多个文件、横向滚动、点击 `×` 关闭
 - “Git 追踪”视图提供 VSCode 风格的三个子页：**改动**（当前分支、暂存区改动、工作区未暂存改动与未跟踪文件，点击可预览带行级高亮的 diff 或未跟踪文件内容）、**历史**（提交记录、提交信息与单次提交 diff，支持加载更多）、**分支**（本地/远端分支列表，可切换分支或把远端分支检出为本地追踪分支）；面板头部提供拉取（pull）与推送（push）操作，执行前会弹出确认框；状态、diff、历史与分支都会随文件变化、Git 元数据变化和 Git 操作自动刷新，无需手动刷新
 - “浏览器”视图提供自绘的搜索首页，默认展示一个简洁的必应搜索框，搜索后在面板 iframe 中打开必应结果页；也支持地址栏直接输入网址、后退 / 前进、刷新、主页、在外部浏览器新标签页打开，以及 Edge 风格的多标签页（顶部标签条可新建、切换、关闭标签页，每个标签页保留自己的导航历史，并尽量抓取页面标题作为标签标题；部分站点会通过 `X-Frame-Options` / `frame-ancestors` 拒绝被 iframe 嵌入）
+- 浏览器面板头部提供当前工作区 HTML 文件的快捷菜单，列表按文件夹层级展示，可点击展开/收起目录后选择文件，并在当前浏览器视图中直接打开，无需再回到文件树查找；菜单带重新扫描按钮，并自动跳过 `node_modules` 和 `.git` 等目录
 - 在文件树中选择 `.html` / `.htm` 文件时，自动切换到“浏览器”视图，并在浏览器中新建标签页打开该本地文件，不会覆盖当前已打开的网站；本地文件由插件自身的 loopback HTTP 路由提供，HTML 引用的相对资源（CSS / JS / 图片等）也会从同目录加载
 - 支持文本/代码（带行号与基础语法高亮）、Markdown 渲染 / 源码切换、常见图片预览
 - 使用 `chokidar` 监听当前工作区文件变化，文件/目录的新增、修改、删除会自动刷新文件树，并自动重读当前激活的文件预览；未激活的 tab 在切换时读取最新内容，因此面板内不再保留手动刷新按钮
@@ -18,7 +19,7 @@ DSH Web Client 的 VSCode 风格文件树侧栏。作为 `#root` 的兄弟节点
 
 插件分两半：
 
-- **Host half（`src/index.ts`）**：注入 `fs`、`connection` 与 `webServer`，在 `/dsh-sidebar` 注册一个仅 loopback 可访问的 Connection RPC channel，提供 `meta` / `list` / `read` / `git-status` / `git-diff` / `git-log` / `git-show` / `git-branches` / `git-switch` / `git-pull` / `git-push` 等端点；同时在 `/dsh-sidebar/events` 注册同源 SSE 通道，用 `chokidar` 监听当前工作区并把文件变化推送给浏览器，并额外监听 `.git` 元数据（`HEAD`、`index`、`refs`、`logs` 等），推送 `git-change` 事件用于刷新 Git 状态、历史与分支；还在 `/dsh-sidebar/files` 注册仅 loopback 可访问的本地文件路由，供浏览器视图直接加载 HTML 及相对资源。
+- **Host half（`src/index.ts`）**：注入 `fs`、`connection` 与 `webServer`，在 `/dsh-sidebar` 注册一个仅 loopback 可访问的 Connection RPC channel，提供 `meta` / `list` / `read` / `html-files` / `git-status` / `git-diff` / `git-log` / `git-show` / `git-branches` / `git-switch` / `git-pull` / `git-push` 等端点；同时在 `/dsh-sidebar/events` 注册同源 SSE 通道，用 `chokidar` 监听当前工作区并把文件变化推送给浏览器，并额外监听 `.git` 元数据（`HEAD`、`index`、`refs`、`logs` 等），推送 `git-change` 事件用于刷新 Git 状态、历史与分支；还在 `/dsh-sidebar/files` 注册仅 loopback 可访问的本地文件路由，供浏览器视图直接加载 HTML 及相对资源。
 - **Browser half（`src/client.tsx`）**：注入 `sessions`、`workspaces`、`connection`，在 `document.body` 上创建自己的 React root 并挂载右侧栏；通过 `EventSource` 订阅文件变化事件，自动失效并重载受影响的目录，同时重读当前激活的预览。右侧栏是 `#root` 的兄弟节点，不注册任何 DSH slot：
   - 打开时通过 `--dsh-sidebar-width` 让 `#root` 让出宽度，形成“真占位”的 VSCode 式侧栏，而不是 overlay；收起时至少让出 40px 给常驻 Activity Bar；
   - 面板本身可拖拽调整宽度（最小 280px，不设上限），宽度与开关状态按 localStorage 持久化；
@@ -30,7 +31,7 @@ DSH Web Client 的 VSCode 风格文件树侧栏。作为 `#root` 的兄弟节点
 
 源码按职责拆分，入口文件只保留插件注册逻辑：
 
-- `src/index.ts`：Host 插件入口；RPC、文件系统、Git、配置等逻辑在 `src/host/`（`config` / `fs` / `git` / `handlers` / `local-files` / `rpc` / `result` / `utils`）。
+- `src/index.ts`：Host 插件入口；RPC、文件系统、Git、配置等逻辑在 `src/host/`（`config` / `fs` / `git` / `handlers` / `html-files` / `local-files` / `rpc` / `result` / `utils`）。
 - `src/client.tsx`：Browser 插件入口；React 组件、状态与 API 封装在 `src/client/`（`api` / `activity-bar` / `browser-panel` / `git-panel` / `diff-view` / `tree` / `preview` / `sidebar-shell` / `styles` 等）。
 - `src/client-model.ts`：与 React 无关的纯模型（路径、扁平化、树交互 reducer），可独立单测。
 
@@ -68,7 +69,7 @@ dsh plugin --profile web add @kaijia/dsh-sidebar
 ```bash
 pnpm build
 pnpm pack
-dsh plugin --profile web add ./kaijia-dsh-sidebar-0.1.7.tgz
+dsh plugin --profile web add ./kaijia-dsh-sidebar-0.1.8.tgz
 ```
 
 两种方式安装后，都可以用以下命令确认配置层已生效：

@@ -12,6 +12,7 @@ import {
   handleGitSwitch,
 } from './git'
 import { handleList, handleRead } from './handlers'
+import { handleHtmlFiles } from './html-files'
 import { fail, ok } from './result'
 import { errorMessage, readOptionalNumber, readString } from './utils'
 
@@ -34,6 +35,10 @@ export function createRpcHandler(ctx: Context, config: Config): ConnectionRpcHan
         }
         case 'read': {
           return ok(await handleRead(ctx, config, payload, signal))
+        }
+        case 'html-files':
+        case 'htmlFiles': {
+          return ok(await handleHtmlFiles(payload, signal))
         }
         case 'git-status':
         case 'gitStatus': {

@@ -37,6 +37,21 @@ export interface ReadOk {
 
 export type ReadValue = ReadOk | DomainError
 
+export interface HtmlFileEntry {
+  path: string
+  name: string
+  relativePath: string
+}
+
+export interface HtmlFilesOk {
+  kind: 'html-files'
+  root: string
+  files: HtmlFileEntry[]
+  truncated: boolean
+}
+
+export type HtmlFilesValue = HtmlFilesOk | DomainError
+
 export interface GitStatusEntry {
   status: string
   path: string
@@ -126,6 +141,7 @@ export type GitOperationValue = GitOperationOk | DomainError
 export interface FsApi {
   list(path: string, signal?: AbortSignal): Promise<ListValue>
   read(path: string, signal?: AbortSignal): Promise<ReadValue>
+  htmlFiles(root: string, signal?: AbortSignal): Promise<HtmlFilesValue>
   meta(signal?: AbortSignal): Promise<Limits>
   gitStatus(root: string, signal?: AbortSignal): Promise<GitStatusValue>
   gitDiff(root: string, path: string, staged: boolean, signal?: AbortSignal): Promise<GitDiffValue>

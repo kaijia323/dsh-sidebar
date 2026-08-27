@@ -145,7 +145,7 @@ export function SidebarShell({ ctx, api }: SidebarShellProps) {
             <GitPanel api={api} root={root} active={view === 'git'} />
           </div>
           <div className={`kaijia-sidebar-view-pane${view === 'browser' ? '' : ' kaijia-sidebar-view-hidden'}`}>
-            <BrowserPanel active={view === 'browser'} openRequest={browserRequest} />
+            <BrowserPanel active={view === 'browser'} openRequest={browserRequest} root={root} api={api} />
           </div>
         </div>
         <ActivityBar view={view} onSelect={selectView} />

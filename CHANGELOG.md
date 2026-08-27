@@ -5,6 +5,12 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，
 版本号遵循 [SemVer](https://semver.org/lang/zh-CN/)。
 
+## [0.1.8] - 2026-08-27
+
+### Added
+
+- 浏览器面板头部新增当前工作区 HTML 文件快捷菜单，按文件夹层级展开/收起，可直接在浏览器视图中打开，无需返回文件树查找；支持重新扫描，并自动跳过 `node_modules` 和 `.git` 等目录。
+
 ## [0.1.7] - 2026-08-27
 
 ### Added

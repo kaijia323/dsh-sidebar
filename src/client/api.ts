@@ -10,6 +10,7 @@ import type {
   GitOperationValue,
   GitShowValue,
   GitStatusValue,
+  HtmlFilesValue,
   Limits,
   ListValue,
   ReadValue,
@@ -32,6 +33,9 @@ export function createFsApi(ctx: ClientContext): FsApi {
     },
     read(path, signal) {
       return callValue<ReadValue>('read', { path }, signal)
+    },
+    htmlFiles(root, signal) {
+      return callValue<HtmlFilesValue>('html-files', { root }, signal)
     },
     gitStatus(root, signal) {
       return callValue<GitStatusValue>('git-status', { root }, signal)

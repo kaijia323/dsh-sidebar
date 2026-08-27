@@ -123,6 +123,43 @@ test('list returns directories first and truncates by config', async () => {
   }
 })
 
+test('html-files recursively returns workspace html files and skips heavy dirs', async () => {
+  const { dir, handler } = await createHandler()
+  try {
+    await mkdir(path.join(dir, 'sub'))
+    await mkdir(path.join(dir, 'node_modules'))
+    await mkdir(path.join(dir, '.git'))
+    await writeFile(path.join(dir, 'index.html'), '<h1>home</h1>', 'utf8')
+    await writeFile(path.join(dir, 'page.HTM'), '<h1>page</h1>', 'utf8')
+    await writeFile(path.join(dir, 'doc.xhtml'), '<html />', 'utf8')
+    await writeFile(path.join(dir, 'notes.txt'), 'not html', 'utf8')
+    await writeFile(path.join(dir, 'sub', 'demo.html'), '<h1>demo</h1>', 'utf8')
+    await writeFile(path.join(dir, 'node_modules', 'generated.html'), '<h1>vendor</h1>', 'utf8')
+    await writeFile(path.join(dir, '.git', 'config.html'), '<h1>git</h1>', 'utf8')
+
+    const result = await handler('html-files', { root: dir }, new AbortController().signal)
+    assert.equal(result.ok, true)
+    assert.equal(result.value.kind, 'html-files')
+    const relativePaths = result.value.files.map((file: { relativePath: string }) => file.relativePath)
+    assert.deepEqual(relativePaths, ['doc.xhtml', 'index.html', 'page.HTM', 'sub/demo.html'])
+    assert.ok(relativePaths.every((path: string) => !path.includes('node_modules') && !path.includes('.git')))
+  } finally {
+    await rm(dir, { recursive: true, force: true })
+  }
+})
+
+test('html-files rejects relative roots', async () => {
+  const { dir, handler } = await createHandler()
+  try {
+    const result = await handler('html-files', { root: 'relative/path' }, new AbortController().signal)
+    assert.equal(result.ok, true)
+    assert.equal(result.value.kind, 'domain-error')
+    assert.equal(result.value.code, 'invalid-path')
+  } finally {
+    await rm(dir, { recursive: true, force: true })
+  }
+})
+
 test('read returns utf-8 text', async () => {
   const { dir, handler } = await createHandler()
   try {

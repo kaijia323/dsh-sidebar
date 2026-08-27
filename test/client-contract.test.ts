@@ -147,6 +147,15 @@ test('browser address bar follows the loaded iframe URL when same-origin', async
   assert.match(source, /history\.pushState =/, 'same-origin SPA pushState navigation must refresh the address bar')
 })
 
+test('browser view has an expandable workspace html quick-open menu', async () => {
+  const source = await readClientSources()
+  assert.match(source, /kaijia-browser-html-menu/, 'browser panel must render an html quick-open menu')
+  assert.match(source, /api\.htmlFiles\(/, 'browser panel must load workspace html files')
+  assert.match(source, /buildHtmlTree/, 'browser panel must group html files into a folder tree')
+  assert.match(source, /toggleHtmlDirectory/, 'browser panel must support expanding/collapsing html folders')
+  assert.match(source, /重新扫描工作区 HTML/, 'browser panel must expose an html rescan action')
+})
+
 test('selecting an html file routes it to the browser view', async () => {
   const source = await readClientSources()
   assert.match(source, /isHtmlPath/, 'file tree must recognize html files')
