@@ -68,7 +68,7 @@ dsh plugin --profile web add @kaijia/dsh-sidebar
 ```bash
 pnpm build
 pnpm pack
-dsh plugin --profile web add ./kaijia-dsh-sidebar-0.1.6.tgz
+dsh plugin --profile web add ./kaijia-dsh-sidebar-0.1.7.tgz
 ```
 
 两种方式安装后，都可以用以下命令确认配置层已生效：
