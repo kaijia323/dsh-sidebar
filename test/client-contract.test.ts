@@ -119,6 +119,17 @@ test('browser view provides a built-in search homepage that defaults to Bing', a
   assert.match(source, /必应搜索/, 'browser homepage must be labeled as Bing search')
 })
 
+test('browser view supports Edge-style new tabs with per-tab history', async () => {
+  const source = await readClientSources()
+  assert.match(source, /interface BrowserTab/, 'browser panel must model multiple tabs')
+  assert.match(source, /function addTab\(\)/, 'browser panel must be able to create a new tab')
+  assert.match(source, /function closeTab\(id: number\)/, 'browser panel must be able to close a tab')
+  assert.match(source, /新建标签页/, 'browser panel must expose a new-tab action')
+  assert.match(source, /kaijia-browser-tab-active/, 'browser panel must mark the active tab')
+  assert.match(source, /kaijia-browser-tabs-bar/, 'browser panel must put tabs and new-tab action in a clearly separated bar')
+  assert.match(source, /kaijia-browser-new-tab-zone/, 'new-tab action must have its own visually isolated zone')
+})
+
 test('client bundle materializes as a lazy-CJS plugin factory', async () => {
   const packageJson = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8'))
   const code = await readFile(new URL('../lib/client.js', import.meta.url), 'utf8')
