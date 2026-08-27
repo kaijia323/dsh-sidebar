@@ -6,10 +6,12 @@ import {
   dirname,
   flattenTree,
   formatBytes,
+  isHtmlPath,
   isImagePath,
   isMarkdownPath,
   isPathInside,
   resolveRoot,
+  toFileBrowserUrl,
   treeInteractionReducer,
 } from '../src/client-model.ts'
 
@@ -64,6 +66,20 @@ test('path kind helpers', () => {
   assert.equal(isMarkdownPath('a.txt'), false)
   assert.equal(isImagePath('photo.PNG'), true)
   assert.equal(isImagePath('photo.svg'), false)
+})
+
+test('html path helper identifies html files for browser opening', () => {
+  assert.equal(isHtmlPath('index.html'), true)
+  assert.equal(isHtmlPath('page.HTM'), true)
+  assert.equal(isHtmlPath('dashboard.xhtml'), true)
+  assert.equal(isHtmlPath('README.md'), false)
+  assert.equal(isHtmlPath('style.css'), false)
+})
+
+test('toFileBrowserUrl maps absolute paths to the local file server', () => {
+  assert.equal(toFileBrowserUrl('/home/me/project/index.html'), '/dsh-sidebar/files//home/me/project/index.html')
+  assert.equal(toFileBrowserUrl('C:\\repo\\demo\\index.html'), '/dsh-sidebar/files/C%3A/repo/demo/index.html')
+  assert.equal(toFileBrowserUrl('/has space/a b.html'), '/dsh-sidebar/files//has%20space/a%20b.html')
 })
 
 test('resolveRoot prefers session cwd then recent workspace then first workspace', () => {

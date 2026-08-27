@@ -6,6 +6,7 @@ import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { promisify } from 'node:util'
 import * as plugin from '../lib/index.js'
+import { decodeLocalFilePath, handleLocalFile } from '../src/host/local-files.ts'
 
 const execFileAsync = promisify(execFile)
 
@@ -400,6 +401,39 @@ test('list rejects relative paths and unknown endpoints fail closed', async () =
     const unknown = await handler('nope', {}, new AbortController().signal)
     assert.equal(unknown.ok, false)
     assert.equal(unknown.error.code, 'internal')
+  } finally {
+    await rm(dir, { recursive: true, force: true })
+  }
+})
+
+test('local file route decodes only absolute file paths', () => {
+  assert.equal(decodeLocalFilePath('/dsh-sidebar/files//home/me/index.html'), '/home/me/index.html')
+  assert.equal(decodeLocalFilePath('/dsh-sidebar/files/C%3A/repo/demo/index.html'), 'C:/repo/demo/index.html')
+  assert.equal(decodeLocalFilePath('/dsh-sidebar/files/relative/index.html'), undefined)
+  assert.equal(decodeLocalFilePath('/dsh-sidebar/files//home/../secret.txt'), undefined)
+})
+
+test('local file route serves an html file to loopback browsers', async () => {
+  const dir = await mkdtemp(path.join(tmpdir(), 'dsh-sidebar-html-'))
+  try {
+    await writeFile(path.join(dir, 'index.html'), '<h1>hello</h1>', 'utf8')
+    const requestUrl = `/dsh-sidebar/files/${encodeURIComponent(path.join(dir, 'index.html'))}`
+    let status = 0
+    let headers: Record<string, string> = {}
+    let body = ''
+    const res = {
+      writeHead(code: number, value?: Record<string, string>) {
+        status = code
+        headers = value ?? {}
+      },
+      end(value?: string | Buffer) {
+        body = value ? Buffer.from(value).toString('utf8') : ''
+      },
+    }
+    await handleLocalFile({ method: 'GET', headers: { host: '127.0.0.1:3080' }, url: requestUrl } as any, res as any)
+    assert.equal(status, 200)
+    assert.equal(headers['Content-Type'], 'text/html')
+    assert.equal(body, '<h1>hello</h1>')
   } finally {
     await rm(dir, { recursive: true, force: true })
   }

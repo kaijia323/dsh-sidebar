@@ -69,7 +69,7 @@ interface SseClient {
   heartbeat: ReturnType<typeof setInterval> | undefined
 }
 
-function isLoopbackAuthority(hostHeader: string | undefined): boolean {
+export function isLoopbackAuthority(hostHeader: string | undefined): boolean {
   if (!hostHeader) return false
   try {
     const hostname = new URL(`http://${hostHeader}`).hostname

@@ -1,5 +1,7 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent, type SyntheticEvent } from 'react'
 import { ArrowLeft, ArrowRight, ExternalLink, Globe, Home, Plus, RefreshCw, Search, X } from 'lucide-react'
+import { toFileBrowserUrl } from '../client-model'
+import type { BrowserOpenRequest } from './types'
 
 const HOME = ''
 const BING_SEARCH = 'https://cn.bing.com/search?q='
@@ -18,11 +20,13 @@ function normalizeUrl(input: string): string {
   if (!value) return ''
   if (/^https?:\/\//i.test(value) || /^about:/i.test(value) || /^data:/i.test(value)) return value
   if (/^\/\//.test(value)) return `https:${value}`
+  if (/^\/(?!\/)/.test(value)) return value
   if (/^(?:localhost|127\.0\.0\.1)(?::\d+)?(?:[/?#].*)?$/i.test(value)) return `http://${value}`
   return `https://${value}`
 }
 
 function tabTitle(tab: BrowserTab): string {
+  if (tab.title?.trim()) return tab.title.trim()
   const url = tab.history[tab.index] ?? HOME
   if (!url) return '新标签页'
   try {
@@ -40,14 +44,17 @@ interface BrowserTab {
   address: string
   homeQuery: string
   reloadKey: number
+  title: string
 }
 
 interface BrowserPanelProps {
   active?: boolean
+  openRequest?: BrowserOpenRequest | null
 }
 
-export function BrowserPanel({ active = true }: BrowserPanelProps) {
+export function BrowserPanel({ active = true, openRequest = null }: BrowserPanelProps) {
   const nextIdRef = useRef(1)
+  const lastOpenRequestRef = useRef<number | null>(null)
   const [tabs, setTabs] = useState<BrowserTab[]>(() => [createTab()])
   const [activeId, setActiveId] = useState<number>(() => tabs[0]?.id ?? 1)
   const [hasOpened, setHasOpened] = useState(active)
@@ -56,23 +63,45 @@ export function BrowserPanel({ active = true }: BrowserPanelProps) {
     if (active) setHasOpened(true)
   }, [active])
 
+  useEffect(() => {
+    if (!openRequest) return
+    if (lastOpenRequestRef.current === openRequest.id) return
+    lastOpenRequestRef.current = openRequest.id
+    setHasOpened(true)
+    const path = toFileBrowserUrl(openRequest.path)
+    const url = new URL(path, window.location.href).href
+    openHtmlInNewTab(url)
+  }, [openRequest?.id, openRequest?.nonce])
+
   const activeTab = tabs.find((tab) => tab.id === activeId) ?? tabs[tabs.length - 1]
 
-  function createTab(): BrowserTab {
+  function createTab(initialUrl = HOME): BrowserTab {
     const id = nextIdRef.current
     nextIdRef.current += 1
     return {
       id,
-      history: [HOME],
+      history: [initialUrl],
       index: 0,
-      address: '',
+      address: initialUrl === HOME ? '' : initialUrl,
       homeQuery: '',
       reloadKey: 0,
+      title: '',
     }
   }
 
   function updateTab(id: number, updater: (tab: BrowserTab) => BrowserTab) {
     setTabs((prev) => prev.map((tab) => (tab.id === id ? updater(tab) : tab)))
+  }
+
+  function handleFrameLoad(tabId: number, event: SyntheticEvent<HTMLIFrameElement>) {
+    try {
+      const title = event.currentTarget.contentDocument?.title?.trim() ?? ''
+      if (title) {
+        updateTab(tabId, (tab) => ({ ...tab, title }))
+      }
+    } catch {
+      // Cross-origin iframes do not expose their document; keep the URL fallback.
+    }
   }
 
   const current = activeTab ? activeTab.history[activeTab.index] ?? HOME : HOME
@@ -89,6 +118,7 @@ export function BrowserPanel({ active = true }: BrowserPanelProps) {
         index: history.length - 1,
         address: url,
         reloadKey: tab.reloadKey + 1,
+        title: '',
       }
     })
   }
@@ -97,7 +127,7 @@ export function BrowserPanel({ active = true }: BrowserPanelProps) {
     const url = normalizeUrl(input)
     if (!url || !activeTab) return
     if (url === current && !isHome) {
-      updateTab(activeTab.id, (tab) => ({ ...tab, address: url }))
+      updateTab(activeTab.id, (tab) => ({ ...tab, address: url, title: '' }))
       reload()
       return
     }
@@ -115,6 +145,7 @@ export function BrowserPanel({ active = true }: BrowserPanelProps) {
         index: history.length - 1,
         address: '',
         reloadKey: tab.reloadKey + 1,
+        title: '',
       }
     })
   }
@@ -127,6 +158,7 @@ export function BrowserPanel({ active = true }: BrowserPanelProps) {
       index: nextIndex,
       address: tab.history[nextIndex],
       reloadKey: tab.reloadKey + 1,
+      title: '',
     }))
   }
 
@@ -138,12 +170,13 @@ export function BrowserPanel({ active = true }: BrowserPanelProps) {
       index: nextIndex,
       address: tab.history[nextIndex],
       reloadKey: tab.reloadKey + 1,
+      title: '',
     }))
   }
 
   function reload() {
     if (!activeTab || isHome) return
-    updateTab(activeTab.id, (tab) => ({ ...tab, reloadKey: tab.reloadKey + 1 }))
+    updateTab(activeTab.id, (tab) => ({ ...tab, reloadKey: tab.reloadKey + 1, title: '' }))
   }
 
   function performSearch(query: string) {
@@ -158,6 +191,12 @@ export function BrowserPanel({ active = true }: BrowserPanelProps) {
 
   function addTab() {
     const tab = createTab()
+    setTabs((prev) => [...prev, tab])
+    setActiveId(tab.id)
+  }
+
+  function openHtmlInNewTab(url: string) {
+    const tab = createTab(url)
     setTabs((prev) => [...prev, tab])
     setActiveId(tab.id)
   }
@@ -319,6 +358,7 @@ export function BrowserPanel({ active = true }: BrowserPanelProps) {
               className={`kaijia-browser-iframe${isActive ? '' : ' kaijia-browser-iframe-hidden'}`}
               src={current}
               title="浏览器面板"
+              onLoad={(event) => handleFrameLoad(tab.id, event)}
             />
           )
         })}

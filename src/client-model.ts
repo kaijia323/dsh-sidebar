@@ -90,6 +90,23 @@ export function isImagePath(path: string): boolean {
   return /\.(?:png|jpe?g|gif|webp|bmp|ico|avif)$/i.test(path)
 }
 
+export function isHtmlPath(path: string): boolean {
+  return /\.(?:html?|xhtml|shtml)$/i.test(path)
+}
+
+/**
+ * Build the sidebar-local URL used by the browser view to load an absolute
+ * file path through the plugin's loopback file server. Each path segment is
+ * percent-encoded, while slashes remain real URL separators so relative
+ * assets referenced by an HTML page resolve under the same directory.
+ */
+export function toFileBrowserUrl(path: string): string {
+  const normalized = path.replace(/\\/g, '/')
+  const parts = normalized.split('/')
+  const encoded = parts.map((part) => encodeURIComponent(part))
+  return `/dsh-sidebar/files/${encoded.join('/')}`
+}
+
 export function resolveRoot(sessionId: string, sessions: SessionListLike, workspaces: WorkspaceListLike): string | undefined {
   const current = sessions.byId[sessionId]
   if (current?.cwd) return current.cwd

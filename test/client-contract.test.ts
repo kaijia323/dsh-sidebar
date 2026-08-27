@@ -130,6 +130,33 @@ test('browser view supports Edge-style new tabs with per-tab history', async () 
   assert.match(source, /kaijia-browser-new-tab-zone/, 'new-tab action must have its own visually isolated zone')
 })
 
+test('browser tab titles use the loaded page title when available', async () => {
+  const source = await readClientSources()
+  assert.match(source, /contentDocument\?\.title/, 'browser tabs must read document.title from loaded iframes')
+  assert.match(source, /onLoad=\{\(event\) => handleFrameLoad\(tab\.id, event\)\}/, 'loaded iframes must update their tab title')
+  assert.match(source, /tab\.title/, 'tab rendering must prefer the fetched page title')
+  assert.match(source, /title: string/, 'browser tab model must store a page title')
+})
+
+test('selecting an html file routes it to the browser view', async () => {
+  const source = await readClientSources()
+  assert.match(source, /isHtmlPath/, 'file tree must recognize html files')
+  assert.match(source, /onOpenInBrowser/, 'file tree must expose an html-open callback')
+  assert.match(source, /setView\('browser'\)/, 'opening an html file must switch to the browser view')
+  assert.match(source, /openRequest=\{browserRequest\}/, 'sidebar must forward browser open requests')
+  assert.match(source, /toFileBrowserUrl/, 'browser panel must translate file paths into local file URLs')
+  assert.match(source, /openHtmlInNewTab\(url\)/, 'browser panel must open local html files in a new tab')
+  assert.match(source, /createTab\(url\)/, 'local html tab must start with the file url as its initial history')
+})
+
+test('host registers a loopback local file route for html preview', async () => {
+  const source = await readFile(new URL('../src/host/local-files.ts', import.meta.url), 'utf8')
+  assert.match(source, /\/dsh-sidebar\/files/, 'local files must be served under the plugin file route')
+  assert.match(source, /kind: 'prefix'/, 'file serving must use a prefix route so relative assets resolve')
+  assert.match(source, /isLoopbackAuthority/, 'file serving must stay loopback-only')
+  assert.match(source, /text\/html/, 'html files must be served with an html content type')
+})
+
 test('client bundle materializes as a lazy-CJS plugin factory', async () => {
   const packageJson = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8'))
   const code = await readFile(new URL('../lib/client.js', import.meta.url), 'utf8')

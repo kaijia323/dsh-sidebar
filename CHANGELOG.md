@@ -5,6 +5,13 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，
 版本号遵循 [SemVer](https://semver.org/lang/zh-CN/)。
 
+## [Unreleased]
+
+### Added
+
+- 在文件树中选择 `.html` / `.htm` 文件时自动切换到侧栏“浏览器”视图，并新建标签页查看，不会覆盖已打开的网站；通过新增的 loopback 本地文件路由加载 HTML 及其相对资源。
+- 浏览器标签页会尽量抓取已加载页面的 `<title>` 作为标签标题，而不是只显示地址。
+
 ## [0.1.6] - 2026-08-27
 
 ### Added

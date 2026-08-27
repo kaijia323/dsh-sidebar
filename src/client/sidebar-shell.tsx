@@ -7,7 +7,7 @@ import { ACTIVITY_BAR_WIDTH, SIDEBAR_MIN, SIDEBAR_STORAGE_KEY } from './constant
 import { FileTreePanel } from './file-tree-panel'
 import { GitPanel } from './git-panel'
 import { loadSidebarOpen, loadSidebarView, loadSidebarWidth, useSnapshotStore } from './hooks'
-import type { FsApi } from './types'
+import type { BrowserOpenRequest, FsApi } from './types'
 
 interface SidebarShellProps {
   ctx: ClientContext
@@ -20,6 +20,8 @@ export function SidebarShell({ ctx, api }: SidebarShellProps) {
   const [open, setOpen] = useState<boolean>(loadSidebarOpen)
   const [width, setWidth] = useState<number>(loadSidebarWidth)
   const [view, setView] = useState<SidebarView>(loadSidebarView)
+  const [browserRequest, setBrowserRequest] = useState<BrowserOpenRequest | null>(null)
+  const browserRequestRef = useRef(0)
   const panelRef = useRef<HTMLDivElement>(null)
   const widthRef = useRef(width)
   const dragRef = useRef<{ startX: number; startWidth: number } | null>(null)
@@ -96,6 +98,13 @@ export function SidebarShell({ ctx, api }: SidebarShellProps) {
     [sessionId, sessions, workspaces],
   )
 
+  function openHtmlInBrowser(path: string) {
+    browserRequestRef.current += 1
+    setBrowserRequest({ path, id: browserRequestRef.current, nonce: browserRequestRef.current })
+    setView('browser')
+    setOpen(true)
+  }
+
   function selectView(next: SidebarView) {
     if (!open || next !== view) {
       setView(next)
@@ -127,13 +136,16 @@ export function SidebarShell({ ctx, api }: SidebarShellProps) {
               sessionId={sessionId}
               sessions={sessions}
               workspaces={workspaces}
+              onOpenInBrowser={openHtmlInBrowser}
+              onOpenHtml={openHtmlInBrowser}
+              onOpenHtmlFile={openHtmlInBrowser}
             />
           </div>
           <div className={`kaijia-sidebar-view-pane${view === 'git' ? '' : ' kaijia-sidebar-view-hidden'}`}>
             <GitPanel api={api} root={root} active={view === 'git'} />
           </div>
           <div className={`kaijia-sidebar-view-pane${view === 'browser' ? '' : ' kaijia-sidebar-view-hidden'}`}>
-            <BrowserPanel active={view === 'browser'} />
+            <BrowserPanel active={view === 'browser'} openRequest={browserRequest} />
           </div>
         </div>
         <ActivityBar view={view} onSelect={selectView} />
