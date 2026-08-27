@@ -1,7 +1,6 @@
 import { useCallback, useSyncExternalStore } from 'react'
-import { clamp } from '../client-model'
 import type { SidebarView } from './activity-bar'
-import { SIDEBAR_DEFAULT, SIDEBAR_MAX, SIDEBAR_MIN, SIDEBAR_STORAGE_KEY } from './constants'
+import { SIDEBAR_DEFAULT, SIDEBAR_MIN, SIDEBAR_STORAGE_KEY } from './constants'
 import type { SnapshotStore } from './types'
 
 export function useSnapshotStore<T>(store: SnapshotStore<T>): T {
@@ -30,7 +29,7 @@ export function loadSidebarOpen(): boolean {
 export function loadSidebarWidth(): number {
   try {
     const raw = Number(localStorage.getItem(`${SIDEBAR_STORAGE_KEY}:width`))
-    return Number.isFinite(raw) ? clamp(raw, SIDEBAR_MIN, SIDEBAR_MAX) : SIDEBAR_DEFAULT
+    return Number.isFinite(raw) ? Math.max(SIDEBAR_MIN, raw) : SIDEBAR_DEFAULT
   } catch {
     return SIDEBAR_DEFAULT
   }

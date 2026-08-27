@@ -6,7 +6,6 @@ export const OVERSCAN = 10
 
 export const ACTIVITY_BAR_WIDTH = 40
 export const SIDEBAR_MIN = 280
-export const SIDEBAR_MAX = 640
 export const SIDEBAR_DEFAULT = 360
 export const SIDEBAR_STORAGE_KEY = 'dsh-sidebar:v1'
 

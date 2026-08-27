@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
 import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
-import { clamp, resolveRoot } from '../client-model'
+import { resolveRoot } from '../client-model'
 import { ActivityBar, type SidebarView } from './activity-bar'
 import { BrowserPanel } from './browser-panel'
-import { ACTIVITY_BAR_WIDTH, SIDEBAR_MAX, SIDEBAR_MIN, SIDEBAR_STORAGE_KEY } from './constants'
+import { ACTIVITY_BAR_WIDTH, SIDEBAR_MIN, SIDEBAR_STORAGE_KEY } from './constants'
 import { FileTreePanel } from './file-tree-panel'
 import { GitPanel } from './git-panel'
 import { loadSidebarOpen, loadSidebarView, loadSidebarWidth, useSnapshotStore } from './hooks'
@@ -74,7 +74,7 @@ export function SidebarShell({ ctx, api }: SidebarShellProps) {
   function handleDragMove(event: ReactPointerEvent<HTMLDivElement>) {
     const drag = dragRef.current
     if (!drag || !event.currentTarget.hasPointerCapture(event.pointerId)) return
-    const next = clamp(drag.startWidth - (event.clientX - drag.startX), SIDEBAR_MIN, SIDEBAR_MAX)
+    const next = Math.max(SIDEBAR_MIN, drag.startWidth - (event.clientX - drag.startX))
     if (panelRef.current) panelRef.current.style.width = `${next}px`
     document.documentElement.style.setProperty('--dsh-sidebar-width', `${next}px`)
   }
@@ -83,7 +83,7 @@ export function SidebarShell({ ctx, api }: SidebarShellProps) {
     const drag = dragRef.current
     if (!drag) return
     event.currentTarget.releasePointerCapture(event.pointerId)
-    const next = clamp(drag.startWidth - (event.clientX - drag.startX), SIDEBAR_MIN, SIDEBAR_MAX)
+    const next = Math.max(SIDEBAR_MIN, drag.startWidth - (event.clientX - drag.startX))
     dragRef.current = null
     panelRef.current?.removeAttribute('data-dragging')
     document.body.removeAttribute('data-dsh-sidebar-dragging')

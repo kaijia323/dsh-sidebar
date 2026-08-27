@@ -20,7 +20,7 @@ DSH Web Client 的 VSCode 风格文件树侧栏。作为 `#root` 的兄弟节点
 - **Host half（`src/index.ts`）**：注入 `fs`、`connection` 与 `webServer`，在 `/dsh-sidebar` 注册一个仅 loopback 可访问的 Connection RPC channel，提供 `meta` / `list` / `read` / `git-status` / `git-diff` / `git-log` / `git-show` / `git-branches` / `git-switch` / `git-pull` / `git-push` 等端点；同时在 `/dsh-sidebar/events` 注册同源 SSE 通道，用 `chokidar` 监听当前工作区并把文件变化推送给浏览器，并额外监听 `.git` 元数据（`HEAD`、`index`、`refs`、`logs` 等），推送 `git-change` 事件用于刷新 Git 状态、历史与分支。
 - **Browser half（`src/client.tsx`）**：注入 `sessions`、`workspaces`、`connection`，在 `document.body` 上创建自己的 React root 并挂载右侧栏；通过 `EventSource` 订阅文件变化事件，自动失效并重载受影响的目录，同时重读当前激活的预览。右侧栏是 `#root` 的兄弟节点，不注册任何 DSH slot：
   - 打开时通过 `--dsh-sidebar-width` 让 `#root` 让出宽度，形成“真占位”的 VSCode 式侧栏，而不是 overlay；收起时至少让出 40px 给常驻 Activity Bar；
-  - 面板本身可拖拽调整宽度（280–640px），宽度与开关状态按 localStorage 持久化；
+  - 面板本身可拖拽调整宽度（最小 280px，不设上限），宽度与开关状态按 localStorage 持久化；
   - 最右侧是 40px 的 Activity Bar，可在“文件资源管理器”“Git 追踪”和“浏览器”间切换；点击当前视图图标收起侧栏，再次点击展开或切换视图；
   - 三个视图保持挂载以保留文件树、Git 与浏览器页面状态，当前视图也会持久化；面板头部不显示刷新和关闭按钮；
   - 不依赖 `ctx.layout.openDetails()`，所以 blank / 无消息会话也能打开。

@@ -161,7 +161,7 @@ body[data-ds-dark-theme] .kaijia-image { box-shadow: 0 0 0 1px rgba(255, 255, 25
 body[data-dsh-sidebar-dragging] #root { transition: none; }
 [data-dsh-sidebar-root], .kaijia-sidebar-root { background: var(--dsw-specific-sidebar-fill); }
 .kaijia-sidebar-root { position: fixed; top: 0; right: 0; bottom: 0; z-index: 10; display: flex; flex-direction: column; border-left: 1px solid var(--dsw-alias-border-l2); }
-.kaijia-sidebar-root.kaijia-sidebar-open { min-width: 280px; max-width: 640px; }
+.kaijia-sidebar-root.kaijia-sidebar-open { min-width: 280px; }
 .kaijia-sidebar-root.kaijia-sidebar-collapsed { width: 40px; min-width: 40px; max-width: 40px; border-left: none; }
 .kaijia-sidebar-drag-handle { position: absolute; left: -4px; top: 0; bottom: 0; width: 8px; cursor: col-resize; touch-action: none; }
 .kaijia-sidebar-drag-handle::after { content: ''; position: absolute; left: 3px; top: 0; bottom: 0; width: 2px; background: transparent; transition: background-color 120ms ease; }
