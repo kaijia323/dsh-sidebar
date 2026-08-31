@@ -39,7 +39,7 @@ DSH Web Client 的 VSCode 风格文件树侧栏。作为 `#root` 的兄弟节点
 
 ## 安装
 
-要求 DSH `0.1.1-rc.2` 或更新版本、pnpm 10+ 与 Node.js 20+。
+要求 DSH `0.1.2-alpha.2` 或更新版本、pnpm 10+ 与 Node.js 20+。
 
 ### 本地安装（源码 / 开发）
 
@@ -69,7 +69,7 @@ dsh plugin --profile web add @kaijia/dsh-sidebar
 ```bash
 pnpm build
 pnpm pack
-dsh plugin --profile web add ./kaijia-dsh-sidebar-0.1.8.tgz
+dsh plugin --profile web add ./kaijia-dsh-sidebar-0.1.9.tgz
 ```
 
 两种方式安装后，都可以用以下命令确认配置层已生效：

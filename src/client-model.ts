@@ -23,11 +23,15 @@ export interface FlatRow {
 
 export interface SessionSummaryLike {
   cwd?: string
+  updatedAt?: number
 }
 
 export interface WorkspaceViewLike {
   workspaceId: string
   path: string
+  sessionIds?: readonly string[]
+  createdAt?: string
+  updatedAt?: string
 }
 
 export interface SessionListLike {
@@ -36,7 +40,26 @@ export interface SessionListLike {
 
 export interface WorkspaceListLike {
   items: readonly WorkspaceViewLike[]
-  recentWorkspaceId?: string
+}
+
+function deriveRecentWorkspaceId(sessions: SessionListLike, workspaces: WorkspaceListLike): string | undefined {
+  let selected: string | undefined
+  let selectedTime = Number.NEGATIVE_INFINITY
+  for (const workspace of workspaces.items) {
+    let latest = Number.NEGATIVE_INFINITY
+    for (const sessionId of workspace.sessionIds ?? []) {
+      const session = sessions.byId[sessionId]
+      if (session?.updatedAt !== undefined) latest = Math.max(latest, session.updatedAt)
+    }
+    if (latest === Number.NEGATIVE_INFINITY && workspace.createdAt) {
+      latest = Date.parse(workspace.createdAt)
+    }
+    if (selected === undefined || latest > selectedTime) {
+      selected = workspace.workspaceId
+      selectedTime = latest
+    }
+  }
+  return selected
 }
 
 export function basename(path: string): string {
@@ -110,7 +133,7 @@ export function toFileBrowserUrl(path: string): string {
 export function resolveRoot(sessionId: string, sessions: SessionListLike, workspaces: WorkspaceListLike): string | undefined {
   const current = sessions.byId[sessionId]
   if (current?.cwd) return current.cwd
-  const recentId = workspaces.recentWorkspaceId
+  const recentId = deriveRecentWorkspaceId(sessions, workspaces)
   const recent = recentId ? workspaces.items.find((item) => item.workspaceId === recentId) : undefined
   if (recent?.path) return recent.path
   return workspaces.items[0]?.path

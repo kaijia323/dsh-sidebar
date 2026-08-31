@@ -1,4 +1,4 @@
-import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
+import type { Context } from '@deepseek-ai/cordis'
 import type { RpcResult } from '@deepseek-ai/dsh-client-connection/client'
 import { CHANNEL } from './constants'
 import type {
@@ -20,7 +20,7 @@ export function isDomainError(value: unknown): value is DomainError {
   return typeof value === 'object' && value !== null && (value as { kind?: unknown }).kind === 'domain-error'
 }
 
-export function createFsApi(ctx: ClientContext): FsApi {
+export function createFsApi(ctx: Context): FsApi {
   async function callValue<T>(endpoint: string, payload: unknown, signal?: AbortSignal): Promise<T> {
     const response: RpcResult<unknown> = await ctx.connection.rpc.call(CHANNEL, endpoint, payload, signal)
     if (!response.ok) throw new Error(response.error.message)

@@ -1,5 +1,5 @@
 import { createRoot } from 'react-dom/client'
-import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
+import type { Context } from '@deepseek-ai/cordis'
 import { createFsApi } from './client/api'
 import { SidebarShell } from './client/sidebar-shell'
 import { installStyles } from './client/styles'
@@ -7,7 +7,7 @@ import { installStyles } from './client/styles'
 export const name = 'dsh-sidebar'
 export const inject = ['sessions', 'workspaces', 'connection']
 
-export function apply(ctx: ClientContext) {
+export function apply(ctx: Context) {
   const api = createFsApi(ctx)
 
   ctx.effect(() => installStyles())

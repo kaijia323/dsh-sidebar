@@ -5,6 +5,16 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，
 版本号遵循 [SemVer](https://semver.org/lang/zh-CN/)。
 
+## [0.1.9] - 2026-08-31
+
+### Changed
+
+- 适配 DSH `0.1.2-alpha.2`：升级 `@deepseek-ai/dsh-client-connection`、`@deepseek-ai/dsh-fs`、`@deepseek-ai/dsh-host-webserver`、`@deepseek-ai/schemastery` 与 `@deepseek-ai/cordis` 依赖版本。
+- 移除已删除的 `@deepseek-ai/dsh-client-runtime`，客户端上下文改用 `@deepseek-ai/cordis` 的 `Context`。
+- 浏览器客户端依赖改为 `@deepseek-ai/dsh-api-session-controller` 与 `@deepseek-ai/dsh-api-workspace-controller` 提供 sessions / workspaces 服务。
+- Host RPC 适配 DSH 0.1.2 新的 `connection.rpc.handle` 签名，移除已不存在的 `ConnectionRpcHandlerOptions`。
+- 工作区根目录的“最近工作区”回退改为根据 workspace 所属 session 的活跃时间推导，适配 DSH 0.1.2 移除 `recentWorkspaceId` 的变化。
+
 ## [0.1.8] - 2026-08-27
 
 ### Added

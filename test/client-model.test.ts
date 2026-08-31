@@ -83,18 +83,37 @@ test('toFileBrowserUrl maps absolute paths to the local file server', () => {
 })
 
 test('resolveRoot prefers session cwd then recent workspace then first workspace', () => {
-  const sessions = { byId: { s1: { cwd: 'C:/work/s1' }, s2: {} } }
+  const sessions = {
+    byId: {
+      s1: { cwd: 'C:/work/s1', updatedAt: 100 },
+      s2: { cwd: undefined, updatedAt: 200 },
+      s3: { cwd: undefined, updatedAt: 50 },
+    },
+  }
   const workspaces = {
+    items: [
+      { workspaceId: 'w1', path: 'C:/work/w1', sessionIds: ['s1'], createdAt: '2026-01-01T00:00:00.000Z' },
+      { workspaceId: 'w2', path: 'C:/work/w2', sessionIds: ['s2'], createdAt: '2026-01-02T00:00:00.000Z' },
+      { workspaceId: 'w3', path: 'C:/work/w3', sessionIds: ['s3'], createdAt: '2026-01-03T00:00:00.000Z' },
+    ],
+  }
+  // A session's own cwd wins before any workspace recency fallback.
+  assert.equal(resolveRoot('s1', sessions, workspaces), 'C:/work/s1')
+  // DSH 0.1.2 no longer exposes recentWorkspaceId; derive it from the
+  // workspace whose sessions were most recently active.
+  assert.equal(resolveRoot('s2', sessions, workspaces), 'C:/work/w2')
+  assert.equal(resolveRoot('s3', sessions, workspaces), 'C:/work/w2')
+  assert.equal(resolveRoot('nope', sessions, workspaces), 'C:/work/w2')
+  assert.equal(resolveRoot('s2', sessions, { items: [] }), undefined)
+
+  // Without membership/creation timestamps the first workspace is the fallback.
+  const plain = {
     items: [
       { workspaceId: 'w1', path: 'C:/work/w1' },
       { workspaceId: 'w2', path: 'C:/work/w2' },
     ],
-    recentWorkspaceId: 'w2',
   }
-  assert.equal(resolveRoot('s1', sessions, workspaces), 'C:/work/s1')
-  assert.equal(resolveRoot('s2', sessions, workspaces), 'C:/work/w2')
-  assert.equal(resolveRoot('s2', sessions, { ...workspaces, recentWorkspaceId: undefined }), 'C:/work/w1')
-  assert.equal(resolveRoot('s2', sessions, { items: [] }), undefined)
+  assert.equal(resolveRoot('nope', { byId: {} }, plain), 'C:/work/w1')
 })
 
 test('flattenTree stays lazy until a directory is expanded', () => {

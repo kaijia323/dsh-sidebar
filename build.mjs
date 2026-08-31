@@ -91,12 +91,12 @@ export declare function apply(ctx: Context, config: Config): void
 `
 await writeFile('lib/index.d.ts', hostDts, 'utf8')
 
-const clientDts = `import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
+const clientDts = `import type { Context } from '@deepseek-ai/cordis'
 
 export declare const name: 'dsh-sidebar'
 export declare const inject: string[]
 
-export declare function apply(ctx: ClientContext): void
+export declare function apply(ctx: Context): void
 `
 await writeFile('lib/client.d.ts', clientDts, 'utf8')
 

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
-import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
+import type { Context } from '@deepseek-ai/cordis'
 import { resolveRoot } from '../client-model'
 import { ActivityBar, type SidebarView } from './activity-bar'
 import { BrowserPanel } from './browser-panel'
@@ -10,7 +10,7 @@ import { loadSidebarOpen, loadSidebarView, loadSidebarWidth, useSnapshotStore } 
 import type { BrowserOpenRequest, FsApi } from './types'
 
 interface SidebarShellProps {
-  ctx: ClientContext
+  ctx: Context
   api: FsApi
 }
 
